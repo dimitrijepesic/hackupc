@@ -1,0 +1,402 @@
+{
+  "graph_id": "test3",
+  "nodes": [
+    {
+      "id": "func:todo_service.swift:TodoService.add:8",
+      "type": "function",
+      "qualified_name": "TodoService.add",
+      "name": "add",
+      "file": "todo_service.swift",
+      "line": 8,
+      "line_end": 10,
+      "signature": "func add(_ todo: Todo)",
+      "params": [
+        {
+          "label": null,
+          "name": "todo",
+          "type": "Todo"
+        }
+      ],
+      "return_type": null,
+      "container": "TodoService",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_service.swift:TodoService.all:12",
+      "type": "function",
+      "qualified_name": "TodoService.all",
+      "name": "all",
+      "file": "todo_service.swift",
+      "line": 12,
+      "line_end": 14,
+      "signature": "func all() -> [Todo]",
+      "params": [],
+      "return_type": "[Todo]",
+      "container": "TodoService",
+      "in_degree": 3,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_service.swift:TodoService.complete:16",
+      "type": "function",
+      "qualified_name": "TodoService.complete",
+      "name": "complete",
+      "file": "todo_service.swift",
+      "line": 16,
+      "line_end": 21,
+      "signature": "func complete(id: UUID) -> Todo?",
+      "params": [
+        {
+          "label": "id",
+          "name": "id",
+          "type": "UUID"
+        }
+      ],
+      "return_type": "Todo?",
+      "container": "TodoService",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_service.swift:TodoService.highPriority:23",
+      "type": "function",
+      "qualified_name": "TodoService.highPriority",
+      "name": "highPriority",
+      "file": "todo_service.swift",
+      "line": 23,
+      "line_end": 25,
+      "signature": "func highPriority() -> [Todo]",
+      "params": [],
+      "return_type": "[Todo]",
+      "container": "TodoService",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_service.swift:TodoService.bulkAdd:27",
+      "type": "function",
+      "qualified_name": "TodoService.bulkAdd",
+      "name": "bulkAdd",
+      "file": "todo_service.swift",
+      "line": 27,
+      "line_end": 29,
+      "signature": "func bulkAdd(_ todos: [Todo])",
+      "params": [
+        {
+          "label": null,
+          "name": "todos",
+          "type": "[Todo]"
+        }
+      ],
+      "return_type": null,
+      "container": "TodoService",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_controller.swift:TodoController.init:8",
+      "type": "function",
+      "qualified_name": "TodoController.init",
+      "name": "init",
+      "file": "todo_controller.swift",
+      "line": 8,
+      "line_end": 10,
+      "signature": "init(service: TodoService)",
+      "params": [
+        {
+          "label": "service",
+          "name": "service",
+          "type": "TodoService"
+        }
+      ],
+      "return_type": "TodoController",
+      "container": "TodoController",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_controller.swift:TodoController.seedDefaults:12",
+      "type": "function",
+      "qualified_name": "TodoController.seedDefaults",
+      "name": "seedDefaults",
+      "file": "todo_controller.swift",
+      "line": 12,
+      "line_end": 19,
+      "signature": "func seedDefaults()",
+      "params": [],
+      "return_type": null,
+      "container": "TodoController",
+      "in_degree": 1,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_controller.swift:TodoController.promoteAll:21",
+      "type": "function",
+      "qualified_name": "TodoController.promoteAll",
+      "name": "promoteAll",
+      "file": "todo_controller.swift",
+      "line": 21,
+      "line_end": 24,
+      "signature": "func promoteAll()",
+      "params": [],
+      "return_type": null,
+      "container": "TodoController",
+      "in_degree": 1,
+      "out_degree": 3,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_controller.swift:TodoController.completeHighPriority:26",
+      "type": "function",
+      "qualified_name": "TodoController.completeHighPriority",
+      "name": "completeHighPriority",
+      "file": "todo_controller.swift",
+      "line": 26,
+      "line_end": 29,
+      "signature": "func completeHighPriority() -> [Todo]",
+      "params": [],
+      "return_type": "[Todo]",
+      "container": "TodoController",
+      "in_degree": 1,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_controller.swift:TodoController.report:31",
+      "type": "function",
+      "qualified_name": "TodoController.report",
+      "name": "report",
+      "file": "todo_controller.swift",
+      "line": 31,
+      "line_end": 35,
+      "signature": "func report() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "TodoController",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:main.swift:bootstrap:5",
+      "type": "function",
+      "qualified_name": "bootstrap",
+      "name": "bootstrap",
+      "file": "main.swift",
+      "line": 5,
+      "line_end": 10,
+      "signature": "func bootstrap() -> TodoController",
+      "params": [],
+      "return_type": "TodoController",
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:main.swift:run:12",
+      "type": "function",
+      "qualified_name": "run",
+      "name": "run",
+      "file": "main.swift",
+      "line": 12,
+      "line_end": 18,
+      "signature": "func run()",
+      "params": [],
+      "return_type": null,
+      "container": null,
+      "in_degree": 0,
+      "out_degree": 5,
+      "category": "source"
+    },
+    {
+      "id": "func:main.swift:logResults:20",
+      "type": "function",
+      "qualified_name": "logResults",
+      "name": "logResults",
+      "file": "main.swift",
+      "line": 20,
+      "line_end": 24,
+      "signature": "func logResults(_ todos: [Todo])",
+      "params": [
+        {
+          "label": null,
+          "name": "todos",
+          "type": "[Todo]"
+        }
+      ],
+      "return_type": null,
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_model.swift:Todo.init:15",
+      "type": "function",
+      "qualified_name": "Todo.init",
+      "name": "init",
+      "file": "todo_model.swift",
+      "line": 15,
+      "line_end": 20,
+      "signature": "init(title: String, priority: Priority = .medium)",
+      "params": [
+        {
+          "label": "title",
+          "name": "title",
+          "type": "String"
+        },
+        {
+          "label": "priority",
+          "name": "priority",
+          "type": "Priority"
+        }
+      ],
+      "return_type": "Todo",
+      "container": "Todo",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:todo_model.swift:Todo.withPriority:22",
+      "type": "function",
+      "qualified_name": "Todo.withPriority",
+      "name": "withPriority",
+      "file": "todo_model.swift",
+      "line": 22,
+      "line_end": 26,
+      "signature": "func withPriority(_ priority: Priority) -> Todo",
+      "params": [
+        {
+          "label": null,
+          "name": "priority",
+          "type": "Priority"
+        }
+      ],
+      "return_type": "Todo",
+      "container": "Todo",
+      "in_degree": 2,
+      "out_degree": 0,
+      "category": "source"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:todo_service.swift:TodoService.highPriority:23",
+      "target": "func:todo_service.swift:TodoService.all:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_service.swift:TodoService.bulkAdd:27",
+      "target": "func:todo_service.swift:TodoService.add:8",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.seedDefaults:12",
+      "target": "func:todo_model.swift:Todo.init:15",
+      "type": "calls",
+      "weight": 3
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.seedDefaults:12",
+      "target": "func:todo_service.swift:TodoService.bulkAdd:27",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.promoteAll:21",
+      "target": "func:todo_service.swift:TodoService.all:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.promoteAll:21",
+      "target": "func:todo_model.swift:Todo.withPriority:22",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.promoteAll:21",
+      "target": "func:todo_service.swift:TodoService.bulkAdd:27",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.completeHighPriority:26",
+      "target": "func:todo_service.swift:TodoService.highPriority:23",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.completeHighPriority:26",
+      "target": "func:todo_service.swift:TodoService.complete:16",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:todo_controller.swift:TodoController.report:31",
+      "target": "func:todo_service.swift:TodoService.all:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:bootstrap:5",
+      "target": "func:todo_controller.swift:TodoController.init:8",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:bootstrap:5",
+      "target": "func:todo_controller.swift:TodoController.seedDefaults:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:run:12",
+      "target": "func:main.swift:bootstrap:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:run:12",
+      "target": "func:todo_controller.swift:TodoController.promoteAll:21",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:run:12",
+      "target": "func:todo_controller.swift:TodoController.completeHighPriority:26",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:run:12",
+      "target": "func:todo_controller.swift:TodoController.report:31",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:run:12",
+      "target": "func:main.swift:logResults:20",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:main.swift:logResults:20",
+      "target": "func:todo_model.swift:Todo.withPriority:22",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}

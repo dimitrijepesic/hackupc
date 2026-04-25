@@ -1,0 +1,801 @@
+{
+  "graph_id": "file-processor",
+  "nodes": [
+    {
+      "id": "func:Sources/Node.swift:Node.init:5",
+      "type": "function",
+      "qualified_name": "Node.init",
+      "name": "init",
+      "file": "Sources/Node.swift",
+      "line": 5,
+      "line_end": 7,
+      "signature": "init(name: String)",
+      "params": [
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "return_type": "Node",
+      "container": "Node",
+      "in_degree": 2,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Node.swift:Node.process:9",
+      "type": "function",
+      "qualified_name": "Node.process",
+      "name": "process",
+      "file": "Sources/Node.swift",
+      "line": 9,
+      "line_end": 11,
+      "signature": "func process() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "Node",
+      "in_degree": 3,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Node.swift:Node.accept:13",
+      "type": "function",
+      "qualified_name": "Node.accept",
+      "name": "accept",
+      "file": "Sources/Node.swift",
+      "line": 13,
+      "line_end": 15,
+      "signature": "func accept(_ visitor: Visitor)",
+      "params": [
+        {
+          "label": null,
+          "name": "visitor",
+          "type": "Visitor"
+        }
+      ],
+      "return_type": null,
+      "container": "Node",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/FileNode.swift:FileNode.init:5",
+      "type": "function",
+      "qualified_name": "FileNode.init",
+      "name": "init",
+      "file": "Sources/FileNode.swift",
+      "line": 5,
+      "line_end": 8,
+      "signature": "init(name: String, size: Int)",
+      "params": [
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "label": "size",
+          "name": "size",
+          "type": "Int"
+        }
+      ],
+      "return_type": "FileNode",
+      "container": "FileNode",
+      "in_degree": 4,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/FileNode.swift:FileNode.process:10",
+      "type": "function",
+      "qualified_name": "FileNode.process",
+      "name": "process",
+      "file": "Sources/FileNode.swift",
+      "line": 10,
+      "line_end": 12,
+      "signature": "override func process() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "FileNode",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/FileNode.swift:FileNode.formatSize:14",
+      "type": "function",
+      "qualified_name": "FileNode.formatSize",
+      "name": "formatSize",
+      "file": "Sources/FileNode.swift",
+      "line": 14,
+      "line_end": 16,
+      "signature": "private func formatSize() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "FileNode",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/DirectoryNode.swift:DirectoryNode.init:5",
+      "type": "function",
+      "qualified_name": "DirectoryNode.init",
+      "name": "init",
+      "file": "Sources/DirectoryNode.swift",
+      "line": 5,
+      "line_end": 8,
+      "signature": "init(name: String, children: [Node])",
+      "params": [
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        },
+        {
+          "label": "children",
+          "name": "children",
+          "type": "[Node]"
+        }
+      ],
+      "return_type": "DirectoryNode",
+      "container": "DirectoryNode",
+      "in_degree": 3,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/DirectoryNode.swift:DirectoryNode.process:10",
+      "type": "function",
+      "qualified_name": "DirectoryNode.process",
+      "name": "process",
+      "file": "Sources/DirectoryNode.swift",
+      "line": 10,
+      "line_end": 15,
+      "signature": "override func process() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "DirectoryNode",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "type": "function",
+      "qualified_name": "DirectoryNode.traverse",
+      "name": "traverse",
+      "file": "Sources/DirectoryNode.swift",
+      "line": 18,
+      "line_end": 30,
+      "signature": "func traverse() -> [String]",
+      "params": [],
+      "return_type": "[String]",
+      "container": "DirectoryNode",
+      "in_degree": 3,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/DirectoryNode.swift:DirectoryNode.totalSize:32",
+      "type": "function",
+      "qualified_name": "DirectoryNode.totalSize",
+      "name": "totalSize",
+      "file": "Sources/DirectoryNode.swift",
+      "line": 32,
+      "line_end": 38,
+      "signature": "func totalSize() -> Int",
+      "params": [],
+      "return_type": "Int",
+      "container": "DirectoryNode",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Validator.swift:ValidationError.init:4",
+      "type": "function",
+      "qualified_name": "ValidationError.init",
+      "name": "init",
+      "file": "Sources/Validator.swift",
+      "line": 4,
+      "line_end": 4,
+      "signature": "init(message: String)",
+      "params": [
+        {
+          "label": "message",
+          "name": "message",
+          "type": "String"
+        }
+      ],
+      "return_type": "ValidationError",
+      "container": "ValidationError",
+      "in_degree": 3,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Validator.swift:Validator.validate:10",
+      "type": "function",
+      "qualified_name": "Validator.validate",
+      "name": "validate",
+      "file": "Sources/Validator.swift",
+      "line": 10,
+      "line_end": 18,
+      "signature": "func validate(_ node: Node) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        }
+      ],
+      "return_type": null,
+      "container": "Validator",
+      "in_degree": 3,
+      "out_degree": 4,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Validator.swift:Validator.validateName:20",
+      "type": "function",
+      "qualified_name": "Validator.validateName",
+      "name": "validateName",
+      "file": "Sources/Validator.swift",
+      "line": 20,
+      "line_end": 26,
+      "signature": "private func validateName(_ name: String) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "return_type": null,
+      "container": "Validator",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Validator.swift:Validator.validateDepth:28",
+      "type": "function",
+      "qualified_name": "Validator.validateDepth",
+      "name": "validateDepth",
+      "file": "Sources/Validator.swift",
+      "line": 28,
+      "line_end": 34,
+      "signature": "private func validateDepth(_ node: Node, current: Int) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        },
+        {
+          "label": "current",
+          "name": "current",
+          "type": "Int"
+        }
+      ],
+      "return_type": null,
+      "container": "Validator",
+      "in_degree": 2,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Processor.swift:BaseProcessor.run:5",
+      "type": "function",
+      "qualified_name": "BaseProcessor.run",
+      "name": "run",
+      "file": "Sources/Processor.swift",
+      "line": 5,
+      "line_end": 10,
+      "signature": "func run(_ node: Node) throws -> String",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        }
+      ],
+      "return_type": "String",
+      "container": "BaseProcessor",
+      "in_degree": 2,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Processor.swift:BaseProcessor.log:12",
+      "type": "function",
+      "qualified_name": "BaseProcessor.log",
+      "name": "log",
+      "file": "Sources/Processor.swift",
+      "line": 12,
+      "line_end": 14,
+      "signature": "func log(_ message: String)",
+      "params": [
+        {
+          "label": null,
+          "name": "message",
+          "type": "String"
+        }
+      ],
+      "return_type": null,
+      "container": "BaseProcessor",
+      "in_degree": 2,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Processor.swift:LoggingProcessor.run:20",
+      "type": "function",
+      "qualified_name": "LoggingProcessor.run",
+      "name": "run",
+      "file": "Sources/Processor.swift",
+      "line": 20,
+      "line_end": 28,
+      "signature": "override func run(_ node: Node) throws -> String",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        }
+      ],
+      "return_type": "String",
+      "container": "LoggingProcessor",
+      "in_degree": 0,
+      "out_degree": 3,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Processor.swift:LoggingProcessor.formatOutput:30",
+      "type": "function",
+      "qualified_name": "LoggingProcessor.formatOutput",
+      "name": "formatOutput",
+      "file": "Sources/Processor.swift",
+      "line": 30,
+      "line_end": 32,
+      "signature": "private func formatOutput(_ result: String) -> String",
+      "params": [
+        {
+          "label": null,
+          "name": "result",
+          "type": "String"
+        }
+      ],
+      "return_type": "String",
+      "container": "LoggingProcessor",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Visitor.swift:Visitor.visit:5",
+      "type": "function",
+      "qualified_name": "Visitor.visit",
+      "name": "visit",
+      "file": "Sources/Visitor.swift",
+      "line": 5,
+      "line_end": 7,
+      "signature": "func visit(_ node: Node)",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        }
+      ],
+      "return_type": null,
+      "container": "Visitor",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Visitor.swift:CountingVisitor.visit:13",
+      "type": "function",
+      "qualified_name": "CountingVisitor.visit",
+      "name": "visit",
+      "file": "Sources/Visitor.swift",
+      "line": 13,
+      "line_end": 17,
+      "signature": "override func visit(_ node: Node)",
+      "params": [
+        {
+          "label": null,
+          "name": "node",
+          "type": "Node"
+        }
+      ],
+      "return_type": null,
+      "container": "CountingVisitor",
+      "in_degree": 0,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Engine.swift:Engine.init:5",
+      "type": "function",
+      "qualified_name": "Engine.init",
+      "name": "init",
+      "file": "Sources/Engine.swift",
+      "line": 5,
+      "line_end": 8,
+      "signature": "init(processor: BaseProcessor, validator: Validator)",
+      "params": [
+        {
+          "label": "processor",
+          "name": "processor",
+          "type": "BaseProcessor"
+        },
+        {
+          "label": "validator",
+          "name": "validator",
+          "type": "Validator"
+        }
+      ],
+      "return_type": "Engine",
+      "container": "Engine",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Engine.swift:Engine.execute:10",
+      "type": "function",
+      "qualified_name": "Engine.execute",
+      "name": "execute",
+      "file": "Sources/Engine.swift",
+      "line": 10,
+      "line_end": 20,
+      "signature": "func execute(root: Node) throws -> String",
+      "params": [
+        {
+          "label": "root",
+          "name": "root",
+          "type": "Node"
+        }
+      ],
+      "return_type": "String",
+      "container": "Engine",
+      "in_degree": 2,
+      "out_degree": 3,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Engine.swift:Engine.batchExecute:22",
+      "type": "function",
+      "qualified_name": "Engine.batchExecute",
+      "name": "batchExecute",
+      "file": "Sources/Engine.swift",
+      "line": 22,
+      "line_end": 30,
+      "signature": "func batchExecute(roots: [Node]) throws -> [String]",
+      "params": [
+        {
+          "label": "roots",
+          "name": "roots",
+          "type": "[Node]"
+        }
+      ],
+      "return_type": "[String]",
+      "container": "Engine",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Tests/EngineTests.swift:EngineTests.testTraversal:8",
+      "type": "function",
+      "qualified_name": "EngineTests.testTraversal",
+      "name": "testTraversal",
+      "file": "Tests/EngineTests.swift",
+      "line": 8,
+      "line_end": 20,
+      "signature": "func testTraversal()",
+      "params": [],
+      "return_type": null,
+      "container": "EngineTests",
+      "in_degree": 0,
+      "out_degree": 4,
+      "category": "test"
+    },
+    {
+      "id": "func:Tests/EngineTests.swift:EngineTests.testValidationThrows:22",
+      "type": "function",
+      "qualified_name": "EngineTests.testValidationThrows",
+      "name": "testValidationThrows",
+      "file": "Tests/EngineTests.swift",
+      "line": 22,
+      "line_end": 32,
+      "signature": "func testValidationThrows() throws",
+      "params": [],
+      "return_type": null,
+      "container": "EngineTests",
+      "in_degree": 0,
+      "out_degree": 2,
+      "category": "test"
+    },
+    {
+      "id": "func:Tests/EngineTests.swift:EngineTests.testRecursiveTraversal:34",
+      "type": "function",
+      "qualified_name": "EngineTests.testRecursiveTraversal",
+      "name": "testRecursiveTraversal",
+      "file": "Tests/EngineTests.swift",
+      "line": 34,
+      "line_end": 50,
+      "signature": "func testRecursiveTraversal()",
+      "params": [],
+      "return_type": null,
+      "container": "EngineTests",
+      "in_degree": 0,
+      "out_degree": 4,
+      "category": "test"
+    },
+    {
+      "id": "func:Tests/EngineTests.swift:EngineTests.testPolymorphicProcess:52",
+      "type": "function",
+      "qualified_name": "EngineTests.testPolymorphicProcess",
+      "name": "testPolymorphicProcess",
+      "file": "Tests/EngineTests.swift",
+      "line": 52,
+      "line_end": 64,
+      "signature": "func testPolymorphicProcess()",
+      "params": [],
+      "return_type": null,
+      "container": "EngineTests",
+      "in_degree": 0,
+      "out_degree": 3,
+      "category": "test"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:Sources/Node.swift:Node.accept:13",
+      "target": "func:Sources/Visitor.swift:Visitor.visit:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/FileNode.swift:FileNode.init:5",
+      "target": "func:Sources/Node.swift:Node.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/FileNode.swift:FileNode.process:10",
+      "target": "func:Sources/FileNode.swift:FileNode.formatSize:14",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/DirectoryNode.swift:DirectoryNode.init:5",
+      "target": "func:Sources/Node.swift:Node.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/DirectoryNode.swift:DirectoryNode.process:10",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.process:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Sources/DirectoryNode.swift:DirectoryNode.totalSize:32",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.totalSize:32",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validate:10",
+      "target": "func:Sources/Validator.swift:Validator.validateName:20",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validate:10",
+      "target": "func:Sources/Validator.swift:Validator.validateDepth:28",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validate:10",
+      "target": "func:Sources/Validator.swift:Validator.validate:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validate:10",
+      "target": "func:Sources/Validator.swift:ValidationError.init:4",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validateName:20",
+      "target": "func:Sources/Validator.swift:ValidationError.init:4",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validateDepth:28",
+      "target": "func:Sources/Validator.swift:Validator.validateDepth:28",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Validator.swift:Validator.validateDepth:28",
+      "target": "func:Sources/Validator.swift:ValidationError.init:4",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Processor.swift:BaseProcessor.run:5",
+      "target": "func:Sources/Node.swift:Node.process:9",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Processor.swift:BaseProcessor.run:5",
+      "target": "func:Sources/Processor.swift:BaseProcessor.log:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Processor.swift:LoggingProcessor.run:20",
+      "target": "func:Sources/Processor.swift:BaseProcessor.log:12",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Sources/Processor.swift:LoggingProcessor.run:20",
+      "target": "func:Sources/Processor.swift:BaseProcessor.run:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Processor.swift:LoggingProcessor.run:20",
+      "target": "func:Sources/Processor.swift:LoggingProcessor.formatOutput:30",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Visitor.swift:Visitor.visit:5",
+      "target": "func:Sources/Node.swift:Node.accept:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Visitor.swift:CountingVisitor.visit:13",
+      "target": "func:Sources/Visitor.swift:Visitor.visit:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Visitor.swift:CountingVisitor.visit:13",
+      "target": "func:Sources/Node.swift:Node.process:9",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Engine.swift:Engine.execute:10",
+      "target": "func:Sources/Validator.swift:Validator.validate:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Engine.swift:Engine.execute:10",
+      "target": "func:Sources/Processor.swift:BaseProcessor.run:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Engine.swift:Engine.execute:10",
+      "target": "func:Sources/Node.swift:Node.accept:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Engine.swift:Engine.batchExecute:22",
+      "target": "func:Sources/Engine.swift:Engine.execute:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testTraversal:8",
+      "target": "func:Sources/FileNode.swift:FileNode.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testTraversal:8",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testTraversal:8",
+      "target": "func:Sources/Engine.swift:Engine.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testTraversal:8",
+      "target": "func:Sources/Engine.swift:Engine.execute:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testValidationThrows:22",
+      "target": "func:Sources/FileNode.swift:FileNode.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testValidationThrows:22",
+      "target": "func:Sources/Validator.swift:Validator.validate:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testRecursiveTraversal:34",
+      "target": "func:Sources/FileNode.swift:FileNode.init:5",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testRecursiveTraversal:34",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.init:5",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testRecursiveTraversal:34",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.traverse:18",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testRecursiveTraversal:34",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.totalSize:32",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testPolymorphicProcess:52",
+      "target": "func:Sources/FileNode.swift:FileNode.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testPolymorphicProcess:52",
+      "target": "func:Sources/DirectoryNode.swift:DirectoryNode.init:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/EngineTests.swift:EngineTests.testPolymorphicProcess:52",
+      "target": "func:Sources/Node.swift:Node.process:9",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}

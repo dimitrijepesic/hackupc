@@ -1,0 +1,161 @@
+{
+  "graph_id": "test1",
+  "nodes": [
+    {
+      "id": "func:math_utils.swift:clamp:6",
+      "type": "function",
+      "qualified_name": "clamp",
+      "name": "clamp",
+      "file": "math_utils.swift",
+      "line": 6,
+      "line_end": 10,
+      "signature": "func clamp(_ value: Int, min: Int, max: Int) -> Int",
+      "params": [
+        {
+          "label": null,
+          "name": "value",
+          "type": "Int"
+        },
+        {
+          "label": "min",
+          "name": "min",
+          "type": "Int"
+        },
+        {
+          "label": "max",
+          "name": "max",
+          "type": "Int"
+        }
+      ],
+      "return_type": "Int",
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:math_utils.swift:normalize:12",
+      "type": "function",
+      "qualified_name": "normalize",
+      "name": "normalize",
+      "file": "math_utils.swift",
+      "line": 12,
+      "line_end": 15,
+      "signature": "func normalize(values: [Double]) -> [Double]",
+      "params": [
+        {
+          "label": "values",
+          "name": "values",
+          "type": "[Double]"
+        }
+      ],
+      "return_type": "[Double]",
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:math_utils.swift:summarize:17",
+      "type": "function",
+      "qualified_name": "summarize",
+      "name": "summarize",
+      "file": "math_utils.swift",
+      "line": 17,
+      "line_end": 21,
+      "signature": "func summarize(label: String, values: [Double]) -> String",
+      "params": [
+        {
+          "label": "label",
+          "name": "label",
+          "type": "String"
+        },
+        {
+          "label": "values",
+          "name": "values",
+          "type": "[Double]"
+        }
+      ],
+      "return_type": "String",
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:math_utils.swift:loadAndSummarize:23",
+      "type": "function",
+      "qualified_name": "loadAndSummarize",
+      "name": "loadAndSummarize",
+      "file": "math_utils.swift",
+      "line": 23,
+      "line_end": 30,
+      "signature": "func loadAndSummarize(path: String, label: String) throws -> String",
+      "params": [
+        {
+          "label": "path",
+          "name": "path",
+          "type": "String"
+        },
+        {
+          "label": "label",
+          "name": "label",
+          "type": "String"
+        }
+      ],
+      "return_type": "String",
+      "container": null,
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:math_utils.swift:batchSummarize:32",
+      "type": "function",
+      "qualified_name": "batchSummarize",
+      "name": "batchSummarize",
+      "file": "math_utils.swift",
+      "line": 32,
+      "line_end": 36,
+      "signature": "func batchSummarize(_ entries: [(path: String, label: String)]) -> [String]",
+      "params": [
+        {
+          "label": null,
+          "name": "entries",
+          "type": "[(path: String, label: String)]"
+        }
+      ],
+      "return_type": "[String]",
+      "container": null,
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:math_utils.swift:summarize:17",
+      "target": "func:math_utils.swift:normalize:12",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:math_utils.swift:summarize:17",
+      "target": "func:math_utils.swift:clamp:6",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:math_utils.swift:loadAndSummarize:23",
+      "target": "func:math_utils.swift:summarize:17",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:math_utils.swift:batchSummarize:32",
+      "target": "func:math_utils.swift:loadAndSummarize:23",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}
