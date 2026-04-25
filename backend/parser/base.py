@@ -26,7 +26,7 @@ class FunctionInfo:
     container: str | None = None
     params: list[Param] = field(default_factory=list)
     return_type: str | None = None
-    decorators: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 @dataclass
 class TypeInfo:
