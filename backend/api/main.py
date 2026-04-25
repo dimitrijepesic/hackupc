@@ -27,6 +27,7 @@ from ir_compiler.ir_compiler import (
     dead_code,
 )
 from parser import parse_repo
+from parser.registry import supported_extensions
 
 GRAPH_PATH = Path(os.environ.get("GRAPH_PATH", str(ROOT / "cached" / "katana.graph.json")))
 
@@ -229,8 +230,12 @@ async def upload_codebase(file: UploadFile = File(...)):
     global GRAPH
 
     name = file.filename or "upload"
-    if not (name.endswith(".zip") or name.endswith(".tar") or name.endswith(".tar.gz") or name.endswith(".tgz")):
-        raise HTTPException(400, "Unsupported file type. Please upload a .zip, .tar, or .tar.gz file.")
+    ext = Path(name).suffix.lower()
+    is_archive = name.endswith(".zip") or name.endswith(".tar") or name.endswith(".tar.gz") or name.endswith(".tgz")
+    is_source = ext in supported_extensions()
+    if not (is_archive or is_source):
+        exts = ", ".join(supported_extensions())
+        raise HTTPException(400, f"Unsupported file type. Please upload an archive (.zip, .tar, .tar.gz) or a source file ({exts}).")
 
     # Derive graph_id from filename
     base = name.split(".")[0]
@@ -257,17 +262,23 @@ async def upload_codebase(file: UploadFile = File(...)):
         with open(archive_path, "wb") as f:
             f.write(content)
 
-        # Extract
-        if name.endswith(".zip"):
-            with zipfile.ZipFile(archive_path, "r") as zf:
-                zf.extractall(extract_dir)
+        if is_source:
+            # Single source file — place it directly in extract_dir
+            src_path = extract_dir / name
+            src_path.write_bytes(content)
+            repo_dir = extract_dir
         else:
-            with tarfile.open(archive_path, "r:*") as tf:
-                tf.extractall(extract_dir)
+            # Extract archive
+            if name.endswith(".zip"):
+                with zipfile.ZipFile(archive_path, "r") as zf:
+                    zf.extractall(extract_dir)
+            else:
+                with tarfile.open(archive_path, "r:*") as tf:
+                    tf.extractall(extract_dir)
 
-        # If the archive contains a single top-level directory, use that
-        entries = list(extract_dir.iterdir())
-        repo_dir = entries[0] if len(entries) == 1 and entries[0].is_dir() else extract_dir
+            # If the archive contains a single top-level directory, use that
+            entries = list(extract_dir.iterdir())
+            repo_dir = entries[0] if len(entries) == 1 and entries[0].is_dir() else extract_dir
 
         # Parse and build
         print(f"[upload] parsing {name} ...")

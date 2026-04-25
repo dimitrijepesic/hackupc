@@ -41,8 +41,10 @@ export default function Home() {
   const handleUpload = async (file) => {
     if (!file) return;
     const name = file.name.toLowerCase();
-    if (!(name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tar.gz') || name.endsWith('.tgz'))) {
-      setError('Unsupported file type. Please upload a .zip, .tar, or .tar.gz file.');
+    const isArchive = name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tar.gz') || name.endsWith('.tgz');
+    const isSource = name.endsWith('.swift') || name.endsWith('.py') || name.endsWith('.js') || name.endsWith('.ts') || name.endsWith('.java') || name.endsWith('.go');
+    if (!(isArchive || isSource)) {
+      setError('Unsupported file type. Please upload an archive (.zip, .tar, .tar.gz) or a source file (.swift, .py, .js, .ts, .java, .go).');
       return;
     }
     setLoading(true);
@@ -165,7 +167,7 @@ export default function Home() {
               <input
                 id="file-upload"
                 type="file"
-                accept=".zip,.tar,.tar.gz,.tgz"
+                accept=".zip,.tar,.tar.gz,.tgz,.swift,.py,.js,.ts,.java,.go"
                 className="hidden"
                 onChange={(e) => handleUpload(e.target.files[0])}
                 disabled={loading}
@@ -177,7 +179,7 @@ export default function Home() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-900 mb-1">Upload Files</p>
-                <p className="text-xs text-gray-500">Drag &amp; drop or click to upload (.zip, .tar, .tar.gz)</p>
+                <p className="text-xs text-gray-500">Drag &amp; drop or click to upload (.zip, .tar, .tar.gz, .swift, ...)</p>
               </div>
             </div>
           </div>
