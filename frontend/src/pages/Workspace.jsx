@@ -351,6 +351,18 @@ export default function Workspace() {
             onClose={toggleCodePanel}
           />
 
+          {/* Reopen button — top-right, visible when a node is selected but panel is closed */}
+          {selectedNode && !ui.codePanelOpen && (
+            <button
+              onClick={toggleCodePanel}
+              className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
+              title="Show code panel"
+            >
+              <span className="material-symbols-outlined text-[16px]">code</span>
+              <span className="font-label-sm">Code</span>
+            </button>
+          )}
+
           {/* File overlay — full-panel viewer for whole-file mode */}
           {selectedFile && (
             <FileOverlay
