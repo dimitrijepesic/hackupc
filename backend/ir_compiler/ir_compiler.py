@@ -1,5 +1,3 @@
-# graph_builder.py
-
 import json
 import math
 from collections import deque
@@ -42,20 +40,14 @@ def build_call_graph(ir: dict) -> dict:
             name_to_ids[name].append(node_id)
 
             for call in fn["calls"]:
-                raw_edges.append((node_id, call["target"]))
+                raw_edges.append((node_id, call))
 
     edge_counts = {}
-    for source_id, target in raw_edges:
-        if target.startswith("?"):
+    for source_id, call in raw_edges:
+        resolved_id = _resolve_call(call, qualified_to_id, name_to_ids)
+        if resolved_id is None:
             continue
-
-        resolved_id = qualified_to_id.get(target)
-        if resolved_id is None:
-            candidates = name_to_ids.get(target, [])
-            if len(candidates) == 1:
-                resolved_id = candidates[0]
-
-        if resolved_id is None:
+        if resolved_id == source_id:
             continue
 
         key = (source_id, resolved_id)
@@ -76,6 +68,88 @@ def build_call_graph(ir: dict) -> dict:
         "nodes": nodes,
         "edges": edges,
     }
+
+
+# ─── Call Resolution ──────────────────────────────────────────────────────────
+
+def _resolve_call(call: dict, qualified_to_id: dict, name_to_ids: dict) -> str | None:
+    """
+    Resolution strategy for new IR format with receiver/method/kind fields.
+
+    Priority order:
+    1. If kind == "initializer": try to match by method name as a type initializer.
+       For "Todo" the qualified name would be "Todo.init".
+    2. Try exact qualified_name match using "receiver.method" if receiver is a
+       known type (uppercase first letter, not self/super/context/store/etc.)
+    3. Try exact qualified_name match on target field directly (backwards compat)
+    4. Try unqualified name match on method field (if unique)
+    5. Drop
+    """
+    target = call.get("target", "")
+    method = call.get("method", "")
+    receiver = call.get("receiver")
+    kind = call.get("kind", "call")
+
+    # Always skip unresolved markers
+    if target.startswith("?"):
+        return None
+
+    # Skip calls with no useful method name
+    if not method:
+        return None
+
+    # 1. Initializers: try "Method.init" qualified name
+    if kind == "initializer":
+        init_qname = f"{method}.init"
+        if init_qname in qualified_to_id:
+            return qualified_to_id[init_qname]
+        # Also try just the method name in case it's a free function acting as init
+        if method in name_to_ids:
+            candidates = name_to_ids[method]
+            if len(candidates) == 1:
+                return candidates[0]
+        return None
+
+    # 2. Receiver is a known type (uppercase = type, not instance variable)
+    if receiver and _is_type_receiver(receiver):
+        # Try "Receiver.method" as qualified name
+        qname = f"{receiver}.{method}"
+        if qname in qualified_to_id:
+            return qualified_to_id[qname]
+
+    # 3. Try the full target string as a qualified name directly
+    #    Handles both old format ("Store.dispatch") and new ("store.dispatch")
+    if target in qualified_to_id:
+        return qualified_to_id[target]
+
+    # 4. Try method field as unqualified name (unique match only)
+    candidates = name_to_ids.get(method, [])
+    if len(candidates) == 1:
+        return candidates[0]
+
+    return None
+
+
+def _is_type_receiver(receiver: str) -> bool:
+    """
+    Returns True if the receiver looks like a type name (class/struct/enum)
+    rather than an instance variable or keyword.
+
+    Heuristic: starts with uppercase AND is not a known instance keyword.
+    """
+    instance_keywords = {
+        "self", "super", "store", "context", "state", "queue", "promise",
+        "expectation", "notificationCenter", "logic", "item", "middleware",
+        "stateUpdater", "sideEffect", "dispatchable", "invocationOrder",
+        "invocationResults", "typedContext", "m",
+    }
+    if not receiver:
+        return False
+    # Dotted receivers like "DispatchQueue.global" — take the first segment
+    first_segment = receiver.split(".")[0]
+    if first_segment in instance_keywords:
+        return False
+    return first_segment[0].isupper()
 
 
 # ─── Get Node With Neighbors ──────────────────────────────────────────────────
@@ -153,7 +227,10 @@ def predict_impact(graph: dict, node_id: str) -> list:
 
         distance = info["distance"]
         path = info["path"]
-        w = edge_weight.get((path[-2], path[-1]), edge_weight.get((path[-1], path[-2]), 1))
+        w = edge_weight.get(
+            (path[-2], path[-1]),
+            edge_weight.get((path[-1], path[-2]), 1)
+        )
         in_deg = node["in_degree"]
         risk_score = (1.0 / (1 + distance)) * w * (1 + math.log(1 + in_deg))
 
@@ -209,8 +286,8 @@ def save_graph(graph: dict, path: str = "backend/cached/katana.graph.json") -> N
 if __name__ == "__main__":
     import os
 
-    ir_path = os.path.join(os.path.dirname(__file__), "..", "..", "tests", "ir_compiler_tests", "testcase3_bank.json")
-    out_path = os.path.join(os.path.dirname(__file__), "..", "..", "tests", "ir_compiler_tests", "testcase3_output.json")
+    ir_path = os.path.join(os.path.dirname(__file__), "..", "tests", "ir_compiler_tests", "testcase4_katana_renderer.json")
+    out_path = os.path.join(os.path.dirname(__file__), "..", "tests", "ir_compiler_tests", "testcase4_output.json")
     with open(ir_path) as f:
         ir = json.load(f)
 
