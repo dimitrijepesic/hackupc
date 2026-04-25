@@ -179,6 +179,7 @@ class PythonParser(BaseParser):
             signature=self._extract_signature(node, source),
             params=self._extract_params(node, source, is_staticmethod, is_classmethod, current_class),
             return_type=self._extract_return_type(node, source),
+            decorators=decorators,
         )
         fn.tags = [f"@{d}" for d in decorators]
         result.functions.append(fn)
