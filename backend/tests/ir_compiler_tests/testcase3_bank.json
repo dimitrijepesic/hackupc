@@ -1,0 +1,163 @@
+{
+  "version": "1.0",
+  "language": "swift",
+  "repo": "simple/bankapp",
+  "files": [
+    {
+      "path": "Sources/BankApp/Account.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Account.transfer",
+          "name": "transfer",
+          "line_start": 1,
+          "line_end": 8,
+          "signature": "func transfer()",
+          "calls": [
+            {"target": "Account.validateBalance", "line": 2},
+            {"target": "Account.debit", "line": 4},
+            {"target": "Account.credit", "line": 5},
+            {"target": "Logger.logTransaction", "line": 6}
+          ]
+        },
+        {
+          "qualified_name": "Account.debit",
+          "name": "debit",
+          "line_start": 10,
+          "line_end": 15,
+          "signature": "func debit()",
+          "calls": [
+            {"target": "Account.validateBalance", "line": 11},
+            {"target": "Account.updateLedger", "line": 13}
+          ]
+        },
+        {
+          "qualified_name": "Account.credit",
+          "name": "credit",
+          "line_start": 17,
+          "line_end": 22,
+          "signature": "func credit()",
+          "calls": [
+            {"target": "Account.updateLedger", "line": 19}
+          ]
+        },
+        {
+          "qualified_name": "Account.validateBalance",
+          "name": "validateBalance",
+          "line_start": 24,
+          "line_end": 29,
+          "signature": "func validateBalance()",
+          "calls": [
+            {"target": "Account.fetchBalance", "line": 26}
+          ]
+        },
+        {
+          "qualified_name": "Account.fetchBalance",
+          "name": "fetchBalance",
+          "line_start": 31,
+          "line_end": 35,
+          "signature": "func fetchBalance()",
+          "calls": []
+        },
+        {
+          "qualified_name": "Account.updateLedger",
+          "name": "updateLedger",
+          "line_start": 37,
+          "line_end": 42,
+          "signature": "func updateLedger()",
+          "calls": [
+            {"target": "Account.fetchBalance", "line": 39}
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Sources/BankApp/Notification.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Notification.sendEmail",
+          "name": "sendEmail",
+          "line_start": 3,
+          "line_end": 8,
+          "signature": "func sendEmail()",
+          "calls": [
+            {"target": "Notification.formatMessage", "line": 5},
+            {"target": "?SMTPClient.send", "line": 6}
+          ]
+        },
+        {
+          "qualified_name": "Notification.sendSMS",
+          "name": "sendSMS",
+          "line_start": 10,
+          "line_end": 15,
+          "signature": "func sendSMS()",
+          "calls": [
+            {"target": "Notification.formatMessage", "line": 12},
+            {"target": "?TwilioClient.send", "line": 13}
+          ]
+        },
+        {
+          "qualified_name": "Notification.formatMessage",
+          "name": "formatMessage",
+          "line_start": 17,
+          "line_end": 21,
+          "signature": "func formatMessage()",
+          "calls": []
+        },
+        {
+          "qualified_name": "Notification.notifyUser",
+          "name": "notifyUser",
+          "line_start": 23,
+          "line_end": 29,
+          "signature": "func notifyUser()",
+          "calls": [
+            {"target": "Notification.sendEmail", "line": 25},
+            {"target": "Notification.sendSMS", "line": 26},
+            {"target": "Account.fetchBalance", "line": 27}
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Sources/BankApp/Helpers/Logger.swift",
+      "imports": [],
+      "functions": [
+        {
+          "qualified_name": "Logger.logTransaction",
+          "name": "logTransaction",
+          "line_start": 3,
+          "line_end": 7,
+          "signature": "func logTransaction()",
+          "calls": []
+        }
+      ]
+    },
+    {
+      "path": "Tests/BankAppTests/AccountTests.swift",
+      "imports": ["XCTest"],
+      "functions": [
+        {
+          "qualified_name": "AccountTests.testTransfer",
+          "name": "testTransfer",
+          "line_start": 5,
+          "line_end": 12,
+          "signature": "func testTransfer()",
+          "calls": [
+            {"target": "Account.transfer", "line": 8}
+          ]
+        },
+        {
+          "qualified_name": "AccountTests.testDebit",
+          "name": "testDebit",
+          "line_start": 14,
+          "line_end": 20,
+          "signature": "func testDebit()",
+          "calls": [
+            {"target": "Account.debit", "line": 17}
+          ]
+        }
+      ]
+    }
+  ]
+}

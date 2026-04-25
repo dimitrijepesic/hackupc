@@ -1,0 +1,97 @@
+{
+  "graph_id": "calculator",
+  "nodes": [
+    {
+      "id": "func:Sources/Calculator.swift:Calculator.calculate:1",
+      "type": "function",
+      "qualified_name": "Calculator.calculate",
+      "name": "calculate",
+      "file": "Sources/Calculator.swift",
+      "line": 1,
+      "signature": "func calculate()",
+      "in_degree": 0,
+      "out_degree": 2,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Calculator.swift:Calculator.add:8",
+      "type": "function",
+      "qualified_name": "Calculator.add",
+      "name": "add",
+      "file": "Sources/Calculator.swift",
+      "line": 8,
+      "signature": "func add()",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Calculator.swift:Calculator.multiply:13",
+      "type": "function",
+      "qualified_name": "Calculator.multiply",
+      "name": "multiply",
+      "file": "Sources/Calculator.swift",
+      "line": 13,
+      "signature": "func multiply()",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Calculator.swift:Calculator.validate:18",
+      "type": "function",
+      "qualified_name": "Calculator.validate",
+      "name": "validate",
+      "file": "Sources/Calculator.swift",
+      "line": 18,
+      "signature": "func validate()",
+      "in_degree": 2,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Tests/CalculatorTests.swift:CalculatorTests.testAdd:3",
+      "type": "function",
+      "qualified_name": "CalculatorTests.testAdd",
+      "name": "testAdd",
+      "file": "Tests/CalculatorTests.swift",
+      "line": 3,
+      "signature": "func testAdd()",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "test"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:Sources/Calculator.swift:Calculator.calculate:1",
+      "target": "func:Sources/Calculator.swift:Calculator.add:8",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Calculator.swift:Calculator.calculate:1",
+      "target": "func:Sources/Calculator.swift:Calculator.multiply:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Calculator.swift:Calculator.add:8",
+      "target": "func:Sources/Calculator.swift:Calculator.validate:18",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Calculator.swift:Calculator.multiply:13",
+      "target": "func:Sources/Calculator.swift:Calculator.validate:18",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/CalculatorTests.swift:CalculatorTests.testAdd:3",
+      "target": "func:Sources/Calculator.swift:Calculator.add:8",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}
