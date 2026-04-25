@@ -8,6 +8,23 @@ import { defaultFileTree, SOURCE_FILES } from '../data/mockData';
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 120;
 
+// --- Reachability classification ---
+// in_degree:0 + non-test => suspected unreachable code. Constructors (Swift
+// `init`, etc.) are excluded — call sites like `Foo(x)` are usually not linked
+// to the init node by the parser, so they'd produce false-positive DEAD flags.
+const isConstructor = (n) =>
+  n.name === 'init' || /\binit\b/.test(n.signature || '') || n.icon === 'add_circle';
+const isDeadNode = (n) =>
+  (n.inDegree ?? 0) === 0 && n.category !== 'test' && !isConstructor(n);
+const isEntryNode = (n) => (n.inDegree ?? 0) === 0;
+const isLeafNode = (n) => (n.outDegree ?? 0) === 0;
+
+const CANVAS_FILTERS = [
+  { id: 'dead', label: 'Dead', match: isDeadNode, dotClass: 'bg-rose-500' },
+  { id: 'entry', label: 'Entry', match: isEntryNode, dotClass: 'bg-indigo-500' },
+  { id: 'leaf', label: 'Leaf', match: isLeafNode, dotClass: 'bg-amber-500' },
+];
+
 // --- Edge path computation ---
 
 function getHandlePosition(node, handleType) {
@@ -114,6 +131,24 @@ export default function Workspace() {
     }
     return set;
   })();
+
+  // Canvas-level classification filter (Dead / Entry / Leaf). Independent of
+  // the side-panel function filter; controls dimming on the graph itself.
+  const [classFilter, setClassFilter] = useState(() => new Set());
+  const toggleClassFilter = useCallback((id) => {
+    setClassFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const matchesClassFilter = useCallback((node) => {
+    if (classFilter.size === 0) return true;
+    for (const f of CANVAS_FILTERS) {
+      if (classFilter.has(f.id) && f.match(node)) return true;
+    }
+    return false;
+  }, [classFilter]);
 
   // --- Zoom / Pan state ---
   const canvasRef = useRef(null);
@@ -282,15 +317,48 @@ export default function Workspace() {
         />
 
         <main className="flex-1 flex h-full relative">
-          {/* Auto Layout button */}
-          <button
-            onClick={() => autoLayout()}
-            className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
-            title="Auto layout nodes"
-          >
-            <span className="material-symbols-outlined text-[16px]">auto_fix_high</span>
-            <span className="font-label-sm">Auto Layout</span>
-          </button>
+          {/* Top-left toolbar: Auto Layout + classification filters */}
+          <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 flex items-center gap-2">
+            <button
+              onClick={() => autoLayout()}
+              className="glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
+              title="Auto layout nodes"
+            >
+              <span className="material-symbols-outlined text-[16px]">auto_fix_high</span>
+              <span className="font-label-sm">Auto Layout</span>
+            </button>
+            <div className="glass-panel rounded-lg px-1.5 py-1 flex items-center gap-1">
+              {CANVAS_FILTERS.map((f) => {
+                const on = classFilter.has(f.id);
+                const count = nodes.reduce((s, n) => s + (f.match(n) ? 1 : 0), 0);
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => toggleClassFilter(f.id)}
+                    title={`${f.label}: ${count} node${count === 1 ? '' : 's'}`}
+                    className={`text-[11px] px-2 py-0.5 rounded flex items-center gap-1.5 border transition-colors ${
+                      on
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white/70 text-gray-600 border-transparent hover:text-gray-900'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${f.dotClass}`} />
+                    <span className="font-label-sm">{f.label}</span>
+                    <span className={`text-[10px] ${on ? 'text-white/70' : 'text-gray-400'}`}>{count}</span>
+                  </button>
+                );
+              })}
+              {classFilter.size > 0 && (
+                <button
+                  onClick={() => setClassFilter(new Set())}
+                  className="text-[10px] px-1.5 py-0.5 rounded text-gray-400 hover:text-gray-900"
+                  title="Clear classification filter"
+                >
+                  clear
+                </button>
+              )}
+            </div>
+          </div>
 
           {/* Canvas */}
           <div
@@ -339,18 +407,22 @@ export default function Workspace() {
               </svg>
 
               {/* Nodes */}
-              {nodes.map((node) => (
-                <NodeCard
-                  key={node.id}
-                  node={node}
-                  isSelected={node.id === selectedNodeId}
-                  isDimmed={neighborIds ? !neighborIds.has(node.id) : false}
-                  edges={edges}
-                  onSelect={() => selectNode(node.id)}
-                  onMove={(pos) => moveNode(node.id, pos)}
-                  zoom={zoom}
-                />
-              ))}
+              {nodes.map((node) => {
+                const dimByNeighbor = neighborIds ? !neighborIds.has(node.id) : false;
+                const dimByFilter = !matchesClassFilter(node);
+                return (
+                  <NodeCard
+                    key={node.id}
+                    node={node}
+                    isSelected={node.id === selectedNodeId}
+                    isDimmed={dimByNeighbor || dimByFilter}
+                    edges={edges}
+                    onSelect={() => selectNode(node.id)}
+                    onMove={(pos) => moveNode(node.id, pos)}
+                    zoom={zoom}
+                  />
+                );
+              })}
             </div>
 
             {/* Minimap — stays fixed in viewport */}
@@ -840,6 +912,8 @@ function NodeCard({ node, isSelected, isDimmed = false, edges, onSelect, onMove,
     isSelected ? 'text-primary' : node.icon === 'warning' ? 'text-error' : 'text-gray-500';
 
   const isTest = node.category === 'test';
+  const isDead = isDeadNode(node);
+  const isLeaf = isLeafNode(node);
   const cardBorder = isTest ? { borderTopColor: '#16a34a' } : undefined;
   const fileLabel = node.filePath.split('/').pop();
 
@@ -854,7 +928,7 @@ function NodeCard({ node, isSelected, isDimmed = false, edges, onSelect, onMove,
       }}
     >
       <div
-        className={`node-card ${isSelected ? 'active' : ''} ${isDimmed ? 'dimmed' : ''} rounded px-3 py-3 cursor-move h-full overflow-hidden`}
+        className={`node-card ${isSelected ? 'active' : ''} ${isDimmed ? 'dimmed' : ''} ${isDead ? 'is-dead' : ''} ${isLeaf ? 'is-leaf' : ''} rounded px-3 py-3 cursor-move h-full overflow-hidden`}
         style={cardBorder}
         onMouseDown={handleMouseDown}
       >
@@ -884,6 +958,14 @@ function NodeCard({ node, isSelected, isDimmed = false, edges, onSelect, onMove,
           {isTest && (
             <span className="px-1.5 py-0.5 rounded bg-green-50 text-[9px] font-label-sm text-green-700 border border-green-200">
               TEST
+            </span>
+          )}
+          {isDead && (
+            <span
+              className="px-1.5 py-0.5 rounded bg-rose-50 text-[9px] font-label-sm text-rose-700 border border-rose-200"
+              title="No callers and not a test — likely unreachable"
+            >
+              DEAD
             </span>
           )}
           {node.isSelfRecursive && (
