@@ -83,6 +83,7 @@ export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 export const ENDPOINTS = {
   health: "/health",
   analyze: "/analyze",
+  upload: "/upload",
   graph: (graphId) => `/graph/${graphId}`,
   node: (nodeId) => `/node/${nodeId}`,
   predictImpact: "/predict-impact",

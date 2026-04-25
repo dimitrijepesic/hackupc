@@ -2,44 +2,83 @@ import json
 import os
 import shutil
 import sqlite3
+import subprocess
 import sys
+import tempfile
+import re
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import tarfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]  # backend/
 sys.path.insert(0, str(ROOT))
 
 from llm.use_cases import explain_node, codebase_overview, impact_narrative
 from ir_compiler.ir_compiler import (
+    build_call_graph,
     predict_impact,
     get_node_with_neighbors,
     hotspots,
     dead_code,
 )
+from parser import parse_repo
 
 GRAPH_PATH = Path(os.environ.get("GRAPH_PATH", str(ROOT / "cached" / "katana.graph.json")))
 
+# All loaded graphs keyed by graph_id
+GRAPHS: dict[str, dict] = {}
+
+# Currently active graph (last analyzed or the startup default)
 GRAPH: dict = {}
+
+
+def _read_snippet(repo_dir: Path, file_rel: str, line: int, before: int = 2, after: int = 25) -> str:
+    try:
+        with open(repo_dir / file_rel, encoding="utf-8") as f:
+            lines = f.readlines()
+        start = max(0, line - 1 - before)
+        end = min(len(lines), line - 1 + after + 1)
+        return "".join(lines[start:end])
+    except Exception as e:
+        return f"// could not read {file_rel}: {e}"
+
+
+def _parse_github_url(url: str) -> tuple[str, str]:
+    """Extract (owner/repo, repo_name) from a GitHub URL."""
+    url = url.strip().rstrip("/").removesuffix(".git")
+    m = re.search(r"github\.com[/:]([^/]+)/([^/]+)", url)
+    if not m:
+        raise ValueError(f"Cannot parse GitHub URL: {url}")
+    owner, repo = m.group(1), m.group(2)
+    return f"{owner}/{repo}", repo
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global GRAPH
-    # On first deploy (e.g. Render), copy bundled graph to persistent disk
-    if not GRAPH_PATH.exists():
+    # Load bundled katana graph if available
+    if GRAPH_PATH.exists():
+        with open(GRAPH_PATH, encoding="utf-8") as f:
+            GRAPH = json.load(f)
+        graph_id = GRAPH.get("graph_id", "katana")
+        GRAPHS[graph_id] = GRAPH
+        print(f"[startup] graph '{graph_id}': {len(GRAPH['nodes'])} nodes, {len(GRAPH['edges'])} edges")
+    else:
         bundled = ROOT / "cached" / "katana.graph.json"
         if bundled.exists():
             GRAPH_PATH.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(bundled, GRAPH_PATH)
-            print(f"[startup] seeded {GRAPH_PATH} from bundled copy")
+            with open(GRAPH_PATH, encoding="utf-8") as f:
+                GRAPH = json.load(f)
+            GRAPHS[GRAPH.get("graph_id", "katana")] = GRAPH
+            print(f"[startup] seeded from bundled copy")
         else:
-            raise RuntimeError(f"Graph file not found at {GRAPH_PATH} and no bundled copy at {bundled}")
-    with open(GRAPH_PATH, encoding="utf-8") as f:
-        GRAPH = json.load(f)
-    print(f"[startup] graph: {len(GRAPH['nodes'])} nodes, {len(GRAPH['edges'])} edges")
+            print("[startup] no bundled graph found, starting empty")
     yield
 
 app = FastAPI(
@@ -106,19 +145,182 @@ def health():
 # --- graph endpoints ---
 @app.post("/analyze")
 def analyze(body: AnalyzeRequest):
-    # Hackathon: ignore repo_url, always katana
-    return {
-        "graph_id": "katana",
-        "status": "ready",
-        "node_count": len(GRAPH["nodes"]),
-        "edge_count": len(GRAPH["edges"]),
-    }
+    global GRAPH
+    try:
+        full_name, repo_name = _parse_github_url(body.repo_url)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    # Derive a stable graph_id from the repo name
+    graph_id = repo_name.lower().replace("-swift", "").replace("-", "_")
+
+    # If already analyzed, return cached
+    if graph_id in GRAPHS:
+        g = GRAPHS[graph_id]
+        GRAPH = g
+        return {
+            "graph_id": graph_id,
+            "status": "ready",
+            "node_count": len(g["nodes"]),
+            "edge_count": len(g["edges"]),
+        }
+
+    # Clone into a temp dir
+    tmp_dir = tempfile.mkdtemp(prefix="codegraph_")
+    clone_path = Path(tmp_dir) / repo_name
+    try:
+        print(f"[analyze] cloning {full_name} ...")
+        subprocess.run(
+            ["git", "clone", "--depth", "1", f"https://github.com/{full_name}.git", str(clone_path)],
+            check=True,
+            capture_output=True,
+            timeout=120,
+        )
+
+        # Step 1: Parse
+        print(f"[analyze] parsing ...")
+        ir = parse_repo(str(clone_path), repo_name=full_name)
+
+        # Step 2: Build call graph
+        print(f"[analyze] building call graph ...")
+        graph = build_call_graph(ir)
+        graph["graph_id"] = graph_id
+
+        # Step 3: Inline code snippets
+        snippets_ok = 0
+        for node in graph["nodes"]:
+            node["code_snippet"] = _read_snippet(clone_path, node["file"], node["line"])
+            if not node["code_snippet"].startswith("//"):
+                snippets_ok += 1
+        print(f"[analyze] {snippets_ok}/{len(graph['nodes'])} snippets inlined")
+
+        # Step 4: Build source file contents for the frontend
+        source_files = {}
+        seen_files = set()
+        for node in graph["nodes"]:
+            if node["file"] not in seen_files:
+                seen_files.add(node["file"])
+                try:
+                    with open(clone_path / node["file"], encoding="utf-8") as f:
+                        source_files[node["file"]] = f.read()
+                except Exception:
+                    pass
+        graph["source_files"] = source_files
+
+        # Store
+        GRAPHS[graph_id] = graph
+        GRAPH = graph
+
+        return {
+            "graph_id": graph_id,
+            "status": "ready",
+            "node_count": len(graph["nodes"]),
+            "edge_count": len(graph["edges"]),
+        }
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(400, f"git clone failed: {e.stderr.decode()[:500]}")
+    except Exception as e:
+        raise HTTPException(500, f"Analysis failed: {str(e)}")
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+@app.post("/upload")
+async def upload_codebase(file: UploadFile = File(...)):
+    global GRAPH
+
+    name = file.filename or "upload"
+    if not (name.endswith(".zip") or name.endswith(".tar") or name.endswith(".tar.gz") or name.endswith(".tgz")):
+        raise HTTPException(400, "Unsupported file type. Please upload a .zip, .tar, or .tar.gz file.")
+
+    # Derive graph_id from filename
+    base = name.split(".")[0]
+    graph_id = base.lower().replace("-", "_").replace(" ", "_")
+
+    if graph_id in GRAPHS:
+        g = GRAPHS[graph_id]
+        GRAPH = g
+        return {
+            "graph_id": graph_id,
+            "status": "ready",
+            "node_count": len(g["nodes"]),
+            "edge_count": len(g["edges"]),
+        }
+
+    tmp_dir = tempfile.mkdtemp(prefix="codegraph_upload_")
+    archive_path = Path(tmp_dir) / name
+    extract_dir = Path(tmp_dir) / "src"
+    extract_dir.mkdir()
+
+    try:
+        # Save uploaded file
+        content = await file.read()
+        with open(archive_path, "wb") as f:
+            f.write(content)
+
+        # Extract
+        if name.endswith(".zip"):
+            with zipfile.ZipFile(archive_path, "r") as zf:
+                zf.extractall(extract_dir)
+        else:
+            with tarfile.open(archive_path, "r:*") as tf:
+                tf.extractall(extract_dir)
+
+        # If the archive contains a single top-level directory, use that
+        entries = list(extract_dir.iterdir())
+        repo_dir = entries[0] if len(entries) == 1 and entries[0].is_dir() else extract_dir
+
+        # Parse and build
+        print(f"[upload] parsing {name} ...")
+        ir = parse_repo(str(repo_dir), repo_name=base)
+
+        print(f"[upload] building call graph ...")
+        graph = build_call_graph(ir)
+        graph["graph_id"] = graph_id
+
+        # Inline code snippets
+        snippets_ok = 0
+        for node in graph["nodes"]:
+            node["code_snippet"] = _read_snippet(repo_dir, node["file"], node["line"])
+            if not node["code_snippet"].startswith("//"):
+                snippets_ok += 1
+        print(f"[upload] {snippets_ok}/{len(graph['nodes'])} snippets inlined")
+
+        # Source files
+        source_files = {}
+        seen_files = set()
+        for node in graph["nodes"]:
+            if node["file"] not in seen_files:
+                seen_files.add(node["file"])
+                try:
+                    with open(repo_dir / node["file"], encoding="utf-8") as f:
+                        source_files[node["file"]] = f.read()
+                except Exception:
+                    pass
+        graph["source_files"] = source_files
+
+        GRAPHS[graph_id] = graph
+        GRAPH = graph
+
+        return {
+            "graph_id": graph_id,
+            "status": "ready",
+            "node_count": len(graph["nodes"]),
+            "edge_count": len(graph["edges"]),
+        }
+    except (zipfile.BadZipFile, tarfile.TarError) as e:
+        raise HTTPException(400, f"Failed to extract archive: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"Analysis failed: {str(e)}")
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
 
 @app.get("/graph/{graph_id}")
 def get_graph(graph_id: str):
-    if graph_id != "katana":
-        raise HTTPException(404, f"Unknown graph: {graph_id}")
-    return GRAPH
+    g = GRAPHS.get(graph_id)
+    if g is None:
+        raise HTTPException(404, f"Unknown graph: {graph_id}. Available: {list(GRAPHS.keys())}")
+    return g
 
 @app.get("/node/{node_id:path}")
 def get_node(node_id: str):

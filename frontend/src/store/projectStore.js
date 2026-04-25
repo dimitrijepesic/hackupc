@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { defaultProject } from '../data/mockData';
 
 const useProjectStore = create((set) => ({
-  project: defaultProject,
+  project: { ...defaultProject },
 
   ui: {
     nodeEditorOpen: false,

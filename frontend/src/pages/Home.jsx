@@ -1,6 +1,88 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../components/Layout';
+import { API_BASE } from '../types/api';
 
 export default function Home() {
+  const [repoUrl, setRepoUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAnalyze = async () => {
+    const url = repoUrl.trim();
+    if (!url) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo_url: url }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Server error ${res.status}`);
+      }
+      const data = await res.json();
+      navigate(`/workspace?graph_id=${data.graph_id}`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleAnalyze();
+  };
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!(name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tar.gz') || name.endsWith('.tgz'))) {
+      setError('Unsupported file type. Please upload a .zip, .tar, or .tar.gz file.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Server error ${res.status}`);
+      }
+      const data = await res.json();
+      navigate(`/workspace?graph_id=${data.graph_id}`);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    handleUpload(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+
   return (
     <div className="bg-gray-50 text-on-surface min-h-screen flex flex-col font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
       <Header activePage="home" />
@@ -22,13 +104,31 @@ export default function Home() {
                 <span className="material-symbols-outlined absolute left-4 text-gray-400">link</span>
                 <input
                   className="w-full bg-transparent border-none text-gray-900 font-body-md pl-12 pr-12 py-3.5 focus:ring-0 placeholder:text-gray-400 font-mono text-sm"
-                  placeholder="https://github.com/username/repo"
+                  placeholder="https://github.com/BendingSpoons/katana-swift"
                   type="text"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={loading}
                 />
-                <button className="absolute right-1.5 bg-indigo-600 text-white p-1.5 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center active:scale-95">
-                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={loading || !repoUrl.trim()}
+                  className="absolute right-1.5 bg-indigo-600 text-white p-1.5 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  )}
                 </button>
               </div>
+              {error && (
+                <p className="text-sm text-red-600 mt-1">{error}</p>
+              )}
+              {loading && (
+                <p className="text-sm text-indigo-600 mt-1">Cloning and analyzing repository... this may take a minute.</p>
+              )}
             </div>
 
             {/* Divider */}
@@ -51,13 +151,33 @@ export default function Home() {
             </button>
 
             {/* Local Upload */}
-            <div className="mt-2 border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors cursor-pointer group">
-              <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 group-hover:text-indigo-600 transition-colors">
+            <div
+              className={`mt-2 border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer group ${
+                dragOver
+                  ? 'border-indigo-500 bg-indigo-50'
+                  : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300'
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => document.getElementById('file-upload').click()}
+            >
+              <input
+                id="file-upload"
+                type="file"
+                accept=".zip,.tar,.tar.gz,.tgz"
+                className="hidden"
+                onChange={(e) => handleUpload(e.target.files[0])}
+                disabled={loading}
+              />
+              <div className={`w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center transition-colors ${
+                dragOver ? 'text-indigo-600' : 'text-gray-500 group-hover:text-indigo-600'
+              }`}>
                 <span className="material-symbols-outlined">cloud_upload</span>
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-gray-900 mb-1">Upload Files</p>
-                <p className="text-xs text-gray-500">Drag &amp; drop local codebase (.zip, .tar)</p>
+                <p className="text-xs text-gray-500">Drag &amp; drop or click to upload (.zip, .tar, .tar.gz)</p>
               </div>
             </div>
           </div>

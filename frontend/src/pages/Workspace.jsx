@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Header } from '../components/Layout';
 import useGraphStore from '../store/graphStore';
 import useProjectStore from '../store/projectStore';
@@ -86,8 +87,18 @@ function computeSelfLoopArrow(node) {
 // --- Main Workspace ---
 
 export default function Workspace() {
-  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout } = useGraphStore();
-  const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab } = useProjectStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, sourceFiles, loading: graphLoading, error: graphError, graphId } = useGraphStore();
+  const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab, setProject } = useProjectStore();
+  const [searchParams] = useSearchParams();
+
+  // Load graph from API if graph_id is in the URL
+  useEffect(() => {
+    const qGraphId = searchParams.get('graph_id');
+    if (qGraphId && qGraphId !== graphId) {
+      loadGraph(qGraphId);
+      setProject({ name: qGraphId, branch: 'main' });
+    }
+  }, [searchParams]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
@@ -208,6 +219,30 @@ export default function Workspace() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [selectedFile, closeFile]);
+
+  if (graphLoading) {
+    return (
+      <div className="flex flex-col h-screen font-body-md text-body-md text-on-surface overflow-hidden items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+        <Header activePage="workspace" />
+        <div className="flex flex-col items-center gap-4 pt-20">
+          <span className="material-symbols-outlined text-[48px] text-indigo-600 animate-spin">progress_activity</span>
+          <p className="text-gray-600 text-lg">Loading graph...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (graphError) {
+    return (
+      <div className="flex flex-col h-screen font-body-md text-body-md text-on-surface overflow-hidden items-center justify-center" style={{ backgroundColor: '#f9fafb' }}>
+        <Header activePage="workspace" />
+        <div className="flex flex-col items-center gap-4 pt-20">
+          <span className="material-symbols-outlined text-[48px] text-red-500">error</span>
+          <p className="text-red-600 text-lg">{graphError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen font-body-md text-body-md text-on-surface overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
@@ -336,6 +371,7 @@ export default function Workspace() {
             <FileOverlay
               file={selectedFile}
               nodes={nodes}
+              sourceFiles={sourceFiles}
               onClose={closeFile}
               onJumpToFunction={handleFunctionSelect}
             />
@@ -976,8 +1012,8 @@ function CodePanel({ node, open, onClose }) {
 
 // --- Full-panel File Overlay (whole file view that covers the workspace) ---
 
-function FileOverlay({ file, nodes, onClose, onJumpToFunction }) {
-  const source = SOURCE_FILES[file] || '';
+function FileOverlay({ file, nodes, sourceFiles: dynamicSources, onClose, onJumpToFunction }) {
+  const source = (dynamicSources && dynamicSources[file]) || SOURCE_FILES[file] || '';
   const fnNodes = nodes.filter((n) => n.filePath === file).sort((a, b) => a.startLine - b.startLine);
   const totalLines = source ? source.split('\n').length : 0;
   const tests = fnNodes.filter((n) => n.category === 'test').length;
@@ -1436,6 +1472,33 @@ function NodeEditorPanel({ existingNodes, onClose, onSubmit }) {
 
 // --- File Tree (Explorer panel) ---
 
+function buildFileTreeFromNodes(nodeList) {
+  const files = [...new Set(nodeList.map((n) => n.filePath))];
+  const root = { children: {} };
+  files.forEach((file) => {
+    const parts = file.split('/');
+    let current = root;
+    parts.forEach((part, idx) => {
+      if (idx === parts.length - 1) {
+        current.children[part] = { type: 'file', name: part };
+      } else {
+        if (!current.children[part]) {
+          current.children[part] = { type: 'folder', name: part, children: {} };
+        }
+        current = current.children[part];
+      }
+    });
+  });
+  function flatten(node) {
+    return Object.values(node.children).map((c) =>
+      c.type === 'folder'
+        ? { type: 'folder', name: c.name, children: flatten(c) }
+        : c,
+    );
+  }
+  return flatten(root);
+}
+
 function FileTree({ nodes, selectedNodeId, selectedFile, onFileOpen, onFunctionSelect }) {
   // Group all nodes by their file path so each file can list its functions
   const nodesByFile = {};
@@ -1444,6 +1507,9 @@ function FileTree({ nodes, selectedNodeId, selectedFile, onFileOpen, onFunctionS
     nodesByFile[n.filePath].push(n);
   });
   Object.values(nodesByFile).forEach((arr) => arr.sort((a, b) => a.startLine - b.startLine));
+
+  // Build file tree dynamically from current nodes (works for both mock and API data)
+  const fileTree = buildFileTreeFromNodes(nodes);
 
   const renderItem = (item, parentPath = '', depth = 0) => {
     const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
@@ -1471,7 +1537,7 @@ function FileTree({ nodes, selectedNodeId, selectedFile, onFileOpen, onFunctionS
 
   return (
     <div className="text-[13px] font-inter select-none">
-      {defaultFileTree.map((item) => renderItem(item))}
+      {fileTree.map((item) => renderItem(item))}
     </div>
   );
 }
