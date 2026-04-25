@@ -20,7 +20,8 @@
       "Bash(node -e ':*)",
       "Bash(./venv/Scripts/python.exe:*)",
       "Bash(pip list:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }
