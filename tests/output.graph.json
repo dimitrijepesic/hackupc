@@ -1,0 +1,121 @@
+{
+  "graph_id": "katana",
+  "nodes": [
+    {
+      "id": "func:Sources/Katana/Store.swift:Store.dispatch:5",
+      "type": "function",
+      "qualified_name": "Store.dispatch",
+      "name": "dispatch",
+      "file": "Sources/Katana/Store.swift",
+      "line": 5,
+      "signature": "func dispatch()",
+      "in_degree": 2,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Katana/Store.swift:Store.runReducer:10",
+      "type": "function",
+      "qualified_name": "Store.runReducer",
+      "name": "runReducer",
+      "file": "Sources/Katana/Store.swift",
+      "line": 10,
+      "signature": "func runReducer()",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Katana/Store.swift:Store.notifyListeners:14",
+      "type": "function",
+      "qualified_name": "Store.notifyListeners",
+      "name": "notifyListeners",
+      "file": "Sources/Katana/Store.swift",
+      "line": 14,
+      "signature": "func notifyListeners()",
+      "in_degree": 2,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Katana/Store.swift:Store.subscribe:20",
+      "type": "function",
+      "qualified_name": "Store.subscribe",
+      "name": "subscribe",
+      "file": "Sources/Katana/Store.swift",
+      "line": 20,
+      "signature": "func subscribe()",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Sources/Katana/Action.swift:Action.toAnonymous:5",
+      "type": "function",
+      "qualified_name": "Action.toAnonymous",
+      "name": "toAnonymous",
+      "file": "Sources/Katana/Action.swift",
+      "line": 5,
+      "signature": "func toAnonymous()",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:Tests/KatanaTests/StoreTests.swift:StoreTests.testDispatch:10",
+      "type": "function",
+      "qualified_name": "StoreTests.testDispatch",
+      "name": "testDispatch",
+      "file": "Tests/KatanaTests/StoreTests.swift",
+      "line": 10,
+      "signature": "func testDispatch()",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "test"
+    },
+    {
+      "id": "func:Sources/Katana/Helpers/Logger.swift:Logger.setup:3",
+      "type": "function",
+      "qualified_name": "Logger.setup",
+      "name": "setup",
+      "file": "Sources/Katana/Helpers/Logger.swift",
+      "line": 3,
+      "signature": "func setup()",
+      "in_degree": 0,
+      "out_degree": 0,
+      "category": "util"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:Sources/Katana/Store.swift:Store.dispatch:5",
+      "target": "func:Sources/Katana/Store.swift:Store.runReducer:10",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Katana/Store.swift:Store.runReducer:10",
+      "target": "func:Sources/Katana/Store.swift:Store.notifyListeners:14",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Katana/Store.swift:Store.subscribe:20",
+      "target": "func:Sources/Katana/Store.swift:Store.notifyListeners:14",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Katana/Action.swift:Action.toAnonymous:5",
+      "target": "func:Sources/Katana/Store.swift:Store.dispatch:5",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/KatanaTests/StoreTests.swift:StoreTests.testDispatch:10",
+      "target": "func:Sources/Katana/Store.swift:Store.dispatch:5",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}

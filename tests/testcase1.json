@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "language": "swift",
+  "repo": "BendingSpoons/katana-swift",
+  "files": [
+    {
+      "path": "Sources/Katana/Store.swift",
+      "imports": ["Foundation", "Hydra"],
+      "functions": [
+        {
+          "qualified_name": "Store.dispatch",
+          "name": "dispatch",
+          "line_start": 5,
+          "line_end": 8,
+          "signature": "func dispatch()",
+          "calls": [
+            {"target": "Store.runReducer", "line": 6},
+            {"target": "Logger.log", "line": 7},
+            {"target": "?notify", "line": 8}
+          ]
+        },
+        {
+          "qualified_name": "Store.runReducer",
+          "name": "runReducer",
+          "line_start": 10,
+          "line_end": 12,
+          "signature": "func runReducer()",
+          "calls": [
+            {"target": "Store.notifyListeners", "line": 11}
+          ]
+        },
+        {
+          "qualified_name": "Store.notifyListeners",
+          "name": "notifyListeners",
+          "line_start": 14,
+          "line_end": 18,
+          "signature": "func notifyListeners()",
+          "calls": []
+        },
+        {
+          "qualified_name": "Store.subscribe",
+          "name": "subscribe",
+          "line_start": 20,
+          "line_end": 25,
+          "signature": "func subscribe()",
+          "calls": [
+            {"target": "Store.notifyListeners", "line": 22}
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Sources/Katana/Action.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Action.toAnonymous",
+          "name": "toAnonymous",
+          "line_start": 5,
+          "line_end": 9,
+          "signature": "func toAnonymous()",
+          "calls": [
+            {"target": "Store.dispatch", "line": 7}
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Tests/KatanaTests/StoreTests.swift",
+      "imports": ["XCTest"],
+      "functions": [
+        {
+          "qualified_name": "StoreTests.testDispatch",
+          "name": "testDispatch",
+          "line_start": 10,
+          "line_end": 20,
+          "signature": "func testDispatch()",
+          "calls": [
+            {"target": "Store.dispatch", "line": 15}
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Sources/Katana/Helpers/Logger.swift",
+      "imports": [],
+      "functions": [
+        {
+          "qualified_name": "Logger.setup",
+          "name": "setup",
+          "line_start": 3,
+          "line_end": 7,
+          "signature": "func setup()",
+          "calls": []
+        }
+      ]
+    }
+  ]
+}
