@@ -55,30 +55,7 @@ def parse_file(file_path: str, repo_name: str = "") -> dict:
     return _to_dict(result)
 
 
+from dataclasses import asdict
+
 def _to_dict(result: ParseResult) -> dict:
-    return {
-        "version": result.version,
-        "language": result.language,
-        "repo": result.repo,
-        "files": [
-            {
-                "path": f.path,
-                "imports": f.imports,
-                "functions": [
-                    {
-                        "qualified_name": fn.qualified_name,
-                        "name": fn.name,
-                        "line_start": fn.line_start,
-                        "line_end": fn.line_end,
-                        "signature": fn.signature,
-                        "calls": [
-                            {"target": c.target, "line": c.line}
-                            for c in fn.calls
-                        ]
-                    }
-                    for fn in f.functions
-                ]
-            }
-            for f in result.files
-        ]
-    }
+    return asdict(result)
