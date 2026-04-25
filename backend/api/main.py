@@ -176,7 +176,7 @@ def analyze(body: AnalyzeRequest):
         }
 
     # Clone into a temp dir
-    tmp_dir = tempfile.mkdtemp(prefix="codegraph_")
+    tmp_dir = tempfile.mkdtemp(prefix="synapsis_")
     clone_path = Path(tmp_dir) / repo_name
     try:
         print(f"[analyze] cloning {full_name} ...")
@@ -260,7 +260,7 @@ async def upload_codebase(file: UploadFile = File(...)):
             "edge_count": len(g["edges"]),
         }
 
-    tmp_dir = tempfile.mkdtemp(prefix="codegraph_upload_")
+    tmp_dir = tempfile.mkdtemp(prefix="synapsis_upload_")
     archive_path = Path(tmp_dir) / name
     extract_dir = Path(tmp_dir) / "src"
     extract_dir.mkdir()
