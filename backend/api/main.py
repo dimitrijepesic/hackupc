@@ -18,14 +18,16 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]  # backend/
 sys.path.insert(0, str(ROOT))
 
-from llm.use_cases import explain_node, codebase_overview, impact_narrative
+from llm.use_cases import explain_node, codebase_overview, impact_narrative, chat_with_graph
 from ir_compiler.ir_compiler import (
     build_call_graph,
     predict_impact,
     get_node_with_neighbors,
     hotspots,
     dead_code,
+    safe_to_refactor,
 )
+from ir_compiler.clustering import compute_clusters, label_clusters_with_llm
 from parser import parse_repo
 from parser.registry import supported_extensions
 
@@ -36,6 +38,9 @@ GRAPHS: dict[str, dict] = {}
 
 # Currently active graph (last analyzed or the startup default)
 GRAPH: dict = {}
+
+# Cached cluster results keyed by graph_id
+CLUSTERS: dict[str, dict] = {}
 
 
 def _read_snippet(repo_dir: Path, file_rel: str, line: int, before: int = 2, after: int = 25) -> str:
@@ -112,6 +117,10 @@ class OverviewRequest(BaseModel):
 
 class ImpactNarrativeRequest(BaseModel):
     node_id: str
+
+class ChatRequest(BaseModel):
+    question: str
+    context_node_ids: list[str] = []
 
 
 # --- helpers ---
@@ -389,3 +398,77 @@ def llm_impact_narrative(body: ImpactNarrativeRequest):
     result = _require_node(body.node_id)
     affected = predict_impact(GRAPH, body.node_id)
     return impact_narrative(result["node"], affected)
+
+
+@app.post("/llm/chat")
+def llm_chat(body: ChatRequest):
+    if not GRAPH:
+        raise HTTPException(400, "No graph loaded. Analyze a repo first.")
+
+    # Gather context nodes
+    context_nodes = []
+    for nid in body.context_node_ids:
+        result = get_node_with_neighbors(GRAPH, nid)
+        if result:
+            context_nodes.append(result)
+
+    # If no explicit context nodes, auto-select hotspots
+    if not context_nodes:
+        hot = hotspots(GRAPH, top_n=5)
+        for h in hot:
+            result = get_node_with_neighbors(GRAPH, h["id"])
+            if result:
+                context_nodes.append(result)
+
+    # Build metadata summary
+    graph_metadata = {
+        "node_count": len(GRAPH.get("nodes", [])),
+        "edge_count": len(GRAPH.get("edges", [])),
+        "hotspots": hotspots(GRAPH, top_n=8),
+    }
+
+    # Include clusters if computed
+    graph_id = GRAPH.get("graph_id", "")
+    cluster_data = CLUSTERS.get(graph_id)
+    cluster_summary = cluster_data["clusters"] if cluster_data else None
+
+    return chat_with_graph(
+        question=body.question,
+        graph_metadata=graph_metadata,
+        context_nodes=context_nodes,
+        clusters=cluster_summary,
+    )
+
+
+# --- cluster endpoints ---
+@app.get("/graph/{graph_id}/clusters")
+def get_clusters(graph_id: str, ai_labels: bool = False):
+    g = GRAPHS.get(graph_id)
+    if g is None:
+        raise HTTPException(404, f"Unknown graph: {graph_id}. Available: {list(GRAPHS.keys())}")
+
+    # Return cached if available
+    if graph_id in CLUSTERS:
+        return CLUSTERS[graph_id]
+
+    # Compute clusters
+    result = compute_clusters(g)
+
+    # Optionally add AI labels
+    if ai_labels:
+        try:
+            label_clusters_with_llm(result["clusters"], g)
+        except Exception:
+            pass  # LLM unavailable, keep heuristic labels
+
+    CLUSTERS[graph_id] = result
+    return result
+
+
+# --- safe-to-refactor endpoint ---
+@app.get("/query/safe-to-refactor")
+def get_safe_to_refactor():
+    if not GRAPH:
+        raise HTTPException(400, "No graph loaded.")
+    results = safe_to_refactor(GRAPH)
+    return {"name": "safe_to_refactor", "count": len(results), "results": results}
