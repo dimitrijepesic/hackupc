@@ -137,11 +137,20 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-top: 2px solid #4f46e5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: opacity 180ms ease, filter 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 .node-card.active {
   border-color: #4f46e5;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.22);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+/* Dim non-neighbors when something is selected */
+.node-card.dimmed {
+  opacity: 0.28;
+  filter: grayscale(0.85);
 }
 
 /* SVG connection lines */
@@ -151,11 +160,16 @@
   fill: none;
   stroke-linejoin: round;
   stroke-linecap: round;
+  transition: opacity 180ms ease, stroke 180ms ease;
 }
 
 .connection-line.active {
   stroke: #4f46e5;
   stroke-width: 2;
+}
+
+.connection-line.dimmed {
+  opacity: 0.18;
 }
 
 .connection-line.condition-if {
