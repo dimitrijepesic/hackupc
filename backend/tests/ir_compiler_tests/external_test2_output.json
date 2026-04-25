@@ -1,0 +1,249 @@
+{
+  "graph_id": "test2",
+  "nodes": [
+    {
+      "id": "func:store.swift:AppState.init:20",
+      "type": "function",
+      "qualified_name": "AppState.init",
+      "name": "init",
+      "file": "store.swift",
+      "line": 20,
+      "line_end": 23,
+      "signature": "init(counter: Int = 0, messages: [String] = [])",
+      "params": [
+        {
+          "label": "counter",
+          "name": "counter",
+          "type": "Int"
+        },
+        {
+          "label": "messages",
+          "name": "messages",
+          "type": "[String]"
+        }
+      ],
+      "return_type": "AppState",
+      "container": "AppState",
+      "in_degree": 0,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:BaseStore.init:32",
+      "type": "function",
+      "qualified_name": "BaseStore.init",
+      "name": "init",
+      "file": "store.swift",
+      "line": 32,
+      "line_end": 35,
+      "signature": "init(initial: AppState, middlewares: [String] = [])",
+      "params": [
+        {
+          "label": "initial",
+          "name": "initial",
+          "type": "AppState"
+        },
+        {
+          "label": "middlewares",
+          "name": "middlewares",
+          "type": "[String]"
+        }
+      ],
+      "return_type": "BaseStore",
+      "container": "BaseStore",
+      "in_degree": 0,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:BaseStore.currentState:37",
+      "type": "function",
+      "qualified_name": "BaseStore.currentState",
+      "name": "currentState",
+      "file": "store.swift",
+      "line": 37,
+      "line_end": 39,
+      "signature": "func currentState() -> AppState",
+      "params": [],
+      "return_type": "AppState",
+      "container": "BaseStore",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:BaseStore.dispatch:41",
+      "type": "function",
+      "qualified_name": "BaseStore.dispatch",
+      "name": "dispatch",
+      "file": "store.swift",
+      "line": 41,
+      "line_end": 44,
+      "signature": "func dispatch(_ action: Dispatchable)",
+      "params": [
+        {
+          "label": null,
+          "name": "action",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "BaseStore",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:BaseStore.applyMiddlewares:46",
+      "type": "function",
+      "qualified_name": "BaseStore.applyMiddlewares",
+      "name": "applyMiddlewares",
+      "file": "store.swift",
+      "line": 46,
+      "line_end": 50,
+      "signature": "func applyMiddlewares(for action: Dispatchable)",
+      "params": [
+        {
+          "label": "for",
+          "name": "action",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "BaseStore",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:LoggingStore.dispatch:56",
+      "type": "function",
+      "qualified_name": "LoggingStore.dispatch",
+      "name": "dispatch",
+      "file": "store.swift",
+      "line": 56,
+      "line_end": 60,
+      "signature": "override func dispatch(_ action: Dispatchable)",
+      "params": [
+        {
+          "label": null,
+          "name": "action",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "LoggingStore",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:LoggingStore.recordCompletion:62",
+      "type": "function",
+      "qualified_name": "LoggingStore.recordCompletion",
+      "name": "recordCompletion",
+      "file": "store.swift",
+      "line": 62,
+      "line_end": 65,
+      "signature": "func recordCompletion(action: Dispatchable)",
+      "params": [
+        {
+          "label": "action",
+          "name": "action",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "LoggingStore",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:LoggingStore.replayLog:67",
+      "type": "function",
+      "qualified_name": "LoggingStore.replayLog",
+      "name": "replayLog",
+      "file": "store.swift",
+      "line": 67,
+      "line_end": 69,
+      "signature": "func replayLog() -> [String]",
+      "params": [],
+      "return_type": "[String]",
+      "container": "LoggingStore",
+      "in_degree": 1,
+      "out_degree": 0,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:LoggingStore.exportLog:73",
+      "type": "function",
+      "qualified_name": "LoggingStore.exportLog",
+      "name": "exportLog",
+      "file": "store.swift",
+      "line": 73,
+      "line_end": 75,
+      "signature": "func exportLog(separator: String = \"\\n\") -> String",
+      "params": [
+        {
+          "label": "separator",
+          "name": "separator",
+          "type": "String"
+        }
+      ],
+      "return_type": "String",
+      "container": "LoggingStore",
+      "in_degree": 1,
+      "out_degree": 1,
+      "category": "source"
+    },
+    {
+      "id": "func:store.swift:LoggingStore.clearAndExport:77",
+      "type": "function",
+      "qualified_name": "LoggingStore.clearAndExport",
+      "name": "clearAndExport",
+      "file": "store.swift",
+      "line": 77,
+      "line_end": 81,
+      "signature": "func clearAndExport() -> String",
+      "params": [],
+      "return_type": "String",
+      "container": "LoggingStore",
+      "in_degree": 0,
+      "out_degree": 1,
+      "category": "source"
+    }
+  ],
+  "edges": [
+    {
+      "source": "func:store.swift:BaseStore.dispatch:41",
+      "target": "func:store.swift:BaseStore.applyMiddlewares:46",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:store.swift:LoggingStore.dispatch:56",
+      "target": "func:store.swift:LoggingStore.recordCompletion:62",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:store.swift:LoggingStore.recordCompletion:62",
+      "target": "func:store.swift:BaseStore.currentState:37",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:store.swift:LoggingStore.exportLog:73",
+      "target": "func:store.swift:LoggingStore.replayLog:67",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:store.swift:LoggingStore.clearAndExport:77",
+      "target": "func:store.swift:LoggingStore.exportLog:73",
+      "type": "calls",
+      "weight": 1
+    }
+  ]
+}

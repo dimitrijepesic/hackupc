@@ -8,9 +8,13 @@
       "name": "testObserveOnStateChange_whenUsingAppStateChangeObserver_dispatchesDispatchable",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 18,
+      "line_end": 35,
       "signature": "func testObserveOnStateChange_whenUsingAppStateChangeObserver_dispatchesDispatchable() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 5,
       "category": "test"
     },
     {
@@ -20,9 +24,13 @@
       "name": "testObserveOnStateChange_whenUsingAppStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 37,
+      "line_end": 58,
       "signature": "func testObserveOnStateChange_whenUsingAppStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -32,9 +40,13 @@
       "name": "testObserveOnStateChange_whenUsingAppStateChangeObserverAndNillableInitDispatchables_discardsNilOnes",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 60,
+      "line_end": 80,
       "signature": "func testObserveOnStateChange_whenUsingAppStateChangeObserverAndNillableInitDispatchables_discardsNilOnes() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 5,
       "category": "test"
     },
     {
@@ -44,9 +56,13 @@
       "name": "testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 82,
+      "line_end": 96,
       "signature": "func testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 5,
       "category": "test"
     },
     {
@@ -56,9 +72,13 @@
       "name": "testObserveOnStateChange_whenUsingStateChangeObserver_dispatchesDispatchable",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 100,
+      "line_end": 120,
       "signature": "func testObserveOnStateChange_whenUsingStateChangeObserver_dispatchesDispatchable() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -68,9 +88,13 @@
       "name": "testObserveOnStateChange_whenUsingStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 122,
+      "line_end": 146,
       "signature": "func testObserveOnStateChange_whenUsingStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -80,9 +104,13 @@
       "name": "testObserveOnStateChange_whenUsingStateChangeObserverAndNillableInitDispatchables_discardsNilOnes",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 148,
+      "line_end": 171,
       "signature": "func testObserveOnStateChange_whenUsingStateChangeObserverAndNillableInitDispatchables_discardsNilOnes() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -92,9 +120,13 @@
       "name": "testObserveOnStateChange_whenUsingStateChangeObserver_doesNotInterceptSideEffects",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 173,
+      "line_end": 188,
       "signature": "func testObserveOnStateChange_whenUsingStateChangeObserver_doesNotInterceptSideEffects() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -104,9 +136,13 @@
       "name": "testObserveOnDispatch_dispatchesDispatchables",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 192,
+      "line_end": 207,
       "signature": "func testObserveOnDispatch_dispatchesDispatchables() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -116,9 +152,13 @@
       "name": "testObserveOnDispatch_whenMultipleDispatchables_dispatchesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 209,
+      "line_end": 227,
       "signature": "func testObserveOnDispatch_whenMultipleDispatchables_dispatchesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -128,9 +168,13 @@
       "name": "testObserveOnDispatch_whenNillableInitDispatchables_discardsNilOnes",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 229,
+      "line_end": 247,
       "signature": "func testObserveOnDispatch_whenNillableInitDispatchables_discardsNilOnes() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -140,9 +184,13 @@
       "name": "testObserveOnDispatch_whenMultipleObservers_observesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 249,
+      "line_end": 268,
       "signature": "func testObserveOnDispatch_whenMultipleObservers_observesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 3,
       "category": "test"
     },
     {
@@ -152,7 +200,11 @@
       "name": "testObserveOnNotification_dispatchesDispatchables",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 272,
+      "line_end": 290,
       "signature": "func testObserveOnNotification_dispatchesDispatchables() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -164,7 +216,11 @@
       "name": "testObserveOnNotification_whenMultipleDispatchables_dispatchesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 292,
+      "line_end": 313,
       "signature": "func testObserveOnNotification_whenMultipleDispatchables_dispatchesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -176,7 +232,11 @@
       "name": "testObserveOnNotification_whenNillableInitDispatchables_discardsNilOnes",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 315,
+      "line_end": 336,
       "signature": "func testObserveOnNotification_whenNillableInitDispatchables_discardsNilOnes() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -188,7 +248,11 @@
       "name": "testObserveOnStart_dispatchesDispatchables",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 340,
+      "line_end": 350,
       "signature": "func testObserveOnStart_dispatchesDispatchables() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -200,7 +264,11 @@
       "name": "testObserveOnStart_whenMultipleDispatchables_dispatchesAllOfThem",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 352,
+      "line_end": 365,
       "signature": "func testObserveOnStart_whenMultipleDispatchables_dispatchesAllOfThem() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -212,7 +280,11 @@
       "name": "testObserveOnStart_whenNillableInitDispatchables_discardsNilOnes",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 367,
+      "line_end": 380,
       "signature": "func testObserveOnStart_whenNillableInitDispatchables_discardsNilOnes() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -224,7 +296,11 @@
       "name": "testObserveOnNotification_whenStoreIsDeallocated_unregistersObserver",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 384,
+      "line_end": 406,
       "signature": "func testObserveOnNotification_whenStoreIsDeallocated_unregistersObserver() throws",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverInterceptorTests",
       "in_degree": 0,
       "out_degree": 2,
       "category": "test"
@@ -236,7 +312,17 @@
       "name": "updateState",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 417,
+      "line_end": 421,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "AddTodoWithDelay",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -248,7 +334,22 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 429,
+      "line_end": 429,
       "signature": "init?(prevState _: State, currentState _: State)",
+      "params": [
+        {
+          "label": "prevState",
+          "name": "_",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "_",
+          "type": "State"
+        }
+      ],
+      "return_type": "StateChangeAddUser",
+      "container": "StateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -260,7 +361,27 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 431,
+      "line_end": 431,
       "signature": "init?(dispatchedItem _: Dispatchable, prevState _: State, currentState _: State)",
+      "params": [
+        {
+          "label": "dispatchedItem",
+          "name": "_",
+          "type": "Dispatchable"
+        },
+        {
+          "label": "prevState",
+          "name": "_",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "_",
+          "type": "State"
+        }
+      ],
+      "return_type": "StateChangeAddUser",
+      "container": "StateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -272,7 +393,17 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 433,
+      "line_end": 433,
       "signature": "init?(notification _: Notification)",
+      "params": [
+        {
+          "label": "notification",
+          "name": "_",
+          "type": "Notification"
+        }
+      ],
+      "return_type": "StateChangeAddUser",
+      "container": "StateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -284,7 +415,11 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 435,
+      "line_end": 435,
       "signature": "init?()",
+      "params": [],
+      "return_type": "StateChangeAddUser",
+      "container": "StateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -296,7 +431,17 @@
       "name": "updateState",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 437,
+      "line_end": 439,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "StateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -308,7 +453,22 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 447,
+      "line_end": 449,
       "signature": "init?(prevState _: State, currentState _: State)",
+      "params": [
+        {
+          "label": "prevState",
+          "name": "_",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "_",
+          "type": "State"
+        }
+      ],
+      "return_type": "NilStateChangeAddUser",
+      "container": "NilStateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -320,7 +480,27 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 451,
+      "line_end": 453,
       "signature": "init?(dispatchedItem _: Dispatchable, prevState _: State, currentState _: State)",
+      "params": [
+        {
+          "label": "dispatchedItem",
+          "name": "_",
+          "type": "Dispatchable"
+        },
+        {
+          "label": "prevState",
+          "name": "_",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "_",
+          "type": "State"
+        }
+      ],
+      "return_type": "NilStateChangeAddUser",
+      "container": "NilStateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -332,7 +512,17 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 455,
+      "line_end": 457,
       "signature": "init?(notification _: Notification)",
+      "params": [
+        {
+          "label": "notification",
+          "name": "_",
+          "type": "Notification"
+        }
+      ],
+      "return_type": "NilStateChangeAddUser",
+      "container": "NilStateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -344,7 +534,11 @@
       "name": "init",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 459,
+      "line_end": 461,
       "signature": "init?()",
+      "params": [],
+      "return_type": "NilStateChangeAddUser",
+      "container": "NilStateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -356,7 +550,17 @@
       "name": "updateState",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 463,
+      "line_end": 465,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "NilStateChangeAddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -368,7 +572,32 @@
       "name": "addObserver",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 471,
+      "line_end": 480,
       "signature": "override func addObserver(\n    forName name: NSNotification.Name?,\n    object obj: Any?,\n    queue: OperationQueue?,\n    using block: @escaping (Notification) -> Void\n  ) -> NSObjectProtocol",
+      "params": [
+        {
+          "label": "forName",
+          "name": "name",
+          "type": "NSNotification.Name?"
+        },
+        {
+          "label": "object",
+          "name": "obj",
+          "type": "Any?"
+        },
+        {
+          "label": "queue",
+          "name": "queue",
+          "type": "OperationQueue?"
+        },
+        {
+          "label": "using",
+          "name": "block",
+          "type": "(Notification) -> Void"
+        }
+      ],
+      "return_type": "NSObjectProtocol",
+      "container": "TestableNotificationCenter",
       "in_degree": 1,
       "out_degree": 0,
       "category": "test"
@@ -380,7 +609,17 @@
       "name": "removeObserver",
       "file": "Tests/ObserverInterceptorTests.swift",
       "line": 482,
+      "line_end": 485,
       "signature": "override func removeObserver(_ observer: Any)",
+      "params": [
+        {
+          "label": null,
+          "name": "observer",
+          "type": "Any"
+        }
+      ],
+      "return_type": null,
+      "container": "TestableNotificationCenter",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -392,9 +631,13 @@
       "name": "testStoreInterceptor",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 16,
+      "line_end": 39,
       "signature": "func testStoreInterceptor()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreInterceptorsTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 3,
       "category": "test"
     },
     {
@@ -404,9 +647,13 @@
       "name": "testStoreInterceptor_whenMultipleInterceptors_areExecutedInOrder",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 41,
+      "line_end": 78,
       "signature": "func testStoreInterceptor_whenMultipleInterceptors_areExecutedInOrder()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreInterceptorsTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -416,9 +663,13 @@
       "name": "testStoreInterceptor_whenInterceptorThrows_propagationIsBlocked",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 80,
+      "line_end": 99,
       "signature": "func testStoreInterceptor_whenInterceptorThrows_propagationIsBlocked()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreInterceptorsTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -428,9 +679,13 @@
       "name": "testStoreInterceptor_whenReturningSideEffect_re",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 101,
+      "line_end": 140,
       "signature": "func testStoreInterceptor_whenReturningSideEffect_re()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreInterceptorsTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 6,
       "category": "test"
     },
     {
@@ -440,8 +695,18 @@
       "name": "init",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 146,
+      "line_end": 150,
       "signature": "init(\n    invocationClosure: @escaping (_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws -> AppState\n  )",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": "invocationClosure",
+          "name": "invocationClosure",
+          "type": "(_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws -> AppState"
+        }
+      ],
+      "return_type": "ReturningClosureSideEffect",
+      "container": "ReturningClosureSideEffect",
+      "in_degree": 1,
       "out_degree": 0,
       "category": "test"
     },
@@ -452,7 +717,17 @@
       "name": "sideEffect",
       "file": "Tests/StoreInterceptorsTests.swift",
       "line": 152,
+      "line_end": 154,
       "signature": "func sideEffect(_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws -> AppState",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "SideEffectContext<AppState, TestDependenciesContainer>"
+        }
+      ],
+      "return_type": "AppState",
+      "container": "ReturningClosureSideEffect",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -464,7 +739,17 @@
       "name": "waitForPromise",
       "file": "Tests/XCTestCase+Promise.swift",
       "line": 13,
+      "line_end": 22,
       "signature": "func waitForPromise<T>(_ promise: Promise<T>) -> T",
+      "params": [
+        {
+          "label": null,
+          "name": "promise",
+          "type": "Promise<T>"
+        }
+      ],
+      "return_type": "T",
+      "container": "XCTestCase",
       "in_degree": 23,
       "out_degree": 0,
       "category": "test"
@@ -476,7 +761,17 @@
       "name": "waitForPromises",
       "file": "Tests/XCTestCase+Promise.swift",
       "line": 24,
+      "line_end": 31,
       "signature": "func waitForPromises<T>(_ promises: Promise<T>...)",
+      "params": [
+        {
+          "label": null,
+          "name": "promises",
+          "type": "Promise<T>"
+        }
+      ],
+      "return_type": null,
+      "container": "XCTestCase",
       "in_degree": 1,
       "out_degree": 0,
       "category": "test"
@@ -488,7 +783,17 @@
       "name": "waitFor",
       "file": "Tests/XCTestCase+Promise.swift",
       "line": 33,
+      "line_end": 42,
       "signature": "func waitFor(_ predicate: @escaping () -> Bool)",
+      "params": [
+        {
+          "label": null,
+          "name": "predicate",
+          "type": "() -> Bool"
+        }
+      ],
+      "return_type": null,
+      "container": "XCTestCase",
       "in_degree": 19,
       "out_degree": 0,
       "category": "test"
@@ -500,9 +805,13 @@
       "name": "testDispatch_invokesTheStateUpdater",
       "file": "Tests/StateUpdaterTests.swift",
       "line": 15,
+      "line_end": 22,
       "signature": "func testDispatch_invokesTheStateUpdater()",
+      "params": [],
+      "return_type": null,
+      "container": "StateUpdaterTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -512,9 +821,13 @@
       "name": "testDispatch_whenChained_areInvokedInOrder",
       "file": "Tests/StateUpdaterTests.swift",
       "line": 24,
+      "line_end": 43,
       "signature": "func testDispatch_whenChained_areInvokedInOrder()",
+      "params": [],
+      "return_type": null,
+      "container": "StateUpdaterTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -524,9 +837,13 @@
       "name": "testDispatch_whenNotChained_areInvokedInOrder",
       "file": "Tests/StateUpdaterTests.swift",
       "line": 45,
+      "line_end": 58,
       "signature": "func testDispatch_whenNotChained_areInvokedInOrder()",
+      "params": [],
+      "return_type": null,
+      "container": "StateUpdaterTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -536,7 +853,17 @@
       "name": "updateState",
       "file": "Tests/StateUpdaterTests.swift",
       "line": 65,
+      "line_end": 69,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "AddTodoWithDelay",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -548,9 +875,13 @@
       "name": "testDispatch_invokesTheSideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 16,
+      "line_end": 23,
       "signature": "func testDispatch_invokesTheSideEffect()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -560,9 +891,13 @@
       "name": "testDispatch_invokesTheSideEffectWithTheSameDependencyContainer",
       "file": "Tests/SideEffectTests.swift",
       "line": 25,
+      "line_end": 40,
       "signature": "func testDispatch_invokesTheSideEffectWithTheSameDependencyContainer()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 3,
       "category": "test"
     },
     {
@@ -572,9 +907,13 @@
       "name": "testDispatch_whenUsingThen_invokesTheSideEffectsInProperOrder",
       "file": "Tests/SideEffectTests.swift",
       "line": 42,
+      "line_end": 58,
       "signature": "func testDispatch_whenUsingThen_invokesTheSideEffectsInProperOrder()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 3,
       "category": "test"
     },
     {
@@ -584,9 +923,13 @@
       "name": "testDispatch_whenDispatchingFromSideEffect_dispatchesCorrectly",
       "file": "Tests/SideEffectTests.swift",
       "line": 60,
+      "line_end": 78,
       "signature": "func testDispatch_whenDispatchingFromSideEffect_dispatchesCorrectly()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -596,9 +939,13 @@
       "name": "testDispatch_whenDispatchingBothStateUpdatersAndSideEffects_handlesAllOfThem",
       "file": "Tests/SideEffectTests.swift",
       "line": 80,
+      "line_end": 113,
       "signature": "func testDispatch_whenDispatchingBothStateUpdatersAndSideEffects_handlesAllOfThem()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 2,
+      "out_degree": 4,
       "category": "test"
     },
     {
@@ -608,9 +955,13 @@
       "name": "testGetState_returnsTheUpdatedState",
       "file": "Tests/SideEffectTests.swift",
       "line": 115,
+      "line_end": 134,
       "signature": "func testGetState_returnsTheUpdatedState()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 5,
       "category": "test"
     },
     {
@@ -620,9 +971,13 @@
       "name": "testDispatch_propagatesErrors",
       "file": "Tests/SideEffectTests.swift",
       "line": 136,
+      "line_end": 152,
       "signature": "func testDispatch_propagatesErrors()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -632,9 +987,13 @@
       "name": "testReturningSideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 154,
+      "line_end": 162,
       "signature": "func testReturningSideEffect()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -644,9 +1003,13 @@
       "name": "testReturningSideEffect_whenNestedSideEffect_returnsComputedValue",
       "file": "Tests/SideEffectTests.swift",
       "line": 164,
+      "line_end": 172,
       "signature": "func testReturningSideEffect_whenNestedSideEffect_returnsComputedValue()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -656,9 +1019,13 @@
       "name": "testRetry_retriesDispatchable",
       "file": "Tests/SideEffectTests.swift",
       "line": 174,
+      "line_end": 188,
       "signature": "func testRetry_retriesDispatchable()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "test"
     },
     {
@@ -668,9 +1035,13 @@
       "name": "testRetry_whenReturningSideEffect_returnsRetriedResult",
       "file": "Tests/SideEffectTests.swift",
       "line": 190,
+      "line_end": 205,
       "signature": "func testRetry_whenReturningSideEffect_returnsRetriedResult()",
+      "params": [],
+      "return_type": null,
+      "container": "SideEffectTests",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "test"
     },
     {
@@ -680,7 +1051,17 @@
       "name": "sideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 212,
+      "line_end": 214,
       "signature": "func sideEffect(_: AnySideEffectContext) throws -> Int",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "Int",
+      "container": "Multiply",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -692,9 +1073,19 @@
       "name": "sideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 219,
+      "line_end": 224,
       "signature": "func sideEffect(_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "SideEffectContext<AppState, TestDependenciesContainer>"
+        }
+      ],
+      "return_type": null,
+      "container": "RetryMe",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -704,9 +1095,19 @@
       "name": "sideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 231,
+      "line_end": 243,
       "signature": "func sideEffect(_ context: AnySideEffectContext) throws -> Int",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "Int",
+      "container": "FailingMultiply",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "test"
     },
     {
@@ -716,9 +1117,19 @@
       "name": "sideEffect",
       "file": "Tests/SideEffectTests.swift",
       "line": 250,
+      "line_end": 253,
       "signature": "func sideEffect(_ context: AnySideEffectContext) throws -> Int",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "Int",
+      "container": "ReentrantMultiply",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "test"
     },
     {
@@ -728,9 +1139,13 @@
       "name": "testDefaultInit_initializesEmptyState",
       "file": "Tests/StoreTests.swift",
       "line": 16,
+      "line_end": 20,
       "signature": "func testDefaultInit_initializesEmptyState()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreTest",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -740,9 +1155,13 @@
       "name": "testListeners_areInvokedOnStateChange",
       "file": "Tests/StoreTests.swift",
       "line": 22,
+      "line_end": 38,
       "signature": "func testListeners_areInvokedOnStateChange()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreTest",
       "in_degree": 0,
-      "out_degree": 1,
+      "out_degree": 3,
       "category": "test"
     },
     {
@@ -752,9 +1171,13 @@
       "name": "testUnsubscribeListeners_areInvokedOnStateChange",
       "file": "Tests/StoreTests.swift",
       "line": 40,
+      "line_end": 62,
       "signature": "func testUnsubscribeListeners_areInvokedOnStateChange()",
+      "params": [],
+      "return_type": null,
+      "container": "StoreTest",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -764,9 +1187,13 @@
       "name": "testStoreListener_whenMultipleConcurrentOperations_itWillNotCrash",
       "file": "Tests/StoreTests.swift",
       "line": 64,
+      "line_end": 87,
       "signature": "func testStoreListener_whenMultipleConcurrentOperations_itWillNotCrash() throws",
+      "params": [],
+      "return_type": null,
+      "container": "StoreTest",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 2,
       "category": "test"
     },
     {
@@ -776,8 +1203,18 @@
       "name": "delay",
       "file": "Tests/Mocks/TestDependenciesContainer.swift",
       "line": 14,
+      "line_end": 18,
       "signature": "func delay(of interval: TimeInterval) -> Promise<Void>",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": "of",
+          "name": "interval",
+          "type": "TimeInterval"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "TestDependenciesContainer",
+      "in_degree": 1,
       "out_degree": 0,
       "category": "test"
     },
@@ -788,7 +1225,22 @@
       "name": "init",
       "file": "Tests/Mocks/TestDependenciesContainer.swift",
       "line": 20,
+      "line_end": 20,
       "signature": "init(dispatch _: @escaping AnyDispatch, getState _: @escaping GetState)",
+      "params": [
+        {
+          "label": "dispatch",
+          "name": "_",
+          "type": "AnyDispatch"
+        },
+        {
+          "label": "getState",
+          "name": "_",
+          "type": "GetState"
+        }
+      ],
+      "return_type": "TestDependenciesContainer",
+      "container": "TestDependenciesContainer",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -800,7 +1252,11 @@
       "name": "init",
       "file": "Tests/Mocks/State.swift",
       "line": 26,
+      "line_end": 28,
       "signature": "init()",
+      "params": [],
+      "return_type": "TodoState",
+      "container": "TodoState",
       "in_degree": 1,
       "out_degree": 0,
       "category": "test"
@@ -812,7 +1268,11 @@
       "name": "init",
       "file": "Tests/Mocks/State.swift",
       "line": 36,
+      "line_end": 38,
       "signature": "init()",
+      "params": [],
+      "return_type": "UserState",
+      "container": "UserState",
       "in_degree": 1,
       "out_degree": 0,
       "category": "test"
@@ -824,8 +1284,12 @@
       "name": "init",
       "file": "Tests/Mocks/State.swift",
       "line": 47,
+      "line_end": 50,
       "signature": "init()",
-      "in_degree": 0,
+      "params": [],
+      "return_type": "AppState",
+      "container": "AppState",
+      "in_degree": 1,
       "out_degree": 2,
       "category": "test"
     },
@@ -836,7 +1300,17 @@
       "name": "sideEffect",
       "file": "Tests/Mocks/Dispatchables.swift",
       "line": 22,
+      "line_end": 28,
       "signature": "func sideEffect(_ context: AnySideEffectContext) throws -> ReturnValue",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "ReturnValue",
+      "container": "ReturningTestSideEffect",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -848,7 +1322,17 @@
       "name": "updateState",
       "file": "Tests/Mocks/Dispatchables.swift",
       "line": 34,
+      "line_end": 36,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "AddTodo",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -860,7 +1344,17 @@
       "name": "updateState",
       "file": "Tests/Mocks/Dispatchables.swift",
       "line": 42,
+      "line_end": 44,
       "signature": "func updateState(_ state: inout AppState)",
+      "params": [
+        {
+          "label": null,
+          "name": "state",
+          "type": "AppState"
+        }
+      ],
+      "return_type": null,
+      "container": "AddUser",
       "in_degree": 0,
       "out_degree": 0,
       "category": "test"
@@ -872,8 +1366,23 @@
       "name": "init",
       "file": "Tests/Mocks/Dispatchables.swift",
       "line": 51,
+      "line_end": 57,
       "signature": "init(\n    delay: TimeInterval = 0,\n    invocationClosure: @escaping (_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws -> Void = { _ in }\n  )",
-      "in_degree": 1,
+      "params": [
+        {
+          "label": "delay",
+          "name": "delay",
+          "type": "TimeInterval"
+        },
+        {
+          "label": "invocationClosure",
+          "name": "invocationClosure",
+          "type": "(_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws -> Void"
+        }
+      ],
+      "return_type": "ClosureSideEffect",
+      "container": "ClosureSideEffect",
+      "in_degree": 9,
       "out_degree": 0,
       "category": "test"
     },
@@ -884,9 +1393,19 @@
       "name": "sideEffect",
       "file": "Tests/Mocks/Dispatchables.swift",
       "line": 59,
+      "line_end": 65,
       "signature": "func sideEffect(_ context: SideEffectContext<AppState, TestDependenciesContainer>) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "SideEffectContext<AppState, TestDependenciesContainer>"
+        }
+      ],
+      "return_type": null,
+      "container": "ClosureSideEffect",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "test"
     },
     {
@@ -896,7 +1415,17 @@
       "name": "updatedState",
       "file": "Sources/StateUpdater.swift",
       "line": 62,
+      "line_end": 69,
       "signature": "public func updatedState(currentState: State) -> State",
+      "params": [
+        {
+          "label": "currentState",
+          "name": "currentState",
+          "type": "State"
+        }
+      ],
+      "return_type": "State",
+      "container": "StateUpdater",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -908,7 +1437,11 @@
       "name": "init",
       "file": "Sources/State.swift",
       "line": 21,
+      "line_end": 21,
       "signature": "init()",
+      "params": [],
+      "return_type": "State",
+      "container": "State",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -920,9 +1453,19 @@
       "name": "dispatch",
       "file": "Sources/SideEffect.swift",
       "line": 69,
+      "line_end": 72,
       "signature": "@discardableResult\n  public func dispatch<T: AnyStateUpdater>(_ dispatchable: T) -> Promise<Void>",
-      "in_degree": 0,
-      "out_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "AnySideEffectContext",
+      "in_degree": 6,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -932,9 +1475,19 @@
       "name": "dispatch",
       "file": "Sources/SideEffect.swift",
       "line": 75,
+      "line_end": 78,
       "signature": "@discardableResult\n  public func dispatch<T: AnySideEffect>(_ dispatchable: T) -> Promise<Void>",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "AnySideEffectContext",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -944,9 +1497,19 @@
       "name": "dispatch",
       "file": "Sources/SideEffect.swift",
       "line": 81,
+      "line_end": 84,
       "signature": "@discardableResult\n  public func dispatch<T: ReturningSideEffect>(_ dispatchable: T) -> Promise<T.ReturnValue>",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<T.ReturnValue>",
+      "container": "AnySideEffectContext",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -956,7 +1519,27 @@
       "name": "init",
       "file": "Sources/SideEffect.swift",
       "line": 113,
+      "line_end": 117,
       "signature": "init(dependencies: D, getState: @escaping () -> S, dispatch: @escaping AnyDispatch)",
+      "params": [
+        {
+          "label": "dependencies",
+          "name": "dependencies",
+          "type": "D"
+        },
+        {
+          "label": "getState",
+          "name": "getState",
+          "type": "() -> S"
+        },
+        {
+          "label": "dispatch",
+          "name": "dispatch",
+          "type": "AnyDispatch"
+        }
+      ],
+      "return_type": "SideEffectContext",
+      "container": "SideEffectContext",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -968,8 +1551,12 @@
       "name": "getState",
       "file": "Sources/SideEffect.swift",
       "line": 124,
+      "line_end": 126,
       "signature": "public func getState() -> S",
-      "in_degree": 0,
+      "params": [],
+      "return_type": "S",
+      "container": "SideEffectContext",
+      "in_degree": 5,
       "out_degree": 0,
       "category": "source"
     },
@@ -980,8 +1567,18 @@
       "name": "anyDispatch",
       "file": "Sources/SideEffect.swift",
       "line": 133,
+      "line_end": 136,
       "signature": "@discardableResult\n  public func anyDispatch(_ dispatchable: Dispatchable) -> Promise<Any>",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": "Promise<Any>",
+      "container": "SideEffectContext",
+      "in_degree": 3,
       "out_degree": 0,
       "category": "source"
     },
@@ -992,9 +1589,13 @@
       "name": "getAnyState",
       "file": "Sources/SideEffect.swift",
       "line": 147,
+      "line_end": 149,
       "signature": "public func getAnyState() -> State",
+      "params": [],
+      "return_type": "State",
+      "container": "SideEffectContext",
       "in_degree": 3,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1004,7 +1605,17 @@
       "name": "anySideEffect",
       "file": "Sources/SideEffect.swift",
       "line": 215,
+      "line_end": 217,
       "signature": "public func anySideEffect(_ context: AnySideEffectContext) throws -> Any",
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "Any",
+      "container": "ReturningSideEffect",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1016,8 +1627,18 @@
       "name": "anySideEffect",
       "file": "Sources/SideEffect.swift",
       "line": 285,
+      "line_end": 292,
       "signature": "public func anySideEffect(_ context: AnySideEffectContext) throws -> Any",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "context",
+          "type": "AnySideEffectContext"
+        }
+      ],
+      "return_type": "Any",
+      "container": "SideEffect",
+      "in_degree": 1,
       "out_degree": 0,
       "category": "source"
     },
@@ -1028,7 +1649,17 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 100,
+      "line_end": 102,
       "signature": "internal init(state: S)",
+      "params": [
+        {
+          "label": "state",
+          "name": "state",
+          "type": "S"
+        }
+      ],
+      "return_type": "PartialStore",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1040,7 +1671,17 @@
       "name": "anyDispatch",
       "file": "Sources/Store.swift",
       "line": 109,
+      "line_end": 112,
       "signature": "@discardableResult\n  public func anyDispatch(_: Dispatchable) -> Promise<Any>",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": "Promise<Any>",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1052,7 +1693,17 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 119,
+      "line_end": 122,
       "signature": "@discardableResult\n  public func dispatch<T: AnyStateUpdater>(_: T) -> Promise<Void>",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1064,7 +1715,17 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 129,
+      "line_end": 132,
       "signature": "@discardableResult\n  public func dispatch<T: AnySideEffect>(_: T) -> Promise<Void>",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1076,7 +1737,17 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 139,
+      "line_end": 142,
       "signature": "@discardableResult\n  public func dispatch<T: ReturningSideEffect>(_: T) -> Promise<T.ReturnValue>",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<T.ReturnValue>",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1088,7 +1759,17 @@
       "name": "addAnyListener",
       "file": "Sources/Store.swift",
       "line": 149,
+      "line_end": 151,
       "signature": "public func addAnyListener(_: @escaping AnyStoreListener) -> StoreUnsubscribe",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "AnyStoreListener"
+        }
+      ],
+      "return_type": "StoreUnsubscribe",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1100,7 +1781,17 @@
       "name": "addListener",
       "file": "Sources/Store.swift",
       "line": 163,
+      "line_end": 165,
       "signature": "public func addListener(_: @escaping StoreListener<S>) -> StoreUnsubscribe",
+      "params": [
+        {
+          "label": null,
+          "name": "_",
+          "type": "StoreListener<S>"
+        }
+      ],
+      "return_type": "StoreUnsubscribe",
+      "container": "PartialStore",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1112,7 +1803,11 @@
       "name": "emptyStateInitializer",
       "file": "Sources/Store.swift",
       "line": 169,
+      "line_end": 171,
       "signature": "private func emptyStateInitializer<S: State>() -> S",
+      "params": [],
+      "return_type": "S",
+      "container": null,
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1124,8 +1819,12 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 275,
+      "line_end": 277,
       "signature": "public convenience init()",
-      "in_degree": 0,
+      "params": [],
+      "return_type": "Store",
+      "container": "Store",
+      "in_degree": 3,
       "out_degree": 0,
       "category": "source"
     },
@@ -1136,9 +1835,19 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 286,
+      "line_end": 291,
       "signature": "public convenience init(interceptors: [StoreInterceptor])",
+      "params": [
+        {
+          "label": "interceptors",
+          "name": "interceptors",
+          "type": "[StoreInterceptor]"
+        }
+      ],
+      "return_type": "Store",
+      "container": "Store",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1148,9 +1857,29 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 301,
+      "line_end": 312,
       "signature": "public convenience init(\n    interceptors: [StoreInterceptor],\n    stateInitializer: @escaping StateInitializer<S>,\n    configuration: Configuration = .init()\n  )",
+      "params": [
+        {
+          "label": "interceptors",
+          "name": "interceptors",
+          "type": "[StoreInterceptor]"
+        },
+        {
+          "label": "stateInitializer",
+          "name": "stateInitializer",
+          "type": "StateInitializer<S>"
+        },
+        {
+          "label": "configuration",
+          "name": "configuration",
+          "type": "Configuration"
+        }
+      ],
+      "return_type": "Store",
+      "container": "Store",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1160,9 +1889,34 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 338,
+      "line_end": 367,
       "signature": "public init(\n    interceptors: [StoreInterceptor],\n    stateInitializer: @escaping StateInitializer<S>,\n    dependenciesInitializer: @escaping DependenciesInitializer,\n    configuration: Configuration = .init()\n  )",
+      "params": [
+        {
+          "label": "interceptors",
+          "name": "interceptors",
+          "type": "[StoreInterceptor]"
+        },
+        {
+          "label": "stateInitializer",
+          "name": "stateInitializer",
+          "type": "StateInitializer<S>"
+        },
+        {
+          "label": "dependenciesInitializer",
+          "name": "dependenciesInitializer",
+          "type": "DependenciesInitializer"
+        },
+        {
+          "label": "configuration",
+          "name": "configuration",
+          "type": "Configuration"
+        }
+      ],
+      "return_type": "Store",
+      "container": "Store",
       "in_degree": 0,
-      "out_degree": 3,
+      "out_degree": 4,
       "category": "source"
     },
     {
@@ -1172,9 +1926,19 @@
       "name": "addAnyListener",
       "file": "Sources/Store.swift",
       "line": 392,
+      "line_end": 396,
       "signature": "override public func addAnyListener(_ listener: @escaping AnyStoreListener) -> StoreUnsubscribe",
+      "params": [
+        {
+          "label": null,
+          "name": "listener",
+          "type": "AnyStoreListener"
+        }
+      ],
+      "return_type": "StoreUnsubscribe",
+      "container": "Store",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1184,8 +1948,18 @@
       "name": "addListener",
       "file": "Sources/Store.swift",
       "line": 407,
+      "line_end": 419,
       "signature": "override public func addListener(_ listener: @escaping StoreListener<S>) -> StoreUnsubscribe",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "listener",
+          "type": "StoreListener<S>"
+        }
+      ],
+      "return_type": "StoreUnsubscribe",
+      "container": "Store",
+      "in_degree": 4,
       "out_degree": 0,
       "category": "source"
     },
@@ -1196,8 +1970,18 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 444,
+      "line_end": 447,
       "signature": "@discardableResult\n  override public func dispatch<T: ReturningSideEffect>(_ dispatchable: T) -> Promise<T.ReturnValue>",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<T.ReturnValue>",
+      "container": "Store",
+      "in_degree": 33,
       "out_degree": 1,
       "category": "source"
     },
@@ -1208,7 +1992,17 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 472,
+      "line_end": 475,
       "signature": "@discardableResult\n  override public func dispatch<T: AnySideEffect>(_ dispatchable: T) -> Promise<Void>",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "Store",
       "in_degree": 0,
       "out_degree": 1,
       "category": "source"
@@ -1220,7 +2014,17 @@
       "name": "dispatch",
       "file": "Sources/Store.swift",
       "line": 498,
+      "line_end": 501,
       "signature": "@discardableResult\n  override public func dispatch<T: AnyStateUpdater>(_ dispatchable: T) -> Promise<Void>",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "T"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "Store",
       "in_degree": 0,
       "out_degree": 1,
       "category": "source"
@@ -1232,9 +2036,19 @@
       "name": "anyDispatch",
       "file": "Sources/Store.swift",
       "line": 532,
+      "line_end": 545,
       "signature": "@discardableResult\n  override public func anyDispatch(_ dispatchable: Dispatchable) -> Promise<Any>",
-      "in_degree": 0,
-      "out_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": "Promise<Any>",
+      "container": "Store",
+      "in_degree": 1,
+      "out_degree": 2,
       "category": "source"
     },
     {
@@ -1244,9 +2058,19 @@
       "name": "nonPromisableDispatch",
       "file": "Sources/Store.swift",
       "line": 552,
+      "line_end": 554,
       "signature": "fileprivate func nonPromisableDispatch(_ dispatchable: Dispatchable)",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "Store",
       "in_degree": 2,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1256,7 +2080,22 @@
       "name": "init",
       "file": "Sources/Store.swift",
       "line": 564,
+      "line_end": 570,
       "signature": "public init(\n      stateInitializerAsyncProvider: Executor = DispatchQueue.main,\n      listenersAsyncProvider: Executor = DispatchQueue.main\n    )",
+      "params": [
+        {
+          "label": "stateInitializerAsyncProvider",
+          "name": "stateInitializerAsyncProvider",
+          "type": "Executor"
+        },
+        {
+          "label": "listenersAsyncProvider",
+          "name": "listenersAsyncProvider",
+          "type": "Executor"
+        }
+      ],
+      "return_type": "Configuration",
+      "container": "Configuration",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1268,7 +2107,17 @@
       "name": "initializeInternalState",
       "file": "Sources/Store.swift",
       "line": 583,
+      "line_end": 591,
       "signature": "private func initializeInternalState(using stateInitializer: StateInitializer<S>)",
+      "params": [
+        {
+          "label": "using",
+          "name": "stateInitializer",
+          "type": "StateInitializer<S>"
+        }
+      ],
+      "return_type": null,
+      "container": "Store",
       "in_degree": 1,
       "out_degree": 1,
       "category": "source"
@@ -1280,7 +2129,22 @@
       "name": "invokeListeners",
       "file": "Sources/Store.swift",
       "line": 594,
+      "line_end": 600,
       "signature": "private func invokeListeners(oldState: S, newState: S)",
+      "params": [
+        {
+          "label": "oldState",
+          "name": "oldState",
+          "type": "S"
+        },
+        {
+          "label": "newState",
+          "name": "newState",
+          "type": "S"
+        }
+      ],
+      "return_type": null,
+      "container": "Store",
       "in_degree": 1,
       "out_degree": 1,
       "category": "source"
@@ -1292,7 +2156,11 @@
       "name": "getState",
       "file": "Sources/Store.swift",
       "line": 609,
+      "line_end": 617,
       "signature": "private func getState() -> S",
+      "params": [],
+      "return_type": "S",
+      "container": "Store",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1304,8 +2172,18 @@
       "name": "enqueueStateUpdater",
       "file": "Sources/Store.swift",
       "line": 629,
+      "line_end": 640,
       "signature": "private func enqueueStateUpdater(_ stateUpdater: AnyStateUpdater) -> Promise<Void>",
-      "in_degree": 1,
+      "params": [
+        {
+          "label": null,
+          "name": "stateUpdater",
+          "type": "AnyStateUpdater"
+        }
+      ],
+      "return_type": "Promise<Void>",
+      "container": "Store",
+      "in_degree": 2,
       "out_degree": 1,
       "category": "source"
     },
@@ -1316,7 +2194,17 @@
       "name": "manageUpdateState",
       "file": "Sources/Store.swift",
       "line": 648,
+      "line_end": 670,
       "signature": "private func manageUpdateState(_ dispatchable: Dispatchable) throws",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "Store",
       "in_degree": 0,
       "out_degree": 4,
       "category": "source"
@@ -1328,8 +2216,18 @@
       "name": "enqueueSideEffect",
       "file": "Sources/Store.swift",
       "line": 682,
+      "line_end": 709,
       "signature": "private func enqueueSideEffect<ReturnValue>(_ sideEffect: AnySideEffect) -> Promise<ReturnValue>",
-      "in_degree": 2,
+      "params": [
+        {
+          "label": null,
+          "name": "sideEffect",
+          "type": "AnySideEffect"
+        }
+      ],
+      "return_type": "Promise<ReturnValue>",
+      "container": "Store",
+      "in_degree": 3,
       "out_degree": 2,
       "category": "source"
     },
@@ -1340,9 +2238,19 @@
       "name": "manageSideEffect",
       "file": "Sources/Store.swift",
       "line": 717,
+      "line_end": 731,
       "signature": "private func manageSideEffect(_ dispatchable: Dispatchable) throws -> Any",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": "Any",
+      "container": "Store",
       "in_degree": 1,
-      "out_degree": 2,
+      "out_degree": 3,
       "category": "source"
     },
     {
@@ -1352,7 +2260,22 @@
       "name": "initializedInterceptors",
       "file": "Sources/Store.swift",
       "line": 754,
+      "line_end": 761,
       "signature": "fileprivate static func initializedInterceptors(\n    _ interceptors: [StoreInterceptor],\n    sideEffectContext: SideEffectContext<S, D>\n  ) -> [InitializedInterceptor]",
+      "params": [
+        {
+          "label": null,
+          "name": "interceptors",
+          "type": "[StoreInterceptor]"
+        },
+        {
+          "label": "sideEffectContext",
+          "name": "sideEffectContext",
+          "type": "SideEffectContext<S, D>"
+        }
+      ],
+      "return_type": "[InitializedInterceptor]",
+      "container": "Store",
       "in_degree": 1,
       "out_degree": 1,
       "category": "source"
@@ -1364,7 +2287,22 @@
       "name": "chainedInterceptors",
       "file": "Sources/Store.swift",
       "line": 771,
+      "line_end": 792,
       "signature": "fileprivate static func chainedInterceptors(\n    _ interceptors: [InitializedInterceptor],\n    with lastStep: @escaping ThrowingDispatch\n  ) -> ThrowingDispatch",
+      "params": [
+        {
+          "label": null,
+          "name": "interceptors",
+          "type": "[InitializedInterceptor]"
+        },
+        {
+          "label": "with",
+          "name": "lastStep",
+          "type": "ThrowingDispatch"
+        }
+      ],
+      "return_type": "ThrowingDispatch",
+      "container": "Store",
       "in_degree": 2,
       "out_degree": 0,
       "category": "source"
@@ -1376,7 +2314,17 @@
       "name": "executeAsync",
       "file": "Sources/Types.swift",
       "line": 62,
+      "line_end": 64,
       "signature": "public func executeAsync(_ closure: @escaping () -> Void)",
+      "params": [
+        {
+          "label": null,
+          "name": "closure",
+          "type": "() -> Void"
+        }
+      ],
+      "return_type": null,
+      "container": "Executor",
       "in_degree": 2,
       "out_degree": 1,
       "category": "source"
@@ -1388,7 +2336,17 @@
       "name": "executeSync",
       "file": "Sources/Types.swift",
       "line": 75,
+      "line_end": 78,
       "signature": "@available(*, deprecated, message: \"Use a proper primitive given by your underlying implementation\")\n  public func executeSync<T>(_ closure: @escaping () -> T) -> T",
+      "params": [
+        {
+          "label": null,
+          "name": "closure",
+          "type": "() -> T"
+        }
+      ],
+      "return_type": "T",
+      "container": "Executor",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1400,7 +2358,17 @@
       "name": "execute",
       "file": "Sources/Types.swift",
       "line": 83,
+      "line_end": 85,
       "signature": "public func execute(_ closure: @escaping () -> Void)",
+      "params": [
+        {
+          "label": null,
+          "name": "closure",
+          "type": "() -> Void"
+        }
+      ],
+      "return_type": null,
+      "container": "DispatchQueue",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1412,7 +2380,17 @@
       "name": "executeSync",
       "file": "Sources/Types.swift",
       "line": 87,
+      "line_end": 106,
       "signature": "public func executeSync<T>(_ closure: @escaping () -> T) -> T",
+      "params": [
+        {
+          "label": null,
+          "name": "closure",
+          "type": "() -> T"
+        }
+      ],
+      "return_type": "T",
+      "container": "DispatchQueue",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1424,7 +2402,22 @@
       "name": "logStart",
       "file": "Sources/SignpostLogger.swift",
       "line": 53,
+      "line_end": 69,
       "signature": "func logStart(type: LogType, name: String) -> LogEndClosure",
+      "params": [
+        {
+          "label": "type",
+          "name": "type",
+          "type": "LogType"
+        },
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "return_type": "LogEndClosure",
+      "container": "SignpostLogger",
       "in_degree": 2,
       "out_degree": 2,
       "category": "source"
@@ -1436,7 +2429,22 @@
       "name": "logStateUpdater",
       "file": "Sources/SignpostLogger.swift",
       "line": 78,
+      "line_end": 87,
       "signature": "@available(iOS 12.0, OSX 10.14, *)\n  func logStateUpdater(log: OSLog, name: String) -> LogEndClosure",
+      "params": [
+        {
+          "label": "log",
+          "name": "log",
+          "type": "OSLog"
+        },
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "return_type": "LogEndClosure",
+      "container": "SignpostLogger",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1448,7 +2456,22 @@
       "name": "logSideEffect",
       "file": "Sources/SignpostLogger.swift",
       "line": 96,
+      "line_end": 105,
       "signature": "@available(iOS 12.0, OSX 10.14, *)\n  func logSideEffect(log: OSLog, name: String) -> LogEndClosure",
+      "params": [
+        {
+          "label": "log",
+          "name": "log",
+          "type": "OSLog"
+        },
+        {
+          "label": "name",
+          "name": "name",
+          "type": "String"
+        }
+      ],
+      "return_type": "LogEndClosure",
+      "container": "SignpostLogger",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1460,7 +2483,11 @@
       "name": "init",
       "file": "Sources/SignpostLogger.swift",
       "line": 114,
+      "line_end": 120,
       "signature": "private init()",
+      "params": [],
+      "return_type": "SignpostLogger",
+      "container": "SignpostLogger",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1472,7 +2499,22 @@
       "name": "init",
       "file": "Sources/SideEffectDependencyContainer.swift",
       "line": 22,
+      "line_end": 22,
       "signature": "init(dispatch: @escaping AnyDispatch, getState: @escaping GetState)",
+      "params": [
+        {
+          "label": "dispatch",
+          "name": "dispatch",
+          "type": "AnyDispatch"
+        },
+        {
+          "label": "getState",
+          "name": "getState",
+          "type": "GetState"
+        }
+      ],
+      "return_type": "SideEffectDependencyContainer",
+      "container": "SideEffectDependencyContainer",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1484,7 +2526,22 @@
       "name": "init",
       "file": "Sources/SideEffectDependencyContainer.swift",
       "line": 33,
+      "line_end": 33,
       "signature": "public required init(dispatch _: @escaping AnyDispatch, getState _: @escaping GetState)",
+      "params": [
+        {
+          "label": "dispatch",
+          "name": "_",
+          "type": "AnyDispatch"
+        },
+        {
+          "label": "getState",
+          "name": "_",
+          "type": "GetState"
+        }
+      ],
+      "return_type": "EmptySideEffectDependencyContainer",
+      "container": "EmptySideEffectDependencyContainer",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1496,7 +2553,17 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 24,
+      "line_end": 24,
       "signature": "init?(notification: Notification)",
+      "params": [
+        {
+          "label": "notification",
+          "name": "notification",
+          "type": "Notification"
+        }
+      ],
+      "return_type": "NotificationObserverDispatchable",
+      "container": "NotificationObserverDispatchable",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1508,7 +2575,22 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 40,
+      "line_end": 40,
       "signature": "init?(prevState: State, currentState: State)",
+      "params": [
+        {
+          "label": "prevState",
+          "name": "prevState",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "currentState",
+          "type": "State"
+        }
+      ],
+      "return_type": "StateObserverDispatchable",
+      "container": "StateObserverDispatchable",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1520,7 +2602,27 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 57,
+      "line_end": 57,
       "signature": "init?(dispatchedItem: Dispatchable, prevState: State, currentState: State)",
+      "params": [
+        {
+          "label": "dispatchedItem",
+          "name": "dispatchedItem",
+          "type": "Dispatchable"
+        },
+        {
+          "label": "prevState",
+          "name": "prevState",
+          "type": "State"
+        },
+        {
+          "label": "currentState",
+          "name": "currentState",
+          "type": "State"
+        }
+      ],
+      "return_type": "DispatchObserverDispatchable",
+      "container": "DispatchObserverDispatchable",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1532,7 +2634,11 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 71,
+      "line_end": 71,
       "signature": "init?()",
+      "params": [],
+      "return_type": "OnStartObserverDispatchable",
+      "container": "OnStartObserverDispatchable",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1544,7 +2650,11 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 81,
+      "line_end": 81,
       "signature": "private init()",
+      "params": [],
+      "return_type": "ObserverInterceptor",
+      "container": "ObserverInterceptor",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1556,7 +2666,22 @@
       "name": "observe",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 90,
+      "line_end": 111,
       "signature": "public static func observe(\n    _ items: [ObserverType],\n    notificationCenter: NotificationCenter = .default\n  ) -> StoreInterceptor",
+      "params": [
+        {
+          "label": null,
+          "name": "items",
+          "type": "[ObserverType]"
+        },
+        {
+          "label": "notificationCenter",
+          "name": "notificationCenter",
+          "type": "NotificationCenter"
+        }
+      ],
+      "return_type": "StoreInterceptor",
+      "container": "ObserverInterceptor",
       "in_degree": 19,
       "out_degree": 5,
       "category": "source"
@@ -1568,7 +2693,27 @@
       "name": "init",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 135,
+      "line_end": 143,
       "signature": "init(\n    dispatch: @escaping AnyDispatch,\n    items: [ObserverInterceptor.ObserverType],\n    notificationCenter: NotificationCenter = .default\n  )",
+      "params": [
+        {
+          "label": "dispatch",
+          "name": "dispatch",
+          "type": "AnyDispatch"
+        },
+        {
+          "label": "items",
+          "name": "items",
+          "type": "[ObserverInterceptor.ObserverType]"
+        },
+        {
+          "label": "notificationCenter",
+          "name": "notificationCenter",
+          "type": "NotificationCenter"
+        }
+      ],
+      "return_type": "ObserverLogic",
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1580,7 +2725,11 @@
       "name": "deinit",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 146,
+      "line_end": 148,
       "signature": "deinit",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 0,
       "out_degree": 0,
       "category": "source"
@@ -1592,7 +2741,11 @@
       "name": "listenToNotifications",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 155,
+      "line_end": 163,
       "signature": "fileprivate func listenToNotifications()",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 1,
       "category": "source"
@@ -1604,7 +2757,11 @@
       "name": "handleOnStart",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 170,
+      "line_end": 184,
       "signature": "fileprivate func handleOnStart()",
+      "params": [],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1616,7 +2773,22 @@
       "name": "handleNotification",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 194,
+      "line_end": 219,
       "signature": "private func handleNotification(\n    with name: NSNotification.Name,\n    _ typesToDispatch: [NotificationObserverDispatchable.Type]\n  )",
+      "params": [
+        {
+          "label": "with",
+          "name": "name",
+          "type": "NSNotification.Name"
+        },
+        {
+          "label": null,
+          "name": "typesToDispatch",
+          "type": "[NotificationObserverDispatchable.Type]"
+        }
+      ],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 1,
       "category": "source"
@@ -1628,7 +2800,27 @@
       "name": "handleDispatchable",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 229,
+      "line_end": 247,
       "signature": "fileprivate func handleDispatchable(_ dispatchable: Dispatchable, anyPrevState: State, anyCurrentState: State)",
+      "params": [
+        {
+          "label": null,
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        },
+        {
+          "label": "anyPrevState",
+          "name": "anyPrevState",
+          "type": "State"
+        },
+        {
+          "label": "anyCurrentState",
+          "name": "anyCurrentState",
+          "type": "State"
+        }
+      ],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 2,
       "category": "source"
@@ -1640,7 +2832,37 @@
       "name": "handleOnStateChange",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 249,
+      "line_end": 267,
       "signature": "private func handleOnStateChange(\n    _ anyPrevState: State,\n    _ anyCurrentState: State,\n    _ isSideEffect: Bool,\n    _ changeClosure: ObserverInterceptor.ObserverType.StateChangeObserver,\n    _ itemsToDispatch: [StateObserverDispatchable.Type]\n  )",
+      "params": [
+        {
+          "label": null,
+          "name": "anyPrevState",
+          "type": "State"
+        },
+        {
+          "label": null,
+          "name": "anyCurrentState",
+          "type": "State"
+        },
+        {
+          "label": null,
+          "name": "isSideEffect",
+          "type": "Bool"
+        },
+        {
+          "label": null,
+          "name": "changeClosure",
+          "type": "ObserverInterceptor.ObserverType.StateChangeObserver"
+        },
+        {
+          "label": null,
+          "name": "itemsToDispatch",
+          "type": "[StateObserverDispatchable.Type]"
+        }
+      ],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1652,7 +2874,32 @@
       "name": "handleOnDispatched",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 277,
+      "line_end": 290,
       "signature": "private func handleOnDispatched(\n    _ itemsToDispatch: [DispatchObserverDispatchable.Type],\n    _ anyPrevState: State,\n    _ anyCurrentState: State,\n    _ dispatched: Dispatchable\n  )",
+      "params": [
+        {
+          "label": null,
+          "name": "itemsToDispatch",
+          "type": "[DispatchObserverDispatchable.Type]"
+        },
+        {
+          "label": null,
+          "name": "anyPrevState",
+          "type": "State"
+        },
+        {
+          "label": null,
+          "name": "anyCurrentState",
+          "type": "State"
+        },
+        {
+          "label": null,
+          "name": "dispatched",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": null,
+      "container": "ObserverLogic",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1664,8 +2911,18 @@
       "name": "stringName",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 296,
+      "line_end": 298,
       "signature": "fileprivate static func stringName(for dispatchable: Dispatchable.Type) -> String",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": "for",
+          "name": "dispatchable",
+          "type": "Dispatchable.Type"
+        }
+      ],
+      "return_type": "String",
+      "container": "ObserverLogic",
+      "in_degree": 1,
       "out_degree": 0,
       "category": "source"
     },
@@ -1676,9 +2933,19 @@
       "name": "stringName",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 304,
+      "line_end": 306,
       "signature": "fileprivate static func stringName(for dispatchable: Dispatchable) -> String",
+      "params": [
+        {
+          "label": "for",
+          "name": "dispatchable",
+          "type": "Dispatchable"
+        }
+      ],
+      "return_type": "String",
+      "container": "ObserverLogic",
       "in_degree": 0,
-      "out_degree": 0,
+      "out_degree": 1,
       "category": "source"
     },
     {
@@ -1688,8 +2955,18 @@
       "name": "typedStateChange",
       "file": "Sources/Interceptor/ObserverInterceptor.swift",
       "line": 351,
+      "line_end": 359,
       "signature": "public static func typedStateChange<S: State>(_ closure: @escaping TypedStateChangeObserver<S>) -> StateChangeObserver",
-      "in_degree": 0,
+      "params": [
+        {
+          "label": null,
+          "name": "closure",
+          "type": "TypedStateChangeObserver<S>"
+        }
+      ],
+      "return_type": "StateChangeObserver",
+      "container": "ObserverType",
+      "in_degree": 4,
       "out_degree": 0,
       "category": "source"
     },
@@ -1700,7 +2977,17 @@
       "name": "interceptor",
       "file": "Sources/Interceptor/DispatchableLogger.swift",
       "line": 20,
+      "line_end": 34,
       "signature": "public static func interceptor(blackList: [Dispatchable.Type] = []) -> StoreInterceptor",
+      "params": [
+        {
+          "label": "blackList",
+          "name": "blackList",
+          "type": "[Dispatchable.Type]"
+        }
+      ],
+      "return_type": "StoreInterceptor",
+      "container": "DispatchableLogger",
       "in_degree": 1,
       "out_degree": 0,
       "category": "source"
@@ -1715,7 +3002,19 @@
     },
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_dispatchesDispatchable:18",
+      "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverType.typedStateChange:351",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_dispatchesDispatchable:18",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_dispatchesDispatchable:18",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1733,6 +3032,18 @@
     },
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem:37",
+      "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverType.typedStateChange:351",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem:37",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem:37",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitFor:33",
       "type": "calls",
       "weight": 1
@@ -1745,7 +3056,19 @@
     },
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndNillableInitDispatchables_discardsNilOnes:60",
+      "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverType.typedStateChange:351",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndNillableInitDispatchables_discardsNilOnes:60",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserverAndNillableInitDispatchables_discardsNilOnes:60",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1763,7 +3086,25 @@
     },
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects:82",
+      "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverType.typedStateChange:351",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects:82",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects:82",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingAppStateChangeObserver_doesNotInterceptSideEffects:82",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
       "type": "calls",
       "weight": 1
     },
@@ -1776,6 +3117,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserver_dispatchesDispatchable:100",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserver_dispatchesDispatchable:100",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1794,6 +3141,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem:122",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserverAndMultipleDispatchables_dispatchesAllOfThem:122",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1812,6 +3165,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserverAndNillableInitDispatchables_discardsNilOnes:148",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserverAndNillableInitDispatchables_discardsNilOnes:148",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1834,6 +3193,18 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserver_doesNotInterceptSideEffects:173",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnStateChange_whenUsingStateChangeObserver_doesNotInterceptSideEffects:173",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_dispatchesDispatchables:192",
       "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverInterceptor.observe:90",
       "type": "calls",
@@ -1842,6 +3213,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_dispatchesDispatchables:192",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_dispatchesDispatchables:192",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1865,6 +3242,12 @@
     },
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenMultipleDispatchables_dispatchesAllOfThem:209",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenMultipleDispatchables_dispatchesAllOfThem:209",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitFor:33",
       "type": "calls",
       "weight": 1
@@ -1878,6 +3261,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenNillableInitDispatchables_discardsNilOnes:229",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenNillableInitDispatchables_discardsNilOnes:229",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1890,6 +3279,12 @@
     {
       "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenMultipleObservers_observesAllOfThem:249",
       "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverInterceptor.observe:90",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/ObserverInterceptorTests.swift:ObserverInterceptorTests.testObserveOnDispatch_whenMultipleObservers_observesAllOfThem:249",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -1996,8 +3391,26 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor:16",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenMultipleInterceptors_areExecutedInOrder:41",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenMultipleInterceptors_areExecutedInOrder:41",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenInterceptorThrows_propagationIsBlocked:80",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -2009,6 +3422,12 @@
     },
     {
       "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenReturningSideEffect_re:101",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenReturningSideEffect_re:101",
       "target": "func:Sources/SideEffect.swift:SideEffectContext.getAnyState:147",
       "type": "calls",
       "weight": 2
@@ -2020,8 +3439,32 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenReturningSideEffect_re:101",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenReturningSideEffect_re:101",
+      "target": "func:Tests/StoreInterceptorsTests.swift:ReturningClosureSideEffect.init:146",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreInterceptorsTests.swift:StoreInterceptorsTests.testStoreInterceptor_whenReturningSideEffect_re:101",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.getState:124",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Tests/StateUpdaterTests.swift:StateUpdaterTests.testDispatch_invokesTheStateUpdater:15",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StateUpdaterTests.swift:StateUpdaterTests.testDispatch_invokesTheStateUpdater:15",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -2032,10 +3475,40 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/StateUpdaterTests.swift:StateUpdaterTests.testDispatch_whenChained_areInvokedInOrder:24",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/StateUpdaterTests.swift:StateUpdaterTests.testDispatch_whenNotChained_areInvokedInOrder:45",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 3
+    },
+    {
       "source": "func:Tests/StateUpdaterTests.swift:StateUpdaterTests.testDispatch_whenNotChained_areInvokedInOrder:45",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromises:24",
       "type": "calls",
       "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_invokesTheSideEffect:16",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_invokesTheSideEffect:16",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_invokesTheSideEffectWithTheSameDependencyContainer:25",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 2
     },
     {
       "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_invokesTheSideEffectWithTheSameDependencyContainer:25",
@@ -2044,8 +3517,38 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_invokesTheSideEffectWithTheSameDependencyContainer:25",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenUsingThen_invokesTheSideEffectsInProperOrder:42",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 3
+    },
+    {
       "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenUsingThen_invokesTheSideEffectsInProperOrder:42",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenUsingThen_invokesTheSideEffectsInProperOrder:42",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 3
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingFromSideEffect_dispatchesCorrectly:60",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 3
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingFromSideEffect_dispatchesCorrectly:60",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
       "type": "calls",
       "weight": 1
     },
@@ -2056,8 +3559,20 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingFromSideEffect_dispatchesCorrectly:60",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 2
+    },
+    {
       "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingBothStateUpdatersAndSideEffects_handlesAllOfThem:80",
       "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingBothStateUpdatersAndSideEffects_handlesAllOfThem:80",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.getState:124",
       "type": "calls",
       "weight": 2
     },
@@ -2068,8 +3583,50 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_whenDispatchingBothStateUpdatersAndSideEffects_handlesAllOfThem:80",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 4
+    },
+    {
       "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testGetState_returnsTheUpdatedState:115",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testGetState_returnsTheUpdatedState:115",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testGetState_returnsTheUpdatedState:115",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testGetState_returnsTheUpdatedState:115",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.getState:124",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testGetState_returnsTheUpdatedState:115",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_propagatesErrors:136",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testDispatch_propagatesErrors:136",
+      "target": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.init:51",
       "type": "calls",
       "weight": 1
     },
@@ -2080,8 +3637,56 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testReturningSideEffect:154",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testReturningSideEffect_whenNestedSideEffect_returnsComputedValue:164",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testReturningSideEffect_whenNestedSideEffect_returnsComputedValue:164",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testRetry_retriesDispatchable:174",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:SideEffectTests.testRetry_whenReturningSideEffect_returnsRetriedResult:190",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:RetryMe.sideEffect:219",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:RetryMe.sideEffect:219",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.getState:124",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:FailingMultiply.sideEffect:231",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/SideEffectTests.swift:ReentrantMultiply.sideEffect:250",
+      "target": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
       "type": "calls",
       "weight": 1
     },
@@ -2092,8 +3697,50 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testDefaultInit_initializesEmptyState:16",
+      "target": "func:Tests/Mocks/State.swift:AppState.init:47",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testListeners_areInvokedOnStateChange:22",
+      "target": "func:Sources/Store.swift:Store.addListener:407",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Tests/StoreTests.swift:StoreTest.testListeners_areInvokedOnStateChange:22",
       "target": "func:Tests/XCTestCase+Promise.swift:XCTestCase.waitForPromise:13",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testListeners_areInvokedOnStateChange:22",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testUnsubscribeListeners_areInvokedOnStateChange:40",
+      "target": "func:Sources/Store.swift:Store.addListener:407",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testUnsubscribeListeners_areInvokedOnStateChange:40",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
+      "type": "calls",
+      "weight": 2
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testStoreListener_whenMultipleConcurrentOperations_itWillNotCrash:64",
+      "target": "func:Sources/Store.swift:Store.addListener:407",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Tests/StoreTests.swift:StoreTest.testStoreListener_whenMultipleConcurrentOperations_itWillNotCrash:64",
+      "target": "func:Sources/Store.swift:Store.dispatch:444",
       "type": "calls",
       "weight": 1
     },
@@ -2110,8 +3757,56 @@
       "weight": 1
     },
     {
+      "source": "func:Tests/Mocks/Dispatchables.swift:ClosureSideEffect.sideEffect:59",
+      "target": "func:Tests/Mocks/TestDependenciesContainer.swift:TestDependenciesContainer.delay:14",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:69",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.anyDispatch:133",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:75",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.anyDispatch:133",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/SideEffect.swift:AnySideEffectContext.dispatch:81",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.anyDispatch:133",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/SideEffect.swift:SideEffectContext.getAnyState:147",
+      "target": "func:Sources/SideEffect.swift:SideEffectContext.getState:124",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.init:286",
+      "target": "func:Sources/Store.swift:Store.init:275",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.init:301",
+      "target": "func:Sources/Store.swift:Store.init:275",
+      "type": "calls",
+      "weight": 1
+    },
+    {
       "source": "func:Sources/Store.swift:Store.init:338",
       "target": "func:Sources/Store.swift:emptyStateInitializer:169",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.init:338",
+      "target": "func:Sources/Store.swift:Store.init:275",
       "type": "calls",
       "weight": 1
     },
@@ -2124,6 +3819,12 @@
     {
       "source": "func:Sources/Store.swift:Store.init:338",
       "target": "func:Sources/Store.swift:Store.initializeInternalState:583",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.addAnyListener:392",
+      "target": "func:Sources/Store.swift:Store.addListener:407",
       "type": "calls",
       "weight": 1
     },
@@ -2142,6 +3843,24 @@
     {
       "source": "func:Sources/Store.swift:Store.dispatch:498",
       "target": "func:Sources/Store.swift:Store.enqueueStateUpdater:629",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.anyDispatch:532",
+      "target": "func:Sources/Store.swift:Store.enqueueStateUpdater:629",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.anyDispatch:532",
+      "target": "func:Sources/Store.swift:Store.enqueueSideEffect:682",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.nonPromisableDispatch:552",
+      "target": "func:Sources/Store.swift:Store.anyDispatch:532",
       "type": "calls",
       "weight": 1
     },
@@ -2208,6 +3927,12 @@
     {
       "source": "func:Sources/Store.swift:Store.manageSideEffect:717",
       "target": "func:Sources/SignpostLogger.swift:SignpostLogger.logStart:53",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Store.swift:Store.manageSideEffect:717",
+      "target": "func:Sources/SideEffect.swift:SideEffect.anySideEffect:285",
       "type": "calls",
       "weight": 1
     },
@@ -2286,6 +4011,12 @@
     {
       "source": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverLogic.handleDispatchable:229",
       "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverLogic.handleOnDispatched:277",
+      "type": "calls",
+      "weight": 1
+    },
+    {
+      "source": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverLogic.stringName:304",
+      "target": "func:Sources/Interceptor/ObserverInterceptor.swift:ObserverLogic.stringName:296",
       "type": "calls",
       "weight": 1
     }

@@ -1,0 +1,281 @@
+{
+  "version": "1.0",
+  "language": "swift",
+  "repo": "example/animal-shelter",
+  "files": [
+    {
+      "path": "Sources/Animal.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Animal.speak",
+          "name": "speak",
+          "line_start": 4,
+          "line_end": 6,
+          "signature": "func speak() -> String",
+          "calls": [],
+          "container": "Animal",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Animal.eat",
+          "name": "eat",
+          "line_start": 8,
+          "line_end": 10,
+          "signature": "func eat(_ food: String)",
+          "calls": [],
+          "container": "Animal",
+          "params": [{"label": null, "name": "food", "type": "String"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Dog.speak",
+          "name": "speak",
+          "line_start": 16,
+          "line_end": 18,
+          "signature": "override func speak() -> String",
+          "calls": [],
+          "container": "Dog",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Dog.fetch",
+          "name": "fetch",
+          "line_start": 20,
+          "line_end": 23,
+          "signature": "func fetch() -> String",
+          "calls": [
+            {"target": "self.run", "line": 21, "receiver": "self", "method": "run", "kind": "method"},
+            {"target": "self.speak", "line": 22, "receiver": "self", "method": "speak", "kind": "method"}
+          ],
+          "container": "Dog",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Dog.run",
+          "name": "run",
+          "line_start": 25,
+          "line_end": 28,
+          "signature": "func run()",
+          "calls": [
+            {"target": "self.fetch", "line": 27, "receiver": "self", "method": "fetch", "kind": "method"}
+          ],
+          "container": "Dog",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Cat.speak",
+          "name": "speak",
+          "line_start": 34,
+          "line_end": 36,
+          "signature": "override func speak() -> String",
+          "calls": [
+            {"target": "self.purr", "line": 35, "receiver": "self", "method": "purr", "kind": "method"}
+          ],
+          "container": "Cat",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Cat.purr",
+          "name": "purr",
+          "line_start": 38,
+          "line_end": 40,
+          "signature": "func purr() -> String",
+          "calls": [],
+          "container": "Cat",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "GuideDog.guide",
+          "name": "guide",
+          "line_start": 46,
+          "line_end": 50,
+          "signature": "func guide()",
+          "calls": [
+            {"target": "self.speak", "line": 47, "receiver": "self", "method": "speak", "kind": "method"},
+            {"target": "self.eat", "line": 48, "receiver": "self", "method": "eat", "kind": "method"},
+            {"target": "super.run", "line": 49, "receiver": "super", "method": "run", "kind": "method"}
+          ],
+          "container": "GuideDog",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "GuideDog.eat",
+          "name": "eat",
+          "line_start": 52,
+          "line_end": 55,
+          "signature": "override func eat(_ food: String)",
+          "calls": [
+            {"target": "super.eat", "line": 54, "receiver": "super", "method": "eat", "kind": "method"}
+          ],
+          "container": "GuideDog",
+          "params": [{"label": null, "name": "food", "type": "String"}],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "Animal", "kind": "class", "line_start": 3, "line_end": 11, "inherits": []},
+        {"name": "Dog", "kind": "class", "line_start": 14, "line_end": 29, "inherits": ["Animal"]},
+        {"name": "Cat", "kind": "class", "line_start": 32, "line_end": 41, "inherits": ["Animal"]},
+        {"name": "GuideDog", "kind": "class", "line_start": 44, "line_end": 56, "inherits": ["Dog"]}
+      ]
+    },
+    {
+      "path": "Sources/Shelter.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "AdoptionError.init",
+          "name": "init",
+          "line_start": 3,
+          "line_end": 5,
+          "signature": "init(message: String)",
+          "calls": [],
+          "container": "AdoptionError",
+          "params": [{"label": "message", "name": "message", "type": "String"}],
+          "return_type": "AdoptionError"
+        },
+        {
+          "qualified_name": "Shelter.run",
+          "name": "run",
+          "line_start": 9,
+          "line_end": 11,
+          "signature": "func run()",
+          "calls": [
+            {"target": "self.processAll", "line": 10, "receiver": "self", "method": "processAll", "kind": "method"}
+          ],
+          "container": "Shelter",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Shelter.adopt",
+          "name": "adopt",
+          "line_start": 13,
+          "line_end": 20,
+          "signature": "func adopt(_ animal: Animal) throws -> String",
+          "calls": [
+            {"target": "animal.speak", "line": 14, "receiver": "animal", "method": "speak", "kind": "method"},
+            {"target": "AdoptionError", "line": 16, "receiver": null, "method": "AdoptionError", "kind": "initializer"},
+            {"target": "animal.eat", "line": 18, "receiver": "animal", "method": "eat", "kind": "method"},
+            {"target": "self.log", "line": 19, "receiver": "self", "method": "log", "kind": "method"}
+          ],
+          "container": "Shelter",
+          "params": [{"label": null, "name": "animal", "type": "Animal"}],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Shelter.processAll",
+          "name": "processAll",
+          "line_start": 22,
+          "line_end": 27,
+          "signature": "func processAll()",
+          "calls": [
+            {"target": "self.adopt", "line": 24, "receiver": "self", "method": "adopt", "kind": "method"},
+            {"target": "self.processAll", "line": 26, "receiver": "self", "method": "processAll", "kind": "method"}
+          ],
+          "container": "Shelter",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Shelter.log",
+          "name": "log",
+          "line_start": 28,
+          "line_end": 30,
+          "signature": "private func log(_ msg: String)",
+          "calls": [],
+          "container": "Shelter",
+          "params": [{"label": null, "name": "msg", "type": "String"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "rescue",
+          "name": "rescue",
+          "line_start": 33,
+          "line_end": 38,
+          "signature": "func rescue(_ animal: Animal, at shelter: Shelter) throws",
+          "calls": [
+            {"target": "shelter.adopt", "line": 34, "receiver": "shelter", "method": "adopt", "kind": "method"},
+            {"target": "animal.speak", "line": 35, "receiver": "animal", "method": "speak", "kind": "method"},
+            {"target": "Dog", "line": 36, "receiver": null, "method": "Dog", "kind": "initializer"},
+            {"target": "shelter.run", "line": 37, "receiver": "shelter", "method": "run", "kind": "method"}
+          ],
+          "container": null,
+          "params": [
+            {"label": null, "name": "animal", "type": "Animal"},
+            {"label": "at", "name": "shelter", "type": "Shelter"}
+          ],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "AdoptionError", "kind": "struct", "line_start": 3, "line_end": 5, "inherits": ["Error"]},
+        {"name": "Shelter", "kind": "class", "line_start": 7, "line_end": 31, "inherits": []}
+      ]
+    },
+    {
+      "path": "Tests/ShelterTests.swift",
+      "imports": ["XCTest"],
+      "functions": [
+        {
+          "qualified_name": "ShelterTests.testAdopt",
+          "name": "testAdopt",
+          "line_start": 6,
+          "line_end": 11,
+          "signature": "func testAdopt() throws",
+          "calls": [
+            {"target": "Dog", "line": 7, "receiver": null, "method": "Dog", "kind": "initializer"},
+            {"target": "Shelter", "line": 8, "receiver": null, "method": "Shelter", "kind": "initializer"},
+            {"target": "shelter.adopt", "line": 9, "receiver": "shelter", "method": "adopt", "kind": "method"},
+            {"target": "XCTAssertFalse", "line": 10, "receiver": null, "method": "XCTAssertFalse", "kind": "call"}
+          ],
+          "container": "ShelterTests",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "ShelterTests.testGuideDog",
+          "name": "testGuideDog",
+          "line_start": 13,
+          "line_end": 18,
+          "signature": "func testGuideDog()",
+          "calls": [
+            {"target": "GuideDog", "line": 14, "receiver": null, "method": "GuideDog", "kind": "initializer"},
+            {"target": "dog.guide", "line": 15, "receiver": "dog", "method": "guide", "kind": "method"},
+            {"target": "dog.fetch", "line": 16, "receiver": "dog", "method": "fetch", "kind": "method"},
+            {"target": "dog.run", "line": 17, "receiver": "dog", "method": "run", "kind": "method"}
+          ],
+          "container": "ShelterTests",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "ShelterTests.testRescue",
+          "name": "testRescue",
+          "line_start": 20,
+          "line_end": 24,
+          "signature": "func testRescue() throws",
+          "calls": [
+            {"target": "Cat", "line": 21, "receiver": null, "method": "Cat", "kind": "initializer"},
+            {"target": "Shelter", "line": 22, "receiver": null, "method": "Shelter", "kind": "initializer"},
+            {"target": "rescue", "line": 23, "receiver": null, "method": "rescue", "kind": "call"}
+          ],
+          "container": "ShelterTests",
+          "params": [],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "ShelterTests", "kind": "class", "line_start": 4, "line_end": 26, "inherits": ["XCTestCase"]}
+      ]
+    }
+  ]
+}

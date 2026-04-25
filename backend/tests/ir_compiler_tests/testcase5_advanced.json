@@ -1,0 +1,465 @@
+{
+  "version": "1.0",
+  "language": "swift",
+  "repo": "example/file-processor",
+  "files": [
+    {
+      "path": "Sources/Node.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Node.init",
+          "name": "init",
+          "line_start": 5,
+          "line_end": 7,
+          "signature": "init(name: String)",
+          "calls": [],
+          "container": "Node",
+          "params": [{"label": "name", "name": "name", "type": "String"}],
+          "return_type": "Node"
+        },
+        {
+          "qualified_name": "Node.process",
+          "name": "process",
+          "line_start": 9,
+          "line_end": 11,
+          "signature": "func process() -> String",
+          "calls": [],
+          "container": "Node",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Node.accept",
+          "name": "accept",
+          "line_start": 13,
+          "line_end": 15,
+          "signature": "func accept(_ visitor: Visitor)",
+          "calls": [
+            {"target": "visitor.visit", "line": 14, "receiver": "visitor", "method": "visit", "kind": "method"}
+          ],
+          "container": "Node",
+          "params": [{"label": null, "name": "visitor", "type": "Visitor"}],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "Node", "kind": "class", "line_start": 3, "line_end": 16, "inherits": []}
+      ]
+    },
+    {
+      "path": "Sources/FileNode.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "FileNode.init",
+          "name": "init",
+          "line_start": 5,
+          "line_end": 8,
+          "signature": "init(name: String, size: Int)",
+          "calls": [
+            {"target": "super.init", "line": 7, "receiver": "super", "method": "init", "kind": "method"}
+          ],
+          "container": "FileNode",
+          "params": [
+            {"label": "name", "name": "name", "type": "String"},
+            {"label": "size", "name": "size", "type": "Int"}
+          ],
+          "return_type": "FileNode"
+        },
+        {
+          "qualified_name": "FileNode.process",
+          "name": "process",
+          "line_start": 10,
+          "line_end": 12,
+          "signature": "override func process() -> String",
+          "calls": [
+            {"target": "self.formatSize", "line": 11, "receiver": "self", "method": "formatSize", "kind": "method"}
+          ],
+          "container": "FileNode",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "FileNode.formatSize",
+          "name": "formatSize",
+          "line_start": 14,
+          "line_end": 16,
+          "signature": "private func formatSize() -> String",
+          "calls": [],
+          "container": "FileNode",
+          "params": [],
+          "return_type": "String"
+        }
+      ],
+      "types": [
+        {"name": "FileNode", "kind": "class", "line_start": 3, "line_end": 17, "inherits": ["Node"]}
+      ]
+    },
+    {
+      "path": "Sources/DirectoryNode.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "DirectoryNode.init",
+          "name": "init",
+          "line_start": 5,
+          "line_end": 8,
+          "signature": "init(name: String, children: [Node])",
+          "calls": [
+            {"target": "super.init", "line": 7, "receiver": "super", "method": "init", "kind": "method"}
+          ],
+          "container": "DirectoryNode",
+          "params": [
+            {"label": "name", "name": "name", "type": "String"},
+            {"label": "children", "name": "children", "type": "[Node]"}
+          ],
+          "return_type": "DirectoryNode"
+        },
+        {
+          "qualified_name": "DirectoryNode.process",
+          "name": "process",
+          "line_start": 10,
+          "line_end": 15,
+          "signature": "override func process() -> String",
+          "calls": [
+            {"target": "self.traverse", "line": 12, "receiver": "self", "method": "traverse", "kind": "method"}
+          ],
+          "container": "DirectoryNode",
+          "params": [],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "DirectoryNode.traverse",
+          "name": "traverse",
+          "line_start": 18,
+          "line_end": 30,
+          "signature": "func traverse() -> [String]",
+          "calls": [
+            {"target": "child.process", "line": 22, "receiver": "child", "method": "process", "kind": "method"},
+            {"target": "child.traverse", "line": 25, "receiver": "child", "method": "traverse", "kind": "method"},
+            {"target": "self.traverse", "line": 25, "receiver": "self", "method": "traverse", "kind": "method"}
+          ],
+          "container": "DirectoryNode",
+          "params": [],
+          "return_type": "[String]"
+        },
+        {
+          "qualified_name": "DirectoryNode.totalSize",
+          "name": "totalSize",
+          "line_start": 32,
+          "line_end": 38,
+          "signature": "func totalSize() -> Int",
+          "calls": [
+            {"target": "child.totalSize", "line": 35, "receiver": "child", "method": "totalSize", "kind": "method"},
+            {"target": "self.totalSize", "line": 35, "receiver": "self", "method": "totalSize", "kind": "method"}
+          ],
+          "container": "DirectoryNode",
+          "params": [],
+          "return_type": "Int"
+        }
+      ],
+      "types": [
+        {"name": "DirectoryNode", "kind": "class", "line_start": 3, "line_end": 39, "inherits": ["Node"]}
+      ]
+    },
+    {
+      "path": "Sources/Validator.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "ValidationError.init",
+          "name": "init",
+          "line_start": 4,
+          "line_end": 4,
+          "signature": "init(message: String)",
+          "calls": [],
+          "container": "ValidationError",
+          "params": [{"label": "message", "name": "message", "type": "String"}],
+          "return_type": "ValidationError"
+        },
+        {
+          "qualified_name": "Validator.validate",
+          "name": "validate",
+          "line_start": 10,
+          "line_end": 18,
+          "signature": "func validate(_ node: Node) throws",
+          "calls": [
+            {"target": "self.validateName", "line": 11, "receiver": "self", "method": "validateName", "kind": "method"},
+            {"target": "self.validateDepth", "line": 12, "receiver": "self", "method": "validateDepth", "kind": "method"},
+            {"target": "self.validate", "line": 15, "receiver": "self", "method": "validate", "kind": "method"},
+            {"target": "ValidationError", "line": 17, "receiver": null, "method": "ValidationError", "kind": "initializer"}
+          ],
+          "container": "Validator",
+          "params": [{"label": null, "name": "node", "type": "Node"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Validator.validateName",
+          "name": "validateName",
+          "line_start": 20,
+          "line_end": 26,
+          "signature": "private func validateName(_ name: String) throws",
+          "calls": [
+            {"target": "ValidationError", "line": 23, "receiver": null, "method": "ValidationError", "kind": "initializer"}
+          ],
+          "container": "Validator",
+          "params": [{"label": null, "name": "name", "type": "String"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "Validator.validateDepth",
+          "name": "validateDepth",
+          "line_start": 28,
+          "line_end": 34,
+          "signature": "private func validateDepth(_ node: Node, current: Int) throws",
+          "calls": [
+            {"target": "self.validateDepth", "line": 31, "receiver": "self", "method": "validateDepth", "kind": "method"},
+            {"target": "ValidationError", "line": 33, "receiver": null, "method": "ValidationError", "kind": "initializer"}
+          ],
+          "container": "Validator",
+          "params": [
+            {"label": null, "name": "node", "type": "Node"},
+            {"label": "current", "name": "current", "type": "Int"}
+          ],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "ValidationError", "kind": "struct", "line_start": 3, "line_end": 5, "inherits": ["Error"]},
+        {"name": "Validator", "kind": "class", "line_start": 8, "line_end": 35, "inherits": []}
+      ]
+    },
+    {
+      "path": "Sources/Processor.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "BaseProcessor.run",
+          "name": "run",
+          "line_start": 5,
+          "line_end": 10,
+          "signature": "func run(_ node: Node) throws -> String",
+          "calls": [
+            {"target": "node.process", "line": 7, "receiver": "node", "method": "process", "kind": "method"},
+            {"target": "self.log", "line": 9, "receiver": "self", "method": "log", "kind": "method"}
+          ],
+          "container": "BaseProcessor",
+          "params": [{"label": null, "name": "node", "type": "Node"}],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "BaseProcessor.log",
+          "name": "log",
+          "line_start": 12,
+          "line_end": 14,
+          "signature": "func log(_ message: String)",
+          "calls": [],
+          "container": "BaseProcessor",
+          "params": [{"label": null, "name": "message", "type": "String"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "LoggingProcessor.run",
+          "name": "run",
+          "line_start": 20,
+          "line_end": 28,
+          "signature": "override func run(_ node: Node) throws -> String",
+          "calls": [
+            {"target": "self.log", "line": 21, "receiver": "self", "method": "log", "kind": "method"},
+            {"target": "super.run", "line": 22, "receiver": "super", "method": "run", "kind": "method"},
+            {"target": "self.formatOutput", "line": 24, "receiver": "self", "method": "formatOutput", "kind": "method"},
+            {"target": "self.log", "line": 27, "receiver": "self", "method": "log", "kind": "method"}
+          ],
+          "container": "LoggingProcessor",
+          "params": [{"label": null, "name": "node", "type": "Node"}],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "LoggingProcessor.formatOutput",
+          "name": "formatOutput",
+          "line_start": 30,
+          "line_end": 32,
+          "signature": "private func formatOutput(_ result: String) -> String",
+          "calls": [],
+          "container": "LoggingProcessor",
+          "params": [{"label": null, "name": "result", "type": "String"}],
+          "return_type": "String"
+        }
+      ],
+      "types": [
+        {"name": "BaseProcessor", "kind": "class", "line_start": 3, "line_end": 15, "inherits": []},
+        {"name": "LoggingProcessor", "kind": "class", "line_start": 18, "line_end": 33, "inherits": ["BaseProcessor"]}
+      ]
+    },
+    {
+      "path": "Sources/Visitor.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Visitor.visit",
+          "name": "visit",
+          "line_start": 5,
+          "line_end": 7,
+          "signature": "func visit(_ node: Node)",
+          "calls": [
+            {"target": "node.accept", "line": 6, "receiver": "node", "method": "accept", "kind": "method"}
+          ],
+          "container": "Visitor",
+          "params": [{"label": null, "name": "node", "type": "Node"}],
+          "return_type": null
+        },
+        {
+          "qualified_name": "CountingVisitor.visit",
+          "name": "visit",
+          "line_start": 13,
+          "line_end": 17,
+          "signature": "override func visit(_ node: Node)",
+          "calls": [
+            {"target": "super.visit", "line": 14, "receiver": "super", "method": "visit", "kind": "method"},
+            {"target": "node.process", "line": 16, "receiver": "node", "method": "process", "kind": "method"}
+          ],
+          "container": "CountingVisitor",
+          "params": [{"label": null, "name": "node", "type": "Node"}],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "Visitor", "kind": "class", "line_start": 3, "line_end": 8, "inherits": []},
+        {"name": "CountingVisitor", "kind": "class", "line_start": 11, "line_end": 18, "inherits": ["Visitor"]}
+      ]
+    },
+    {
+      "path": "Sources/Engine.swift",
+      "imports": ["Foundation"],
+      "functions": [
+        {
+          "qualified_name": "Engine.init",
+          "name": "init",
+          "line_start": 5,
+          "line_end": 8,
+          "signature": "init(processor: BaseProcessor, validator: Validator)",
+          "calls": [],
+          "container": "Engine",
+          "params": [
+            {"label": "processor", "name": "processor", "type": "BaseProcessor"},
+            {"label": "validator", "name": "validator", "type": "Validator"}
+          ],
+          "return_type": "Engine"
+        },
+        {
+          "qualified_name": "Engine.execute",
+          "name": "execute",
+          "line_start": 10,
+          "line_end": 20,
+          "signature": "func execute(root: Node) throws -> String",
+          "calls": [
+            {"target": "validator.validate", "line": 11, "receiver": "validator", "method": "validate", "kind": "method"},
+            {"target": "processor.run", "line": 13, "receiver": "processor", "method": "run", "kind": "method"},
+            {"target": "root.accept", "line": 15, "receiver": "root", "method": "accept", "kind": "method"},
+            {"target": "CountingVisitor", "line": 15, "receiver": null, "method": "CountingVisitor", "kind": "initializer"}
+          ],
+          "container": "Engine",
+          "params": [{"label": "root", "name": "root", "type": "Node"}],
+          "return_type": "String"
+        },
+        {
+          "qualified_name": "Engine.batchExecute",
+          "name": "batchExecute",
+          "line_start": 22,
+          "line_end": 30,
+          "signature": "func batchExecute(roots: [Node]) throws -> [String]",
+          "calls": [
+            {"target": "self.execute", "line": 25, "receiver": "self", "method": "execute", "kind": "method"}
+          ],
+          "container": "Engine",
+          "params": [{"label": "roots", "name": "roots", "type": "[Node]"}],
+          "return_type": "[String]"
+        }
+      ],
+      "types": [
+        {"name": "Engine", "kind": "class", "line_start": 3, "line_end": 31, "inherits": []}
+      ]
+    },
+    {
+      "path": "Tests/EngineTests.swift",
+      "imports": ["XCTest", "Foundation"],
+      "functions": [
+        {
+          "qualified_name": "EngineTests.testTraversal",
+          "name": "testTraversal",
+          "line_start": 8,
+          "line_end": 20,
+          "signature": "func testTraversal()",
+          "calls": [
+            {"target": "FileNode", "line": 9, "receiver": null, "method": "FileNode", "kind": "initializer"},
+            {"target": "DirectoryNode", "line": 10, "receiver": null, "method": "DirectoryNode", "kind": "initializer"},
+            {"target": "LoggingProcessor", "line": 12, "receiver": null, "method": "LoggingProcessor", "kind": "initializer"},
+            {"target": "Validator", "line": 13, "receiver": null, "method": "Validator", "kind": "initializer"},
+            {"target": "Engine", "line": 14, "receiver": null, "method": "Engine", "kind": "initializer"},
+            {"target": "engine.execute", "line": 16, "receiver": "engine", "method": "execute", "kind": "method"},
+            {"target": "XCTAssertNotNil", "line": 18, "receiver": null, "method": "XCTAssertNotNil", "kind": "call"}
+          ],
+          "container": "EngineTests",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "EngineTests.testValidationThrows",
+          "name": "testValidationThrows",
+          "line_start": 22,
+          "line_end": 32,
+          "signature": "func testValidationThrows() throws",
+          "calls": [
+            {"target": "FileNode", "line": 23, "receiver": null, "method": "FileNode", "kind": "initializer"},
+            {"target": "Validator", "line": 25, "receiver": null, "method": "Validator", "kind": "initializer"},
+            {"target": "validator.validate", "line": 27, "receiver": "validator", "method": "validate", "kind": "method"},
+            {"target": "XCTAssertThrowsError", "line": 29, "receiver": null, "method": "XCTAssertThrowsError", "kind": "call"}
+          ],
+          "container": "EngineTests",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "EngineTests.testRecursiveTraversal",
+          "name": "testRecursiveTraversal",
+          "line_start": 34,
+          "line_end": 50,
+          "signature": "func testRecursiveTraversal()",
+          "calls": [
+            {"target": "FileNode", "line": 35, "receiver": null, "method": "FileNode", "kind": "initializer"},
+            {"target": "FileNode", "line": 36, "receiver": null, "method": "FileNode", "kind": "initializer"},
+            {"target": "DirectoryNode", "line": 37, "receiver": null, "method": "DirectoryNode", "kind": "initializer"},
+            {"target": "DirectoryNode", "line": 38, "receiver": null, "method": "DirectoryNode", "kind": "initializer"},
+            {"target": "root.traverse", "line": 40, "receiver": "root", "method": "traverse", "kind": "method"},
+            {"target": "root.totalSize", "line": 42, "receiver": "root", "method": "totalSize", "kind": "method"},
+            {"target": "XCTAssertEqual", "line": 44, "receiver": null, "method": "XCTAssertEqual", "kind": "call"},
+            {"target": "XCTAssertEqual", "line": 45, "receiver": null, "method": "XCTAssertEqual", "kind": "call"}
+          ],
+          "container": "EngineTests",
+          "params": [],
+          "return_type": null
+        },
+        {
+          "qualified_name": "EngineTests.testPolymorphicProcess",
+          "name": "testPolymorphicProcess",
+          "line_start": 52,
+          "line_end": 64,
+          "signature": "func testPolymorphicProcess()",
+          "calls": [
+            {"target": "FileNode", "line": 53, "receiver": null, "method": "FileNode", "kind": "initializer"},
+            {"target": "DirectoryNode", "line": 54, "receiver": null, "method": "DirectoryNode", "kind": "initializer"},
+            {"target": "node.process", "line": 57, "receiver": "node", "method": "process", "kind": "method"},
+            {"target": "XCTAssertEqual", "line": 60, "receiver": null, "method": "XCTAssertEqual", "kind": "call"}
+          ],
+          "container": "EngineTests",
+          "params": [],
+          "return_type": null
+        }
+      ],
+      "types": [
+        {"name": "EngineTests", "kind": "class", "line_start": 6, "line_end": 65, "inherits": ["XCTestCase"]}
+      ]
+    }
+  ]
+}
