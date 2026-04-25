@@ -15,15 +15,7 @@
           "line_start": 8,
           "line_end": 10,
           "signature": "func add(_ todo: Todo)",
-          "calls": [
-            {
-              "target": "store",
-              "line": 9,
-              "receiver": null,
-              "method": "store",
-              "kind": "call"
-            }
-          ],
+          "calls": [],
           "container": "TodoService",
           "params": [
             {
@@ -59,22 +51,7 @@
           "line_start": 16,
           "line_end": 21,
           "signature": "func complete(id: UUID) -> Todo?",
-          "calls": [
-            {
-              "target": "store",
-              "line": 17,
-              "receiver": null,
-              "method": "store",
-              "kind": "call"
-            },
-            {
-              "target": "store",
-              "line": 19,
-              "receiver": null,
-              "method": "store",
-              "kind": "call"
-            }
-          ],
+          "calls": [],
           "container": "TodoService",
           "params": [
             {
@@ -100,11 +77,11 @@
               "kind": "method"
             },
             {
-              "target": "all",
+              "target": "self.all",
               "line": 24,
-              "receiver": null,
+              "receiver": "self",
               "method": "all",
-              "kind": "call"
+              "kind": "method"
             }
           ],
           "container": "TodoService",
@@ -466,7 +443,7 @@
               "line": 16,
               "receiver": null,
               "method": "UUID",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": "Todo",

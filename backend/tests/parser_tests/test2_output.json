@@ -79,11 +79,11 @@
               "kind": "method"
             },
             {
-              "target": "applyMiddlewares",
+              "target": "self.applyMiddlewares",
               "line": 43,
-              "receiver": null,
+              "receiver": "self",
               "method": "applyMiddlewares",
-              "kind": "call"
+              "kind": "method"
             }
           ],
           "container": "BaseStore",
@@ -218,11 +218,11 @@
               "kind": "method"
             },
             {
-              "target": "replayLog",
+              "target": "self.replayLog",
               "line": 74,
-              "receiver": null,
+              "receiver": "self",
               "method": "replayLog",
-              "kind": "call"
+              "kind": "method"
             }
           ],
           "container": "LoggingStore",

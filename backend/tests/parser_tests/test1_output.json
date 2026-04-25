@@ -102,7 +102,7 @@
               "line": 19,
               "receiver": null,
               "method": "Int",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": null,
@@ -132,14 +132,14 @@
               "line": 25,
               "receiver": null,
               "method": "NSError",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "String",
               "line": 27,
               "receiver": null,
               "method": "String",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "raw.split.compactMap",
@@ -160,7 +160,7 @@
               "line": 28,
               "receiver": null,
               "method": "Double",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "summarize",

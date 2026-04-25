@@ -758,7 +758,7 @@
               "line": 273,
               "receiver": null,
               "method": "NotificationCenter",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "ObserverInterceptor.observe",
@@ -805,7 +805,7 @@
               "line": 293,
               "receiver": null,
               "method": "NotificationCenter",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "ObserverInterceptor.observe",
@@ -852,7 +852,7 @@
               "line": 316,
               "receiver": null,
               "method": "NotificationCenter",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "ObserverInterceptor.observe",
@@ -1897,7 +1897,7 @@
               "line": 15,
               "receiver": null,
               "method": "XCTestExpectation",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "promise.then",
@@ -1950,7 +1950,7 @@
               "line": 26,
               "receiver": null,
               "method": "XCTestExpectation",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "promise.then",
@@ -1996,7 +1996,7 @@
               "line": 34,
               "receiver": null,
               "method": "XCTestExpectation",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "DispatchQueue.global.async",
@@ -2939,7 +2939,7 @@
               "line": 137,
               "receiver": null,
               "method": "NSError",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "self.expectation",
@@ -3296,7 +3296,7 @@
               "line": 222,
               "receiver": null,
               "method": "NSError",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": "RetryMe",
@@ -3356,7 +3356,7 @@
               "line": 236,
               "receiver": null,
               "method": "UUID",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "typedContext.getState",
@@ -3370,7 +3370,7 @@
               "line": 239,
               "receiver": null,
               "method": "NSError",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": "FailingMultiply",
@@ -3717,7 +3717,7 @@
               "line": 74,
               "receiver": null,
               "method": "OperationQueue",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "queue.addOperation",
@@ -4811,7 +4811,7 @@
               "line": 170,
               "receiver": null,
               "method": "S",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": null,
@@ -4881,7 +4881,7 @@
               "line": 309,
               "receiver": null,
               "method": "D",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": "Store",
@@ -5016,20 +5016,13 @@
               "line": 408,
               "receiver": null,
               "method": "UUID",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "self.listenersAsyncProvider.executeSync",
               "line": 410,
               "receiver": "self.listenersAsyncProvider",
               "method": "executeSync",
-              "kind": "method"
-            },
-            {
-              "target": "self.listeners",
-              "line": 411,
-              "receiver": "self",
-              "method": "listeners",
               "kind": "method"
             },
             {
@@ -5960,7 +5953,7 @@
               "line": 80,
               "receiver": null,
               "method": "OSSignpostID",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "os_signpost",
@@ -6004,7 +5997,7 @@
               "line": 98,
               "receiver": null,
               "method": "OSSignpostID",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "os_signpost",
@@ -6048,7 +6041,7 @@
               "line": 116,
               "receiver": null,
               "method": "OSLog",
-              "kind": "call"
+              "kind": "initializer"
             }
           ],
           "container": "SignpostLogger",
@@ -6666,7 +6659,7 @@
               "line": 297,
               "receiver": null,
               "method": "String",
-              "kind": "call"
+              "kind": "initializer"
             },
             {
               "target": "type",
