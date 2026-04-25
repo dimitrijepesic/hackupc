@@ -35,6 +35,15 @@ def build_call_graph(ir: dict) -> dict:
         for fn in file["functions"]:
             node_id = f"func:{path}:{fn['qualified_name']}:{fn['line_start']}"
 
+            decorators = fn.get("decorators", [])
+            is_http_endpoint = any(
+                d for d in decorators
+                if any(kw in d.lower() for kw in (
+                    "route", "get", "post", "put", "delete", "patch",
+                    "head", "options", "api_view", "action",
+                ))
+            )
+
             node = {
                 "id": node_id,
                 "type": "function",
@@ -50,6 +59,8 @@ def build_call_graph(ir: dict) -> dict:
                 "in_degree": 0,
                 "out_degree": 0,
                 "category": category,
+                "decorators": decorators,
+                "is_http_endpoint": is_http_endpoint,
             }
 
             nodes.append(node)
@@ -466,7 +477,9 @@ def hotspots(graph: dict, top_n: int = 10) -> list:
 def dead_code(graph: dict) -> list:
     return [
         n for n in graph["nodes"]
-        if n["in_degree"] == 0 and n["category"] != "test"
+        if n["in_degree"] == 0
+        and n["category"] != "test"
+        and not n.get("is_http_endpoint")
     ]
 
 
