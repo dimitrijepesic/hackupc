@@ -8,7 +8,7 @@ export default function Landing() {
         <div className="flex justify-between items-center h-16 px-8 max-w-7xl mx-auto">
           <Link to="/" className="text-xl font-black text-black tracking-tighter flex items-center gap-2">
             <span className="material-symbols-outlined text-[24px] text-indigo-600" style={{ fontVariationSettings: "'FILL' 1" }}>account_tree</span>
-            CodeGraph
+            Synapsis
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <a className="text-black font-semibold border-b-2 border-indigo-600 pb-1 hover:text-indigo-600 transition-all duration-200" href="#features">Features</a>
@@ -183,7 +183,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="w-full py-12 mt-auto bg-white border-t border-gray-100 text-sm">
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-lg font-bold text-black">CodeGraph</div>
+          <div className="text-lg font-bold text-black">Synapsis</div>
           <div className="flex items-center gap-6">
             <a className="text-gray-400 hover:text-indigo-600 transition-colors" href="#">Documentation</a>
             <a className="text-gray-400 hover:text-indigo-600 transition-colors" href="#">GitHub</a>
@@ -191,7 +191,7 @@ export default function Landing() {
             <a className="text-gray-400 hover:text-indigo-600 transition-colors" href="#">Terms</a>
           </div>
           <div className="text-gray-400">
-            &copy; 2024 CodeGraph. Precision codebase intelligence.
+            &copy; 2026 Synapsis. Precision codebase intelligence.
           </div>
         </div>
       </footer>
