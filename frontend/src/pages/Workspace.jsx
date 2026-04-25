@@ -58,7 +58,9 @@ function computeArrowHead(target) {
 
 function getEdgeClasses(edge, selectedNodeId) {
   const classes = ['connection-line'];
-  if (edge.source === selectedNodeId || edge.target === selectedNodeId) classes.push('active');
+  const touchesSelected = edge.source === selectedNodeId || edge.target === selectedNodeId;
+  if (touchesSelected) classes.push('active');
+  else if (selectedNodeId) classes.push('dimmed');
   if (edge.type === 'if') classes.push('condition-if');
   if (edge.type === 'error') classes.push('condition-error');
   if (edge.type === 'loop') classes.push('condition-loop');
@@ -102,6 +104,17 @@ export default function Workspace() {
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
 
+  // Direct neighbors (callers + callees) of the selected node — used for highlighting
+  const neighborIds = (() => {
+    if (!selectedNodeId) return null;
+    const set = new Set([selectedNodeId]);
+    for (const e of edges) {
+      if (e.source === selectedNodeId) set.add(e.target);
+      if (e.target === selectedNodeId) set.add(e.source);
+    }
+    return set;
+  })();
+
   // --- Zoom / Pan state ---
   const canvasRef = useRef(null);
   const [zoom, setZoom] = useState(1);
@@ -121,6 +134,12 @@ export default function Workspace() {
     const obs = new ResizeObserver(measure);
     obs.observe(el);
     return () => obs.disconnect();
+  }, []);
+
+  // Run dagre auto-layout once on mount so the initial graph isn't a tangle
+  useEffect(() => {
+    autoLayout();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Wheel: pinch-to-zoom (ctrlKey) or two-finger-scroll to pan
@@ -265,7 +284,7 @@ export default function Workspace() {
         <main className="flex-1 flex h-full relative">
           {/* Auto Layout button */}
           <button
-            onClick={() => { autoLayout(); resetView(); }}
+            onClick={() => autoLayout()}
             className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
             title="Auto layout nodes"
           >
@@ -325,6 +344,7 @@ export default function Workspace() {
                   key={node.id}
                   node={node}
                   isSelected={node.id === selectedNodeId}
+                  isDimmed={neighborIds ? !neighborIds.has(node.id) : false}
                   edges={edges}
                   onSelect={() => selectNode(node.id)}
                   onMove={(pos) => moveNode(node.id, pos)}
@@ -365,6 +385,18 @@ export default function Workspace() {
             open={ui.codePanelOpen && !!selectedNode}
             onClose={toggleCodePanel}
           />
+
+          {/* Reopen button — top-right, visible when a node is selected but panel is closed */}
+          {selectedNode && !ui.codePanelOpen && (
+            <button
+              onClick={toggleCodePanel}
+              className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
+              title="Show code panel"
+            >
+              <span className="material-symbols-outlined text-[16px]">code</span>
+              <span className="font-label-sm">Code</span>
+            </button>
+          )}
 
           {/* File overlay — full-panel viewer for whole-file mode */}
           {selectedFile && (
@@ -777,7 +809,7 @@ function FunctionRow({ node, active, onSelect }) {
 
 // --- Draggable Node Card ---
 
-function NodeCard({ node, isSelected, edges, onSelect, onMove, zoom = 1 }) {
+function NodeCard({ node, isSelected, isDimmed = false, edges, onSelect, onMove, zoom = 1 }) {
   const handleMouseDown = useCallback(
     (e) => {
       if (e.button !== 0) return;
@@ -822,7 +854,7 @@ function NodeCard({ node, isSelected, edges, onSelect, onMove, zoom = 1 }) {
       }}
     >
       <div
-        className={`node-card ${isSelected ? 'active' : ''} rounded px-3 py-3 cursor-move h-full overflow-hidden ${!isSelected ? 'opacity-90' : ''}`}
+        className={`node-card ${isSelected ? 'active' : ''} ${isDimmed ? 'dimmed' : ''} rounded px-3 py-3 cursor-move h-full overflow-hidden`}
         style={cardBorder}
         onMouseDown={handleMouseDown}
       >

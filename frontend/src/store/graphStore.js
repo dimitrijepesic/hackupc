@@ -1,11 +1,22 @@
 import { create } from 'zustand';
+import dagre from 'dagre';
+import { defaultNodes, defaultEdges } from '../data/mockData';
+
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 120;
+const LAYOUT_ANIM_MS = 500;
+
+let layoutRaf = null;
+
+// easeInOutCubic
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 import { defaultNodes, defaultEdges, defaultSelectedNodeId } from '../data/mockData';
 import { API_BASE } from '../types/api';
 
 const useGraphStore = create((set, get) => ({
   nodes: defaultNodes,
   edges: defaultEdges,
-  selectedNodeId: defaultSelectedNodeId,
+  selectedNodeId: null,
   selectedFile: null,
   sourceFiles: {},
   graphId: null,
@@ -215,62 +226,73 @@ const useGraphStore = create((set, get) => ({
       edges: state.edges.filter((e) => e.id !== id),
     })),
 
-  autoLayout: () =>
-    set((state) => {
-      const { nodes, edges } = state;
-      if (nodes.length === 0) return state;
+  autoLayout: ({ animate = true } = {}) => {
+    const { nodes, edges } = get();
+    if (nodes.length === 0) return;
 
-      const inDeg = {};
-      const children = {};
-      nodes.forEach((n) => { inDeg[n.id] = 0; children[n.id] = []; });
-      edges.forEach((e) => {
-        inDeg[e.target] = (inDeg[e.target] || 0) + 1;
-        if (children[e.source]) children[e.source].push(e.target);
-      });
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({
+      rankdir: 'LR',
+      nodesep: 40,
+      ranksep: 100,
+      marginx: 40,
+      marginy: 40,
+    });
+    g.setDefaultEdgeLabel(() => ({}));
 
-      // BFS to assign layers
-      const roots = nodes.filter((n) => !inDeg[n.id]);
-      if (roots.length === 0) roots.push(nodes[0]); // cycle fallback
-      const depth = {};
-      const visited = new Set();
-      const queue = roots.map((n) => ({ id: n.id, d: 0 }));
-      while (queue.length) {
-        const { id, d } = queue.shift();
-        if (visited.has(id)) continue;
-        visited.add(id);
-        depth[id] = d;
-        for (const c of children[id] || []) {
-          if (!visited.has(c)) queue.push({ id: c, d: d + 1 });
-        }
+    nodes.forEach((n) => {
+      g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+    });
+    edges.forEach((e) => {
+      if (e.source !== e.target) g.setEdge(e.source, e.target);
+    });
+
+    dagre.layout(g);
+
+    const targets = {};
+    nodes.forEach((n) => {
+      const p = g.node(n.id);
+      if (p) targets[n.id] = { x: Math.round(p.x - NODE_WIDTH / 2), y: Math.round(p.y - NODE_HEIGHT / 2) };
+    });
+
+    if (!animate) {
+      set((state) => ({
+        nodes: state.nodes.map((n) => (targets[n.id] ? { ...n, position: targets[n.id] } : n)),
+      }));
+      return;
+    }
+
+    // Snapshot starting positions and tween to targets
+    const starts = {};
+    nodes.forEach((n) => { starts[n.id] = { x: n.position.x, y: n.position.y }; });
+
+    if (layoutRaf) cancelAnimationFrame(layoutRaf);
+    const t0 = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - t0) / LAYOUT_ANIM_MS);
+      const k = ease(t);
+      set((state) => ({
+        nodes: state.nodes.map((n) => {
+          const s = starts[n.id];
+          const e = targets[n.id];
+          if (!s || !e) return n;
+          return {
+            ...n,
+            position: {
+              x: Math.round(s.x + (e.x - s.x) * k),
+              y: Math.round(s.y + (e.y - s.y) * k),
+            },
+          };
+        }),
+      }));
+      if (t < 1) {
+        layoutRaf = requestAnimationFrame(tick);
+      } else {
+        layoutRaf = null;
       }
-      // Disconnected nodes
-      let maxD = Math.max(0, ...Object.values(depth));
-      nodes.forEach((n) => { if (!visited.has(n.id)) depth[n.id] = ++maxD; });
-
-      // Group by layer
-      const layers = {};
-      for (const [id, d] of Object.entries(depth)) {
-        (layers[d] = layers[d] || []).push(id);
-      }
-
-      const H_GAP = 300;
-      const V_GAP = 160;
-      const CENTER_Y = 300;
-      const START_X = 80;
-
-      const positions = {};
-      for (const [d, ids] of Object.entries(layers)) {
-        const totalH = (ids.length - 1) * V_GAP;
-        const startY = CENTER_Y - totalH / 2;
-        ids.forEach((id, i) => {
-          positions[id] = { x: START_X + Number(d) * H_GAP, y: Math.round(startY + i * V_GAP) };
-        });
-      }
-
-      return {
-        nodes: nodes.map((n) => ({ ...n, position: positions[n.id] || n.position })),
-      };
-    }),
+    };
+    layoutRaf = requestAnimationFrame(tick);
+  },
 }));
 
 export default useGraphStore;
