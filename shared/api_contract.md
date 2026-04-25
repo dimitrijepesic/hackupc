@@ -10,13 +10,13 @@ This is the source of truth for frontend-backend communication. Both sides must 
 
 ```json
 {
-  "id": "src/utils.py:parse_data:42",
-  "name": "parse_data",
-  "file": "src/utils.py",
+  "id": "src/Utils.swift:parseData:42",
+  "name": "parseData",
+  "file": "src/Utils.swift",
   "line_start": 42,
   "line_end": 68,
-  "language": "python",
-  "code": "def parse_data(raw):\n    ..."
+  "language": "swift",
+  "code": "func parseData(raw: String) -> Data {\n    ..."
 }
 ```
 
@@ -27,7 +27,7 @@ This is the source of truth for frontend-backend communication. Both sides must 
 | `file` | string | Relative path from project root |
 | `line_start` | int | First line of function |
 | `line_end` | int | Last line of function |
-| `language` | string | `"python"`, `"javascript"`, `"typescript"`, `"java"`, `"go"` |
+| `language` | string | `"python"`, `"javascript"`, `"typescript"`, `"java"`, `"go"`, `"swift"` |
 | `code` | string | Full source code of the function |
 
 ### GraphEdge
@@ -35,9 +35,9 @@ This is the source of truth for frontend-backend communication. Both sides must 
 ```json
 {
   "id": "edge_001",
-  "source": "src/main.py:process:10",
-  "target": "src/utils.py:parse_data:42",
-  "condition": "if data.is_valid()",
+  "source": "src/Main.swift:process:10",
+  "target": "src/Utils.swift:parseData:42",
+  "condition": "if data.isValid()",
   "condition_type": "if"
 }
 ```
@@ -57,8 +57,8 @@ This is the source of truth for frontend-backend communication. Both sides must 
   "project_id": "abc123",
   "nodes": [ ... ],
   "edges": [ ... ],
-  "files": ["src/main.py", "src/utils.py"],
-  "languages": ["python"]
+  "files": ["src/Main.swift", "src/Utils.swift"],
+  "languages": ["swift"]
 }
 ```
 
@@ -98,8 +98,8 @@ Response:
   "project_id": "abc123",
   "nodes": [ GraphNode, ... ],
   "edges": [ GraphEdge, ... ],
-  "files": ["src/main.py", "src/utils.py"],
-  "languages": ["python"]
+  "files": ["src/Main.swift", "src/Utils.swift"],
+  "languages": ["swift"]
 }
 ```
 
@@ -138,11 +138,11 @@ Generate an AI summary for a function, given its context.
 Request:
 ```json
 {
-  "node_id": "src/main.py:process:10",
-  "code": "def process(data): ...",
+  "node_id": "src/Main.swift:process:10",
+  "code": "func process(data: Data) { ... }",
   "adjacent_context": [
-    { "name": "parse_data", "code": "def parse_data(raw): ...", "relation": "callee" },
-    { "name": "main", "code": "def main(): ...", "relation": "caller" }
+    { "name": "parseData", "code": "func parseData(raw: String) -> Data { ... }", "relation": "callee" },
+    { "name": "main", "code": "func main() { ... }", "relation": "caller" }
   ]
 }
 ```
@@ -150,7 +150,7 @@ Request:
 Response:
 ```json
 {
-  "summary": "Processes incoming data by validating it and dispatching to parse_data. Called from main as the primary entry point for data handling."
+  "summary": "Processes incoming data by validating it and dispatching to parseData. Called from main as the primary entry point for data handling."
 }
 ```
 
@@ -164,10 +164,10 @@ Request:
 ```json
 {
   "project_id": "abc123",
-  "description": "Add a caching layer between process() and parse_data() that stores results by input hash",
+  "description": "Add a caching layer between process() and parseData() that stores results by input hash",
   "target_location": {
-    "after_node": "src/main.py:process:10",
-    "before_node": "src/utils.py:parse_data:42"
+    "after_node": "src/Main.swift:process:10",
+    "before_node": "src/Utils.swift:parseData:42"
   }
 }
 ```
@@ -178,7 +178,7 @@ Response:
   "new_node": GraphNode,
   "new_edges": [ GraphEdge, ... ],
   "removed_edges": ["edge_001"],
-  "generated_code": "def cache_lookup(data):\n    ...",
+  "generated_code": "func cacheLookup(data: Data) -> Data {\n    ...",
   "updated_graph": CallGraph
 }
 ```
@@ -196,14 +196,14 @@ Request:
 {
   "project_id": "abc123",
   "node": {
-    "name": "validate_input",
-    "file": "src/validators.py",
-    "code": "def validate_input(data):\n    return data is not None",
-    "language": "python"
+    "name": "validateInput",
+    "file": "src/Validators.swift",
+    "code": "func validateInput(data: Data) -> Bool {\n    return data != nil\n}",
+    "language": "swift"
   },
   "edges": [
-    { "source": "src/main.py:process:10", "target": "NEW", "condition": "if raw_input", "condition_type": "if" },
-    { "source": "NEW", "target": "src/utils.py:parse_data:42", "condition": null, "condition_type": "unconditional" }
+    { "source": "src/Main.swift:process:10", "target": "NEW", "condition": "if rawInput", "condition_type": "if" },
+    { "source": "NEW", "target": "src/Utils.swift:parseData:42", "condition": null, "condition_type": "unconditional" }
   ]
 }
 ```
