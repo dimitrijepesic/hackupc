@@ -21,9 +21,7 @@ export default function Header({ activePage }) {
             <span className="material-symbols-outlined">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
           <Link to="/" className="text-lg sm:text-xl font-black tracking-tighter text-white flex items-center gap-2 font-grotesk">
-            {activePage === 'workspace' && (
-              <span className="material-symbols-outlined text-[20px] sm:text-[24px] text-indigo-400" style={{ fontVariationSettings: "'FILL' 1" }}>account_tree</span>
-            )}
+            <span className="material-symbols-outlined text-[20px] sm:text-[24px] text-indigo-400" style={{ fontVariationSettings: "'FILL' 1" }}>account_tree</span>
             CodeGraph
           </Link>
           <nav className="hidden md:flex h-full items-center gap-6 font-grotesk tracking-tight">

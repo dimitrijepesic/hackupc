@@ -6,7 +6,8 @@ export default function Landing() {
       {/* Nav */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center h-16 px-8 max-w-7xl mx-auto">
-          <Link to="/" className="text-xl font-black text-black tracking-tighter">
+          <Link to="/" className="text-xl font-black text-black tracking-tighter flex items-center gap-2">
+            <span className="material-symbols-outlined text-[24px] text-indigo-600" style={{ fontVariationSettings: "'FILL' 1" }}>account_tree</span>
             CodeGraph
           </Link>
           <div className="hidden md:flex items-center gap-8">
