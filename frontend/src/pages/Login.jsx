@@ -6,7 +6,8 @@ export default function Login() {
       <main className="w-full max-w-[400px]">
         {/* Brand Logo */}
         <div className="text-center mb-8">
-          <Link to="/">
+          <Link to="/" className="inline-flex items-center gap-2">
+            <span className="material-symbols-outlined text-[36px] text-indigo-600" style={{ fontVariationSettings: "'FILL' 1" }}>account_tree</span>
             <h1 className="text-4xl font-black tracking-tighter text-gray-900">CodeGraph</h1>
           </Link>
           <p className="text-sm text-gray-500 mt-2">Precision codebase intelligence.</p>
