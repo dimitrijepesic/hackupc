@@ -1,0 +1,1128 @@
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Header } from '../components/Layout';
+import useGraphStore from '../store/graphStore';
+import useProjectStore from '../store/projectStore';
+import { defaultFileTree } from '../data/mockData';
+
+const NODE_WIDTH = 200;
+const NODE_HEIGHT = 120;
+
+// --- Edge path computation ---
+
+function getHandlePosition(node, handleType) {
+  const { x, y } = node.position;
+  switch (handleType) {
+    case 'input':
+      return { x, y: y + NODE_HEIGHT / 2 };
+    case 'output':
+      return { x: x + NODE_WIDTH, y: y + NODE_HEIGHT / 2 };
+    case 'output-top':
+      return { x: x + NODE_WIDTH, y: y + NODE_HEIGHT * 0.3 };
+    case 'output-bottom':
+      return { x: x + NODE_WIDTH, y: y + NODE_HEIGHT * 0.7 };
+    default:
+      return { x, y: y + NODE_HEIGHT / 2 };
+  }
+}
+
+const HANDLE_GAP = 0;
+const EDGE_OFFSET = 40;
+
+function computeEdgePath(source, target) {
+  const sx = source.x;
+  const sy = source.y;
+  const tx = target.x - HANDLE_GAP;
+  const ty = target.y;
+
+  if (tx > sx + EDGE_OFFSET) {
+    // Target is to the right — simple S-curve through midpoint
+    const midX = Math.round((sx + tx) / 2);
+    return `M ${sx} ${sy} H ${midX} V ${ty} H ${tx}`;
+  }
+
+  // Target is behind or directly below/above — route around nodes
+  const outX = sx + EDGE_OFFSET;
+  const inX = tx - EDGE_OFFSET;
+  const bypassY = sy > ty
+    ? Math.min(sy, ty) - EDGE_OFFSET
+    : Math.max(sy, ty) + EDGE_OFFSET;
+  return `M ${sx} ${sy} H ${outX} V ${bypassY} H ${inX} V ${ty} H ${tx}`;
+}
+
+function computeArrowHead(target) {
+  const s = 5;
+  const tipX = target.x - HANDLE_GAP;
+  return `M ${tipX - s} ${target.y - s} L ${tipX} ${target.y} L ${tipX - s} ${target.y + s}`;
+}
+
+function getEdgeClasses(edge, selectedNodeId) {
+  const classes = ['connection-line'];
+  if (edge.source === selectedNodeId || edge.target === selectedNodeId) classes.push('active');
+  if (edge.type === 'if') classes.push('condition-if');
+  if (edge.type === 'error') classes.push('condition-error');
+  if (edge.type === 'loop') classes.push('condition-loop');
+  return classes.join(' ');
+}
+
+// --- Main Workspace ---
+
+export default function Workspace() {
+  const { nodes, edges, selectedNodeId, selectNode, moveNode, addNode, addEdge, autoLayout } = useGraphStore();
+  const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab } = useProjectStore();
+
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
+
+  // --- Zoom / Pan state ---
+  const canvasRef = useRef(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  zoomRef.current = zoom;
+  panRef.current = pan;
+
+  // Track canvas dimensions reactively
+  const [canvasSize, setCanvasSize] = useState({ w: 800, h: 600 });
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const measure = () => setCanvasSize({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const obs = new ResizeObserver(measure);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Wheel: pinch-to-zoom (ctrlKey) or two-finger-scroll to pan
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const handler = (e) => {
+      e.preventDefault();
+      const z = zoomRef.current;
+      const p = panRef.current;
+
+      if (e.ctrlKey || e.metaKey) {
+        // Pinch-to-zoom on trackpad (or ctrl+scroll with mouse)
+        const rect = el.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const step = -e.deltaY * 0.01;
+        const next = Math.max(0.15, Math.min(2.5, z + step));
+        const ratio = next / z;
+        setZoom(next);
+        setPan({ x: mx - (mx - p.x) * ratio, y: my - (my - p.y) * ratio });
+      } else {
+        // Two-finger scroll → pan
+        setPan({ x: p.x - e.deltaX, y: p.y - e.deltaY });
+      }
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, []);
+
+  // Canvas mousedown: pan (drag) or deselect (click)
+  const handleCanvasMouseDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest('.node-card') || e.target.closest('button') || e.target.closest('aside')) return;
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPan = { ...panRef.current };
+      let moved = false;
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+        setPan({ x: startPan.x + dx, y: startPan.y + dy });
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (canvasRef.current) canvasRef.current.style.cursor = 'grab';
+        if (!moved) selectNode(null);
+      };
+      if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+    [selectNode],
+  );
+
+  // Keyboard shortcut: Escape closes node editor
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') closeNodeEditor();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [closeNodeEditor]);
+
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+
+  const handleFileSelect = useCallback((nodeId) => {
+    selectNode(nodeId);
+    if (!ui.codePanelOpen) toggleCodePanel();
+  }, [selectNode, ui.codePanelOpen, toggleCodePanel]);
+
+  return (
+    <div className="flex flex-col h-screen font-body-md text-body-md text-on-surface overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
+      <Header activePage="workspace" />
+
+      <div className="flex flex-1 pt-14 sm:pt-16 h-full overflow-hidden">
+        {/* Sidebar — icon rail + expandable explorer panel */}
+        <SideNav
+          project={project}
+          activeTab={ui.activeSideTab}
+          onTabChange={(tab) => setActiveSideTab(ui.activeSideTab === tab ? null : tab)}
+          onNewNode={openNodeEditor}
+          nodes={nodes}
+          selectedNodeId={selectedNodeId}
+          onFileSelect={handleFileSelect}
+        />
+
+        <main className="flex-1 flex h-full relative">
+          {/* Auto Layout button */}
+          <button
+            onClick={() => { autoLayout(); resetView(); }}
+            className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors"
+            title="Auto layout nodes"
+          >
+            <span className="material-symbols-outlined text-[16px]">auto_fix_high</span>
+            <span className="font-label-sm">Auto Layout</span>
+          </button>
+
+          {/* Canvas */}
+          <div
+            ref={canvasRef}
+            className="flex-1 node-canvas-bg relative overflow-hidden h-full"
+            style={{ cursor: 'grab' }}
+            onMouseDown={handleCanvasMouseDown}
+          >
+            {/* Transform wrapper — everything inside zooms/pans together */}
+            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+              {/* SVG edges */}
+              <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 5000, height: 5000, overflow: 'visible' }}>
+                {edges.map((edge) => {
+                  const sourceNode = nodes.find((n) => n.id === edge.source);
+                  const targetNode = nodes.find((n) => n.id === edge.target);
+                  if (!sourceNode || !targetNode) return null;
+                  const from = getHandlePosition(sourceNode, edge.sourceHandle);
+                  const to = getHandlePosition(targetNode, edge.targetHandle);
+                  return (
+                    <g key={edge.id}>
+                      <path
+                        className={getEdgeClasses(edge, selectedNodeId)}
+                        d={computeEdgePath(from, to)}
+                      />
+                      <path
+                        className={getEdgeClasses(edge, selectedNodeId)}
+                        d={computeArrowHead(to)}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Nodes */}
+              {nodes.map((node) => (
+                <NodeCard
+                  key={node.id}
+                  node={node}
+                  isSelected={node.id === selectedNodeId}
+                  edges={edges}
+                  onSelect={() => selectNode(node.id)}
+                  onMove={(pos) => moveNode(node.id, pos)}
+                  zoom={zoom}
+                />
+              ))}
+            </div>
+
+            {/* Minimap — stays fixed in viewport */}
+            <Minimap
+              nodes={nodes}
+              selectedNodeId={selectedNodeId}
+              zoom={zoom}
+              pan={pan}
+              canvasSize={canvasSize}
+              onNavigate={(newPan) => setPan(newPan)}
+            />
+
+            {/* Zoom controls */}
+            <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 z-10 glass-panel rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 flex items-center gap-1 sm:gap-2">
+              <button onClick={() => setZoom((z) => Math.max(0.15, z - 0.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px]">remove</span>
+              </button>
+              <span className="font-label-sm text-gray-600 w-8 sm:w-10 text-center select-none text-[10px] sm:text-[12px]">{Math.round(zoom * 100)}%</span>
+              <button onClick={() => setZoom((z) => Math.min(2.5, z + 0.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px]">add</span>
+              </button>
+              <div className="w-px h-4 bg-gray-300 mx-0.5 sm:mx-1"></div>
+              <button onClick={resetView} className="text-gray-500 hover:text-gray-900 transition-colors" title="Reset view">
+                <span className="material-symbols-outlined text-[14px] sm:text-[16px]">fit_screen</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Code Panel — always rendered, animated in/out */}
+          <CodePanel
+            node={selectedNode}
+            open={ui.codePanelOpen && !!selectedNode}
+            onClose={toggleCodePanel}
+          />
+
+          {/* Node Editor */}
+          {ui.nodeEditorOpen && (
+            <NodeEditorPanel
+              existingNodes={nodes}
+              onClose={closeNodeEditor}
+              onSubmit={(formData) => {
+                const maxY = nodes.length > 0 ? Math.max(...nodes.map((n) => n.position.y)) : 0;
+                const avgX = nodes.length > 0 ? nodes.reduce((s, n) => s + n.position.x, 0) / nodes.length : 50;
+                const newId = addNode({
+                  functionName: formData.functionName,
+                  filePath: formData.filePath,
+                  complexity: '',
+                  tags: [],
+                  position: { x: Math.round(avgX), y: maxY + 150 },
+                  icon: 'terminal',
+                  code: formData.description
+                    ? `// ${formData.description}\nexport function ${formData.functionName}() {\n  // TODO\n}`
+                    : `export function ${formData.functionName}() {\n  // TODO\n}`,
+                  startLine: 1,
+                  highlightLine: null,
+                  analysis: {
+                    description: formData.description || `Function ${formData.functionName}`,
+                    dependencies: '-',
+                    returnType: 'unknown',
+                    executionTime: '-',
+                  },
+                });
+                if (formData.calledByNode) {
+                  addEdge({
+                    source: formData.calledByNode,
+                    target: newId,
+                    type: formData.calledByType,
+                    sourceHandle: 'output',
+                    targetHandle: 'input',
+                  });
+                }
+                if (formData.callsNode) {
+                  addEdge({
+                    source: newId,
+                    target: formData.callsNode,
+                    type: formData.callsType,
+                    sourceHandle: 'output',
+                    targetHandle: 'input',
+                  });
+                }
+                closeNodeEditor();
+              }}
+            />
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// --- Side Navigation ---
+
+function SideNav({ project, activeTab, onTabChange, onNewNode, nodes, selectedNodeId, onFileSelect }) {
+  const tabs = [
+    { id: 'explorer', icon: 'folder_open', label: 'Explorer' },
+    { id: 'functions', icon: 'terminal', label: 'Functions', filled: true },
+  ];
+
+  const explorerOpen = activeTab === 'explorer';
+
+  return (
+    <div className="flex h-full shrink-0 z-40">
+      {/* Icon rail */}
+      <nav className="w-12 sm:w-14 md:w-20 h-full flex flex-col items-center py-2 sm:py-3 md:py-4 bg-white border-r border-gray-200 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
+        {/* Tab buttons — top */}
+        <div className="flex flex-col items-center w-full gap-1 md:gap-2 px-0.5 sm:px-1 md:px-2 flex-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`w-full flex flex-col items-center py-1.5 sm:py-2 md:py-3 rounded transition-all duration-100 ease-in group ${
+                activeTab === tab.id
+                  ? 'text-indigo-600 bg-indigo-50'
+                  : 'text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
+              title={tab.label}
+            >
+              <span
+                className="material-symbols-outlined text-[18px] sm:text-[20px] md:text-[24px] md:mb-1 group-hover:scale-110 transition-transform"
+                style={activeTab === tab.id && tab.filled ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {tab.icon}
+              </span>
+              <span className="hidden md:block font-grotesk uppercase text-[10px] tracking-widest text-center w-full truncate px-1">
+                {tab.label}
+              </span>
+            </button>
+          ))}
+          <button
+            onClick={onNewNode}
+            className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mt-2 md:mt-4 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm"
+            title="New Node"
+          >
+            <span className="material-symbols-outlined text-[16px] sm:text-[18px] md:text-[24px]">add</span>
+          </button>
+        </div>
+
+        {/* Bottom — settings, help, project */}
+        <div className="flex flex-col items-center w-full gap-1 md:gap-2 px-0.5 sm:px-1 md:px-2 mt-auto">
+          <button className="w-full flex flex-col items-center py-1.5 sm:py-2 md:py-3 rounded text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-100 ease-in group" title="Settings">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px] md:text-[24px] group-hover:scale-110 transition-transform">settings</span>
+          </button>
+          <button className="w-full flex flex-col items-center py-1.5 sm:py-2 md:py-3 rounded text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-100 ease-in group" title="Help">
+            <span className="material-symbols-outlined text-[18px] sm:text-[20px] md:text-[24px] group-hover:scale-110 transition-transform">help_outline</span>
+          </button>
+          {/* Project badge */}
+          <div className="flex flex-col items-center w-full mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-200">
+            <div className="w-7 sm:w-8 md:w-10 h-7 sm:h-8 md:h-10 rounded bg-indigo-50 flex items-center justify-center border border-indigo-200 mb-1">
+              <span className="text-xs sm:text-sm md:text-lg font-black text-indigo-600">
+                {project.name.charAt(0).toLowerCase()}
+              </span>
+            </div>
+            <div className="hidden md:block text-[9px] font-grotesk uppercase tracking-widest text-gray-900 text-center w-full truncate px-1" title={project.name}>
+              {project.name}
+            </div>
+            <div className="hidden md:block text-[8px] font-grotesk uppercase tracking-widest text-gray-400 mt-0.5">
+              {project.branch}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Explorer panel — slides in/out */}
+      <div
+        className={`h-full overflow-hidden transition-[width] duration-200 ease-in-out border-r border-gray-200 ${
+          explorerOpen ? 'w-56 sm:w-60' : 'w-0 border-r-0'
+        }`}
+      >
+        <div className="w-56 sm:w-60 h-full bg-gray-50 flex flex-col">
+          <div className="h-10 px-3 flex items-center justify-between border-b border-gray-100 shrink-0">
+            <span className="font-label-sm text-gray-500 uppercase tracking-wider text-[10px]">Explorer</span>
+          </div>
+          <div className="flex-1 overflow-y-auto py-1">
+            <FileTree nodes={nodes} selectedNodeId={selectedNodeId} onFileSelect={onFileSelect} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Draggable Node Card ---
+
+function NodeCard({ node, isSelected, edges, onSelect, onMove, zoom = 1 }) {
+  const handleMouseDown = useCallback(
+    (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onSelect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPos = { ...node.position };
+
+      const onMouseMove = (ev) => {
+        onMove({
+          x: startPos.x + (ev.clientX - startX) / zoom,
+          y: startPos.y + (ev.clientY - startY) / zoom,
+        });
+      };
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    },
+    [node.position, onSelect, onMove, zoom],
+  );
+
+  const iconColor =
+    isSelected ? 'text-primary' : node.icon === 'warning' ? 'text-error' : 'text-gray-500';
+
+  return (
+    <div
+      className="absolute z-10"
+      style={{
+        top: node.position.y,
+        left: node.position.x,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+      }}
+    >
+      <div
+        className={`node-card ${isSelected ? 'active' : ''} rounded px-3 py-4 cursor-move h-full overflow-hidden ${!isSelected ? 'opacity-80' : ''}`}
+        onMouseDown={handleMouseDown}
+      >
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center gap-2">
+            <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>{node.icon}</span>
+            <span className="font-label-sm text-gray-600 truncate">{node.filePath}</span>
+          </div>
+          {isSelected && (
+            <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.4)] shrink-0" />
+          )}
+        </div>
+        <div className="font-body-md text-gray-900 truncate">{node.functionName}()</div>
+        {node.tags && node.tags.length > 0 && (
+          <div className="mt-2 flex gap-1">
+            {node.tags.map((tag) => (
+              <span key={tag} className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-label-sm text-gray-500">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+// --- Code Panel ---
+
+function CodePanel({ node, open, onClose }) {
+  const [width, setWidth] = useState(384); // w-96 = 384px
+  const [dragging, setDragging] = useState(false);
+  const MIN_W = 280;
+  const MAX_W = 700;
+
+  const handleResizeStart = useCallback((e) => {
+    e.preventDefault();
+    setDragging(true);
+    const startX = e.clientX;
+    const startW = width;
+    const onMove = (ev) => {
+      const delta = startX - ev.clientX;
+      setWidth(Math.max(MIN_W, Math.min(MAX_W, startW + delta)));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setDragging(false);
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [width]);
+
+  return (
+    <aside
+      className={`border-l border-gray-200 bg-white flex flex-col h-full z-20 flex-shrink-0 relative overflow-hidden ${
+        dragging ? '' : 'transition-[width,min-width] duration-200 ease-in-out'
+      }`}
+      style={{ width: open ? width : 0, minWidth: open ? MIN_W : 0 }}
+    >
+      {/* Resize handle */}
+      <div
+        className="absolute left-0 top-0 w-1.5 h-full cursor-col-resize z-30 hover:bg-primary/30 active:bg-primary/40 transition-colors"
+        onMouseDown={handleResizeStart}
+      />
+      <div className="h-12 border-b border-gray-200 flex items-center justify-between px-4 shrink-0 bg-white">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="material-symbols-outlined text-[18px] text-primary">code</span>
+          <span className="font-label-md text-gray-700 truncate">
+            {node ? node.filePath : 'No selection'}
+          </span>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button className="p-1 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100 transition-colors">
+            <span className="material-symbols-outlined text-[16px]">more_vert</span>
+          </button>
+          <button onClick={onClose} className="p-1 text-gray-500 hover:text-gray-900 rounded hover:bg-gray-100 transition-colors">
+            <span className="material-symbols-outlined text-[16px]">close</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Node Analysis — top */}
+      <div className="border-b border-gray-200 bg-white flex flex-col shrink-0">
+        <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+          <span className="font-label-sm text-gray-500 uppercase tracking-wider text-[10px]">Node Analysis</span>
+          <button className="flex items-center gap-1 text-[10px] font-label-sm text-primary hover:text-gray-900 transition-colors bg-primary/10 px-2 py-1 rounded border border-primary/20">
+            <span className="material-symbols-outlined text-[12px]">auto_awesome</span>
+            Summarize
+          </button>
+        </div>
+        <div className="p-4">
+          {node && node.analysis ? (
+            <>
+              <p className="font-body-md text-sm text-gray-500 mb-3">{node.analysis.description}</p>
+              <div className="space-y-2">
+                {node.analysis.dependencies && <DependenciesList value={node.analysis.dependencies} />}
+                <AnalysisRow label="Return Type" value={node.analysis.returnType || '-'} />
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-400 text-sm">No node selected.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Code view — contained block */}
+      <div className="flex-1 overflow-y-auto p-4 bg-white relative">
+        {node ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-3 py-1.5 border-b border-gray-200 bg-gray-100/60 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[14px] text-gray-400">description</span>
+              <span className="font-label-sm text-[10px] text-gray-500 uppercase tracking-wider">{node.filePath}</span>
+            </div>
+            <div className="p-4 overflow-x-auto">
+              <CodeView code={node.code || ''} startLine={node.startLine || 1} highlightLine={node.highlightLine} />
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-400 text-sm font-label-sm">Click a node to view its source code.</p>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// Syntax highlight tokens (VS Code light theme colors)
+const SYN = {
+  keyword: '#8b5cf6',   // purple
+  string: '#16a34a',    // green
+  comment: '#9ca3af',   // gray
+  number: '#ea580c',    // orange
+  constant: '#2563eb',  // blue
+  fn: '#2563eb',        // blue
+  type: '#0d9488',      // teal
+  punct: '#64748b',     // slate
+  plain: '#1e293b',     // dark
+};
+
+const KEYWORDS = new Set([
+  'function','const','let','var','return','if','else','for','while','do',
+  'switch','case','break','continue','class','extends','new','this','typeof',
+  'instanceof','in','of','import','from','export','default','async','await',
+  'try','catch','finally','throw','yield','delete','void','static','get','set',
+  'super','with','debugger','enum','implements','interface','package','private',
+  'protected','public','abstract','boolean','byte','char','double','final',
+  'float','goto','int','long','native','short','synchronized','throws',
+  'transient','volatile','def','self','elif','except','pass','raise','lambda',
+  'None','print','range','True','False',
+]);
+
+const CONSTANTS = new Set(['true','false','null','undefined','NaN','Infinity','None','True','False']);
+const TYPES = new Set(['string','number','boolean','object','any','void','never','Promise','Array','Map','Set','Date','Error','Response','Request']);
+
+function highlightLine(text) {
+  const tokens = [];
+  let i = 0;
+  while (i < text.length) {
+    // Comments
+    if (text[i] === '/' && text[i + 1] === '/') {
+      tokens.push({ text: text.slice(i), color: SYN.comment });
+      break;
+    }
+    if (text[i] === '#' && (i === 0 || /\s/.test(text[i - 1]))) {
+      tokens.push({ text: text.slice(i), color: SYN.comment });
+      break;
+    }
+    // Strings
+    if (text[i] === '"' || text[i] === "'" || text[i] === '`') {
+      const q = text[i];
+      let j = i + 1;
+      while (j < text.length && text[j] !== q) { if (text[j] === '\\') j++; j++; }
+      j = Math.min(j + 1, text.length);
+      tokens.push({ text: text.slice(i, j), color: SYN.string });
+      i = j;
+      continue;
+    }
+    // Numbers
+    if (/[0-9]/.test(text[i]) && (i === 0 || /[\s(,=+\-*/<>[\]{}:;!&|^~%]/.test(text[i - 1]))) {
+      let j = i;
+      while (j < text.length && /[0-9.xXa-fA-F_eEn]/.test(text[j])) j++;
+      tokens.push({ text: text.slice(i, j), color: SYN.number });
+      i = j;
+      continue;
+    }
+    // Words
+    if (/[a-zA-Z_$@]/.test(text[i])) {
+      let j = i;
+      while (j < text.length && /[a-zA-Z0-9_$@]/.test(text[j])) j++;
+      const word = text.slice(i, j);
+      let color = SYN.plain;
+      if (KEYWORDS.has(word)) color = SYN.keyword;
+      else if (CONSTANTS.has(word)) color = SYN.constant;
+      else if (TYPES.has(word)) color = SYN.type;
+      else if (j < text.length && text[j] === '(') color = SYN.fn;
+      else if (text[i] === '@') color = SYN.keyword;
+      tokens.push({ text: word, color });
+      i = j;
+      continue;
+    }
+    // Punctuation / operators
+    if (/[{}()[\];:.,=+\-*/<>!&|^~%?]/.test(text[i])) {
+      let j = i;
+      while (j < text.length && /[=+\-*/<>!&|^~%?]/.test(text[j])) j++;
+      if (j === i) j = i + 1;
+      tokens.push({ text: text.slice(i, j), color: SYN.punct });
+      i = j;
+      continue;
+    }
+    // Whitespace / other
+    let j = i;
+    while (j < text.length && !/[a-zA-Z0-9_$@"'`/#{}\[\]();:.,=+\-*/<>!&|^~%?]/.test(text[j])) j++;
+    if (j === i) j = i + 1;
+    tokens.push({ text: text.slice(i, j), color: SYN.plain });
+    i = j;
+  }
+  return tokens;
+}
+
+function CodeView({ code, startLine, highlightLine: hlLine }) {
+  const lines = code.split('\n');
+  const start = startLine || 1;
+
+  return (
+    <div className="flex font-label-sm text-[12px] code-font leading-relaxed">
+      <div className="flex flex-col text-gray-400 pr-4 select-none text-right border-r border-gray-200 mr-4 shrink-0">
+        {lines.map((_, i) => (
+          <span key={i} className={start + i === hlLine ? 'text-primary' : ''}>
+            {start + i}
+          </span>
+        ))}
+      </div>
+      <pre className="flex-1 whitespace-pre overflow-x-auto">
+        {lines.map((line, i) => (
+          <div
+            key={i}
+            className={
+              start + i === hlLine
+                ? 'bg-primary/10 -ml-4 pl-4 border-l-2 border-primary'
+                : ''
+            }
+          >
+            {line
+              ? highlightLine(line).map((tok, ti) => (
+                  <span key={ti} style={{ color: tok.color }}>{tok.text}</span>
+                ))
+              : ' '}
+          </div>
+        ))}
+      </pre>
+    </div>
+  );
+}
+
+function DependenciesList({ value }) {
+  const items = value.split(',').map((s) => s.trim()).filter(Boolean);
+  return (
+    <div>
+      <span className="font-label-sm text-gray-500 text-xs">Dependencies</span>
+      <ul className="mt-1 space-y-0.5">
+        {items.map((item) => (
+          <li key={item} className="flex items-center gap-1.5 text-xs text-gray-700 font-label-sm">
+            <span className="w-1 h-1 rounded-full bg-gray-400 shrink-0"></span>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AnalysisRow({ label, value, highlight }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="font-label-sm text-gray-500 text-xs">{label}</span>
+      <span className={`font-label-sm text-xs bg-gray-100 px-2 py-0.5 rounded ${highlight ? 'text-primary' : 'text-gray-700'}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// --- Node Editor Form ---
+
+function NodeEditorPanel({ existingNodes, onClose, onSubmit }) {
+  const [form, setForm] = useState({
+    functionName: '',
+    filePath: '',
+    description: '',
+    calledByNode: '',
+    calledByType: 'normal',
+    callsNode: '',
+    callsType: 'normal',
+  });
+
+  const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+  const handleSubmit = () => {
+    if (!form.functionName.trim()) return;
+    onSubmit(form);
+    setForm({
+      functionName: '',
+      filePath: '',
+      description: '',
+      calledByNode: '',
+      calledByType: 'normal',
+      callsNode: '',
+      callsType: 'normal',
+    });
+  };
+
+  return (
+    <div className="absolute left-2 sm:left-6 top-12 sm:top-6 w-[calc(100%-16px)] sm:w-80 bg-white rounded-lg shadow-[0_12px_24px_rgba(0,0,0,0.08)] z-30 flex flex-col border border-gray-200 overflow-hidden">
+      <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-100">
+        <span className="font-label-md text-gray-900 font-medium flex items-center gap-2">
+          <span className="material-symbols-outlined text-[18px]">add_box</span>
+          New Function Node
+        </span>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
+          <span className="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div className="p-4 flex flex-col gap-4 bg-white max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="flex flex-col gap-1">
+          <label className="font-label-sm text-[10px] text-gray-400 uppercase tracking-wider">Function Name</label>
+          <input
+            className="bg-white border-b border-gray-200 border-t-0 border-x-0 focus:border-primary focus:ring-0 text-gray-900 font-label-md px-0 py-1 text-sm transition-colors w-full placeholder:text-gray-400"
+            placeholder="e.g. hashPassword"
+            type="text"
+            value={form.functionName}
+            onChange={(e) => update('functionName', e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="font-label-sm text-[10px] text-gray-400 uppercase tracking-wider">File Path</label>
+          <input
+            className="bg-white border-b border-gray-200 border-t-0 border-x-0 focus:border-primary focus:ring-0 text-gray-900 font-label-md px-0 py-1 text-sm transition-colors w-full placeholder:text-gray-400"
+            placeholder="src/utils/crypto.ts"
+            type="text"
+            value={form.filePath}
+            onChange={(e) => update('filePath', e.target.value)}
+          />
+        </div>
+        <div className="bg-gray-50 border border-gray-100 rounded p-3 mt-2">
+          <div className="flex items-center justify-between mb-2">
+            <label className="font-label-sm text-[10px] text-primary uppercase tracking-wider flex items-center gap-1">
+              <span className="material-symbols-outlined text-[12px]">auto_awesome</span> Smart Add
+            </label>
+          </div>
+          <textarea
+            className="w-full bg-transparent border-0 focus:ring-0 text-sm text-gray-700 placeholder:text-gray-400 resize-none h-16 p-0 font-body-md"
+            placeholder="Describe what this function should do..."
+            value={form.description}
+            onChange={(e) => update('description', e.target.value)}
+          />
+        </div>
+        <div className="h-px w-full bg-gray-100 my-2"></div>
+        <span className="font-label-sm text-xs text-gray-900 mb-1">Relationships</span>
+        {/* Called By */}
+        <div className="bg-gray-50 rounded border border-gray-100 p-2 flex flex-col gap-2">
+          <span className="font-label-sm text-[10px] text-gray-400 uppercase">Called By Node</span>
+          <div className="flex items-center gap-2">
+            <select
+              className="bg-white border border-gray-200 rounded text-xs text-gray-700 py-1 px-2 focus:ring-1 focus:ring-primary focus:border-primary w-2/3"
+              value={form.calledByNode}
+              onChange={(e) => update('calledByNode', e.target.value)}
+            >
+              <option value="">None (Entry point)</option>
+              {existingNodes.map((n) => (
+                <option key={n.id} value={n.id}>{n.functionName}()</option>
+              ))}
+            </select>
+            <select
+              className="bg-white border border-gray-200 rounded text-xs text-gray-700 py-1 px-2 focus:ring-1 focus:ring-primary focus:border-primary w-1/3"
+              value={form.calledByType}
+              onChange={(e) => update('calledByType', e.target.value)}
+            >
+              <option value="normal">Normal</option>
+              <option value="if">If</option>
+              <option value="error">Catch</option>
+            </select>
+          </div>
+        </div>
+        {/* Calls Node */}
+        <div className="bg-gray-50 rounded border border-gray-100 p-2 flex flex-col gap-2">
+          <span className="font-label-sm text-[10px] text-gray-400 uppercase">Calls Node</span>
+          <div className="flex items-center gap-2">
+            <select
+              className="bg-white border border-gray-200 rounded text-xs text-gray-700 py-1 px-2 focus:ring-1 focus:ring-primary focus:border-primary w-2/3"
+              value={form.callsNode}
+              onChange={(e) => update('callsNode', e.target.value)}
+            >
+              <option value="">Select node...</option>
+              {existingNodes.map((n) => (
+                <option key={n.id} value={n.id}>{n.functionName}()</option>
+              ))}
+            </select>
+            <select
+              className="bg-white border border-gray-200 rounded text-xs text-gray-700 py-1 px-2 focus:ring-1 focus:ring-primary focus:border-primary w-1/3"
+              value={form.callsType}
+              onChange={(e) => update('callsType', e.target.value)}
+            >
+              <option value="normal">Normal</option>
+              <option value="if">If</option>
+              <option value="error">Catch</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div className="bg-gray-50 p-3 border-t border-gray-100 flex justify-end gap-2">
+        <button onClick={onClose} className="px-3 py-1.5 rounded border border-gray-200 text-xs font-label-sm text-gray-700 hover:bg-gray-100 transition-colors">
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={!form.functionName.trim()}
+          className="px-3 py-1.5 rounded bg-primary text-white text-xs font-label-sm hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Create Node
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- Minimap ---
+
+// --- File Tree (Explorer panel) ---
+
+function FileTree({ nodes, selectedNodeId, onFileSelect }) {
+  // Build a lookup: filePath → nodeId for files that map to graph nodes
+  const nodeByFile = {};
+  nodes.forEach((n) => {
+    nodeByFile[n.filePath] = n.id;
+  });
+
+  const renderItem = (item, parentPath = '', depth = 0) => {
+    const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
+    if (item.type === 'folder') {
+      return (
+        <TreeFolder key={fullPath} name={item.name} defaultOpen={item.name === 'Sources'} depth={depth}>
+          {item.children.map((child) => renderItem(child, fullPath, depth + 1))}
+        </TreeFolder>
+      );
+    }
+    const nodeId = nodeByFile[fullPath];
+    return (
+      <TreeFile
+        key={fullPath}
+        name={item.name}
+        depth={depth}
+        active={nodeId != null && nodeId === selectedNodeId}
+        onClick={nodeId ? () => onFileSelect(nodeId) : undefined}
+      />
+    );
+  };
+
+  return (
+    <div className="text-[13px] font-inter select-none">
+      {defaultFileTree.map((item) => renderItem(item))}
+    </div>
+  );
+}
+
+// --- Material Icon Theme (PKief/vscode-material-icon-theme, MIT) ---
+const MI_CDN = '/icons/material';
+
+const FOLDER_ICONS = {
+  src: 'folder-src',
+  sources: 'folder-src',
+  tests: 'folder-test',
+  mocks: 'folder-mock',
+  '.github': 'folder-github',
+  workflows: 'folder-ci',
+  interceptor: 'folder-middleware',
+  docs: 'folder-docs',
+};
+
+const EXT_ICONS = {
+  swift: 'swift',
+  ts: 'typescript',
+  tsx: 'react_ts',
+  js: 'javascript',
+  jsx: 'react',
+  json: 'json',
+  md: 'markdown',
+  yml: 'yaml',
+  yaml: 'yaml',
+  py: 'python',
+  go: 'go',
+  java: 'java',
+  plist: 'xml',
+  gitignore: 'git',
+};
+
+const SPECIAL_FILES = {
+  'Package.swift': 'swift',
+  'Project.swift': 'swift',
+  'LICENSE': 'certificate',
+  '.swiftlint.yml': 'yaml',
+  '.gitignore': 'git',
+  'Makefile': 'makefile',
+  'Gemfile': 'ruby',
+};
+
+function getMaterialFileIcon(name) {
+  if (SPECIAL_FILES[name]) return `${MI_CDN}/${SPECIAL_FILES[name]}.svg`;
+  const ext = name.split('.').pop().toLowerCase();
+  const icon = EXT_ICONS[ext] || 'file';
+  return `${MI_CDN}/${icon}.svg`;
+}
+
+function getMaterialFolderIcon(name, open) {
+  const key = name.toLowerCase();
+  const base = FOLDER_ICONS[key] || 'folder';
+  return `${MI_CDN}/${base}${open ? '-open' : ''}.svg`;
+}
+
+const INDENT_W = 16;
+
+function IndentGuides({ depth }) {
+  return Array.from({ length: depth }, (_, i) => (
+    <span
+      key={i}
+      className="absolute top-0 bottom-0 w-px bg-gray-200"
+      style={{ left: 8 + i * INDENT_W }}
+    />
+  ));
+}
+
+function TreeFolder({ name, children, defaultOpen = false, depth = 0 }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const pad = 4 + depth * INDENT_W;
+
+  return (
+    <div>
+      <button
+        className="relative w-full flex items-center gap-1.5 py-[5px] text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors text-left"
+        style={{ paddingLeft: pad }}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <IndentGuides depth={depth} />
+        <span
+          className="material-symbols-outlined text-[16px] shrink-0 transition-transform duration-150"
+          style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+        >
+          expand_more
+        </span>
+        <img src={getMaterialFolderIcon(name, open)} alt="" className="w-4 h-4 shrink-0" />
+        <span className="truncate">{name}</span>
+      </button>
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-in-out"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="overflow-hidden">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TreeFile({ name, active, onClick, depth = 0 }) {
+  const pad = 4 + depth * INDENT_W + 22;
+  return (
+    <button
+      className={`relative w-full flex items-center gap-1.5 py-[5px] text-left transition-colors ${
+        active ? 'text-gray-900 bg-indigo-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+      }`}
+      style={{ paddingLeft: pad }}
+      onClick={onClick}
+    >
+      <IndentGuides depth={depth} />
+      <img src={getMaterialFileIcon(name)} alt="" className="w-4 h-4 shrink-0" />
+      <span className="truncate">{name}</span>
+    </button>
+  );
+}
+
+// --- Minimap ---
+
+const MINIMAP_INNER_W = 176; // w-48 minus p-2 padding
+const MINIMAP_INNER_H = 112;
+
+function Minimap({ nodes, selectedNodeId, zoom, pan, canvasSize, onNavigate }) {
+  if (nodes.length === 0) return null;
+
+  // World bounds from node positions
+  const xs = nodes.map((n) => n.position.x);
+  const ys = nodes.map((n) => n.position.y);
+  const minX = Math.min(...xs) - 60;
+  const minY = Math.min(...ys) - 60;
+  const maxX = Math.max(...xs) + NODE_WIDTH + 60;
+  const maxY = Math.max(...ys) + NODE_HEIGHT + 60;
+  const worldW = maxX - minX || 1;
+  const worldH = maxY - minY || 1;
+  const scale = Math.min(MINIMAP_INNER_W / worldW, MINIMAP_INNER_H / worldH);
+
+  // Viewport rectangle — which part of the world is visible on screen
+  const vpWorldX = -pan.x / zoom;
+  const vpWorldY = -pan.y / zoom;
+  const vpWorldW = canvasSize.w / zoom;
+  const vpWorldH = canvasSize.h / zoom;
+
+  const vpLeft = (vpWorldX - minX) * scale;
+  const vpTop = (vpWorldY - minY) * scale;
+  const vpWidth = vpWorldW * scale;
+  const vpHeight = vpWorldH * scale;
+
+  // Click on minimap → center viewport on that world point
+  const handleClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const worldX = clickX / scale + minX;
+    const worldY = clickY / scale + minY;
+    onNavigate({
+      x: -(worldX * zoom - canvasSize.w / 2),
+      y: -(worldY * zoom - canvasSize.h / 2),
+    });
+  };
+
+  return (
+    <div className="absolute bottom-4 left-4 w-48 h-32 glass-panel rounded border border-gray-200 p-2 z-10 hidden lg:block">
+      <div
+        className="w-full h-full relative border border-gray-200 bg-gray-100 overflow-hidden cursor-pointer"
+        onClick={handleClick}
+      >
+        {/* Node dots */}
+        {nodes.map((node) => (
+          <div
+            key={node.id}
+            className={`absolute w-4 h-2 rounded-sm ${
+              node.id === selectedNodeId
+                ? 'bg-primary'
+                : node.icon === 'warning'
+                  ? 'bg-error'
+                  : 'bg-gray-400'
+            }`}
+            style={{
+              left: (node.position.x - minX) * scale,
+              top: (node.position.y - minY) * scale,
+            }}
+          />
+        ))}
+        {/* Viewport indicator */}
+        <div
+          className="absolute border border-gray-400 bg-indigo-50/30 pointer-events-none"
+          style={{
+            left: vpLeft,
+            top: vpTop,
+            width: vpWidth,
+            height: vpHeight,
+          }}
+        />
+      </div>
+    </div>
+  );
+}

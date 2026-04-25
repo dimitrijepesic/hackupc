@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors — Precision & Clarity (Light theme) */
+  --color-surface: #fcf8f8;
+  --color-surface-dim: #ddd9d9;
+  --color-surface-bright: #fcf8f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f3f2;
+  --color-surface-container: #f1edec;
+  --color-surface-container-high: #ebe7e7;
+  --color-surface-container-highest: #e5e2e1;
+  --color-on-surface: #1c1b1b;
+  --color-on-surface-variant: #444748;
+  --color-inverse-surface: #313030;
+  --color-inverse-on-surface: #f4f0ef;
+  --color-outline: #747878;
+  --color-outline-variant: #c4c7c8;
+  --color-surface-tint: #4f46e5;
+  --color-surface-variant: #e5e2e1;
+
+  --color-primary: #4f46e5;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e0e7ff;
+  --color-on-primary-container: #312e81;
+  --color-inverse-primary: #a5b4fc;
+
+  --color-secondary: #5e5e5e;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e2e2e2;
+  --color-on-secondary-container: #646464;
+
+  --color-tertiary: #5f5e5e;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #ffffff;
+  --color-on-tertiary-container: #767575;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-primary-fixed: #e0e7ff;
+  --color-primary-fixed-dim: #a5b4fc;
+  --color-on-primary-fixed: #1e1b4b;
+  --color-on-primary-fixed-variant: #3730a3;
+  --color-secondary-fixed: #e2e2e2;
+  --color-secondary-fixed-dim: #c6c6c6;
+  --color-on-secondary-fixed: #1b1b1b;
+  --color-on-secondary-fixed-variant: #474747;
+  --color-tertiary-fixed: #e4e2e1;
+  --color-tertiary-fixed-dim: #c8c6c6;
+  --color-on-tertiary-fixed: #1b1c1c;
+  --color-on-tertiary-fixed-variant: #474747;
+
+  --color-background: #fcf8f8;
+  --color-on-background: #1c1b1b;
+
+  /* Font Families — Inter for everything (Precision & Clarity) */
+  --font-grotesk: 'Inter', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-headline-xl: 'Inter', sans-serif;
+  --font-headline-lg: 'Inter', sans-serif;
+  --font-headline-md: 'Inter', sans-serif;
+  --font-body-lg: 'Inter', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-label-md: 'Inter', sans-serif;
+  --font-label-sm: 'Inter', sans-serif;
+
+  /* Font Sizes with modifiers */
+  --text-headline-xl: 48px;
+  --text-headline-xl--line-height: 1.1;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl--font-weight: 700;
+
+  --text-headline-lg: 36px;
+  --text-headline-lg--line-height: 1.2;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 1.4;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 600;
+
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-lg--font-weight: 400;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.6;
+  --text-body-md--font-weight: 400;
+
+  --text-label-md: 12px;
+  --text-label-md--line-height: 1.0;
+  --text-label-md--letter-spacing: 0.05em;
+  --text-label-md--font-weight: 600;
+
+  --text-label-sm: 11px;
+  --text-label-sm--line-height: 1.0;
+  --text-label-sm--letter-spacing: 0.02em;
+  --text-label-sm--font-weight: 500;
+}
+
+/* Light mesh background */
+.bg-mesh {
+  background-color: #f9fafb;
+}
+
+/* Glass panel — light version */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Input focus glow — indigo */
+.input-glow:focus-within {
+  box-shadow: 0 0 0 2px #4f46e5;
+  border-bottom-color: #4f46e5;
+}
+
+/* Node canvas grid background — light */
+.node-canvas-bg {
+  background-color: #f9fafb;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Node cards — light */
+.node-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 2px solid #4f46e5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.node-card.active {
+  border-color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+/* SVG connection lines */
+.connection-line {
+  stroke: rgba(0, 0, 0, 0.15);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.connection-line.active {
+  stroke: #4f46e5;
+  stroke-width: 2;
+}
+
+.connection-line.condition-if {
+  stroke-dasharray: 5, 5;
+}
+
+.connection-line.condition-loop {
+  stroke: #6366f1;
+}
+
+.connection-line.condition-error {
+  stroke: #ef4444;
+  stroke-dasharray: 2, 2;
+  opacity: 0.4;
+}
+
+/* Monospace code font */
+.code-font {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Custom scrollbar — light */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.2); }
