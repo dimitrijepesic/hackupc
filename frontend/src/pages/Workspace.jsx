@@ -469,13 +469,20 @@ export default function Workspace() {
             </button>
             <button
               onClick={toggleClusterView}
-              className={`glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-colors ${
-                clusterView ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'text-gray-500 hover:text-gray-900'
+              className={`rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-colors border ${
+                clusterView
+                  ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-sm'
+                  : 'glass-panel text-gray-500 hover:text-gray-900 border-transparent'
               }`}
               title={clusterView ? 'Switch to flat view' : 'Switch to package view'}
             >
-              <span className="material-symbols-outlined text-[16px]">package_2</span>
-              <span className="font-label-sm">Packages</span>
+              <span
+                className="material-symbols-outlined text-[16px]"
+                style={clusterView ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {clusterView ? 'check' : 'package_2'}
+              </span>
+              <span className="font-label-sm">{clusterView ? 'Packaged' : 'Packages'}</span>
             </button>
             <div className="glass-panel rounded-lg px-1.5 py-1 flex items-center gap-1">
               {CANVAS_FILTERS.map((f) => {
