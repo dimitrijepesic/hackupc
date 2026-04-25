@@ -20,8 +20,7 @@ def parse_repo(repo_path: str, repo_name: str = "", language: str = "swift") -> 
                 continue
 
             full_path = os.path.join(dirpath, fname)
-            relative_path = os.path.relpath(full_path, repo_path)
-
+            relative_path = os.path.relpath(full_path, repo_path).replace(os.sep, "/")
             try:
                 file_result = parser.parse_file(full_path)
                 file_result.path = relative_path
