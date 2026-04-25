@@ -153,6 +153,23 @@
   filter: grayscale(0.85);
 }
 
+/* Reachability classification — left edge accent. Active selection still
+   wins via .node-card.active overriding box-shadow. */
+.node-card.is-dead {
+  box-shadow: inset 4px 0 0 0 #f43f5e, 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.node-card.is-leaf:not(.is-dead) {
+  box-shadow: inset 4px 0 0 0 #fbbf24, 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.node-card.is-dead.is-leaf {
+  box-shadow:
+    inset 4px 0 0 0 #f43f5e,
+    inset 0 -3px 0 0 #fbbf24,
+    0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 /* SVG connection lines */
 .connection-line {
   stroke: rgba(0, 0, 0, 0.15);
