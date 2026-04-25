@@ -243,7 +243,20 @@ class SwiftParser(BaseParser):
 
     # ---- calls ----
 
+    def _is_subscript(self, node) -> bool:
+        """Return True if this call_expression is actually a subscript (e.g. store[key])."""
+        for child in node.children:
+            if child.type == "call_suffix":
+                for sub in child.children:
+                    if sub.type == "value_arguments":
+                        for tok in sub.children:
+                            if tok.type == "[":
+                                return True
+        return False
+
     def _extract_call(self, node, source) -> FunctionCall | None:
+        if self._is_subscript(node):
+            return None
         line = node.start_point[0] + 1
         for child in node.children:
             if child.type == "simple_identifier":

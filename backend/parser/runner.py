@@ -37,22 +37,64 @@ def parse_repo(repo_path: str, repo_name: str = "", language: str = "swift") -> 
 
     merged = merge(results)
     _refine_call_kinds(merged)
+    _resolve_implicit_self(merged)
     return _to_dict(merged)
 
 
-def _refine_call_kinds(result: ParseResult) -> None:
-    """Demote 'initializer' calls whose target isn't a known type to 'call'.
+# PascalCase global functions that are NOT initializers.
+# Almost everything PascalCase in Swift IS a type initializer;
+# these are the known exceptions (XCTest assertion family).
+_PASCAL_GLOBAL_FUNCS = {
+    'XCTAssertEqual', 'XCTAssertNotEqual',
+    'XCTAssertNil', 'XCTAssertNotNil',
+    'XCTAssertTrue', 'XCTAssertFalse',
+    'XCTAssertThrowsError', 'XCTAssertNoThrow',
+    'XCTAssertIdentical', 'XCTAssertNotIdentical',
+    'XCTAssertGreaterThan', 'XCTAssertGreaterThanOrEqual',
+    'XCTAssertLessThan', 'XCTAssertLessThanOrEqual',
+    'XCTFail', 'XCTExpectFailure',
+    'XCTSkip', 'XCTSkipIf', 'XCTSkipUnless', 'XCTUnwrap',
+}
 
-    The Swift parser tags any bare PascalCase callee as 'initializer' on a guess.
-    Once we have the full corpus we can check the union of declared types and
-    fix the false positives (XCTAssertEqual, XCTAssertNotNil, etc.).
+
+def _refine_call_kinds(result: ParseResult) -> None:
+    """Demote known PascalCase global functions from 'initializer' to 'call'.
+
+    The parser tags any bare PascalCase callee as 'initializer'. That's correct
+    for the vast majority of Swift code (UUID(), URL(), Todo(), ...) but wrong
+    for the XCTest assertion family which are global functions, not types.
     """
-    known_types = {t.name for f in result.files for t in f.types}
     for f in result.files:
         for fn in f.functions:
             for c in fn.calls:
-                if c.kind == "initializer" and c.target not in known_types:
+                if c.kind == "initializer" and c.target in _PASCAL_GLOBAL_FUNCS:
                     c.kind = "call"
+
+
+def _resolve_implicit_self(result: ParseResult) -> None:
+    """Promote bare calls to 'method' when the target matches a sibling method name.
+
+    Swift allows calling methods without explicit `self.` inside a type body.
+    The parser emits these as kind='call' with receiver=None because it has no
+    type info. This pass checks: if a bare call target matches the name of another
+    method in the same container, promote it to kind='method' with receiver='self'.
+    """
+    for f in result.files:
+        # Build a set of method names per container
+        methods_by_container: dict[str, set[str]] = {}
+        for fn in f.functions:
+            if fn.container:
+                methods_by_container.setdefault(fn.container, set()).add(fn.name)
+
+        for fn in f.functions:
+            if not fn.container:
+                continue
+            siblings = methods_by_container.get(fn.container, set())
+            for c in fn.calls:
+                if c.kind == "call" and c.receiver is None and c.method in siblings:
+                    c.kind = "method"
+                    c.receiver = "self"
+                    c.target = f"self.{c.target}"
 
 
 def parse_file(file_path: str, repo_name: str = "") -> dict:
@@ -68,6 +110,7 @@ def parse_file(file_path: str, repo_name: str = "") -> dict:
         files=[file_result]
     )
     _refine_call_kinds(result)
+    _resolve_implicit_self(result)
     return _to_dict(result)
 
 
