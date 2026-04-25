@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Header } from '../components/Layout';
 import useGraphStore from '../store/graphStore';
 import useProjectStore from '../store/projectStore';
-import { defaultFileTree } from '../data/mockData';
+import { defaultFileTree, SOURCE_FILES } from '../data/mockData';
 
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 120;
@@ -64,10 +64,29 @@ function getEdgeClasses(edge, selectedNodeId) {
   return classes.join(' ');
 }
 
+// Small loop arc above a node for source === target self-recursion
+function computeSelfLoopPath(node) {
+  const cx = node.position.x + NODE_WIDTH / 2;
+  const top = node.position.y;
+  const r = 22;
+  const startX = cx - r;
+  const endX = cx + r;
+  const ay = top - 30;
+  return `M ${startX} ${top} C ${startX} ${ay}, ${endX} ${ay}, ${endX} ${top}`;
+}
+
+function computeSelfLoopArrow(node) {
+  const cx = node.position.x + NODE_WIDTH / 2;
+  const endX = cx + 22;
+  const top = node.position.y;
+  const s = 4;
+  return `M ${endX - s} ${top - s} L ${endX} ${top} L ${endX + s} ${top - s}`;
+}
+
 // --- Main Workspace ---
 
 export default function Workspace() {
-  const { nodes, edges, selectedNodeId, selectNode, moveNode, addNode, addEdge, autoLayout } = useGraphStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout } = useGraphStore();
   const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab } = useProjectStore();
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
@@ -161,10 +180,34 @@ export default function Workspace() {
 
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
-  const handleFileSelect = useCallback((nodeId) => {
+  const handleFileOpen = useCallback((filePath) => {
+    selectFile(filePath);
+    if (!ui.codePanelOpen) toggleCodePanel();
+  }, [selectFile, ui.codePanelOpen, toggleCodePanel]);
+
+  const centerOnNode = useCallback((nodeId) => {
+    const target = nodes.find((n) => n.id === nodeId);
+    if (!target) return;
+    const cx = target.position.x + NODE_WIDTH / 2;
+    const cy = target.position.y + NODE_HEIGHT / 2;
+    const z = zoomRef.current;
+    setPan({ x: canvasSize.w / 2 - cx * z, y: canvasSize.h / 2 - cy * z });
+  }, [nodes, canvasSize.w, canvasSize.h]);
+
+  const handleFunctionSelect = useCallback((nodeId) => {
     selectNode(nodeId);
     if (!ui.codePanelOpen) toggleCodePanel();
-  }, [selectNode, ui.codePanelOpen, toggleCodePanel]);
+    centerOnNode(nodeId);
+  }, [selectNode, ui.codePanelOpen, toggleCodePanel, centerOnNode]);
+
+  // Esc closes the file overlay (in addition to the node editor)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape' && selectedFile) closeFile();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedFile, closeFile]);
 
   return (
     <div className="flex flex-col h-screen font-body-md text-body-md text-on-surface overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
@@ -179,7 +222,9 @@ export default function Workspace() {
           onNewNode={openNodeEditor}
           nodes={nodes}
           selectedNodeId={selectedNodeId}
-          onFileSelect={handleFileSelect}
+          selectedFile={selectedFile}
+          onFileOpen={handleFileOpen}
+          onFunctionSelect={handleFunctionSelect}
         />
 
         <main className="flex-1 flex h-full relative">
@@ -208,6 +253,20 @@ export default function Workspace() {
                   const sourceNode = nodes.find((n) => n.id === edge.source);
                   const targetNode = nodes.find((n) => n.id === edge.target);
                   if (!sourceNode || !targetNode) return null;
+                  if (edge.source === edge.target) {
+                    return (
+                      <g key={edge.id}>
+                        <path
+                          className={getEdgeClasses(edge, selectedNodeId)}
+                          d={computeSelfLoopPath(sourceNode)}
+                        />
+                        <path
+                          className={getEdgeClasses(edge, selectedNodeId)}
+                          d={computeSelfLoopArrow(sourceNode)}
+                        />
+                      </g>
+                    );
+                  }
                   const from = getHandlePosition(sourceNode, edge.sourceHandle);
                   const to = getHandlePosition(targetNode, edge.targetHandle);
                   return (
@@ -272,6 +331,16 @@ export default function Workspace() {
             onClose={toggleCodePanel}
           />
 
+          {/* File overlay — full-panel viewer for whole-file mode */}
+          {selectedFile && (
+            <FileOverlay
+              file={selectedFile}
+              nodes={nodes}
+              onClose={closeFile}
+              onJumpToFunction={handleFunctionSelect}
+            />
+          )}
+
           {/* Node Editor */}
           {ui.nodeEditorOpen && (
             <NodeEditorPanel
@@ -329,13 +398,14 @@ export default function Workspace() {
 
 // --- Side Navigation ---
 
-function SideNav({ project, activeTab, onTabChange, onNewNode, nodes, selectedNodeId, onFileSelect }) {
+function SideNav({ project, activeTab, onTabChange, onNewNode, nodes, selectedNodeId, selectedFile, onFileOpen, onFunctionSelect }) {
   const tabs = [
     { id: 'explorer', icon: 'folder_open', label: 'Explorer' },
     { id: 'functions', icon: 'terminal', label: 'Functions', filled: true },
   ];
 
-  const explorerOpen = activeTab === 'explorer';
+  const panelOpen = activeTab === 'explorer' || activeTab === 'functions';
+  const panelTitle = activeTab === 'functions' ? 'Functions' : 'Explorer';
 
   return (
     <div className="flex h-full shrink-0 z-40">
@@ -399,22 +469,273 @@ function SideNav({ project, activeTab, onTabChange, onNewNode, nodes, selectedNo
         </div>
       </nav>
 
-      {/* Explorer panel — slides in/out */}
+      {/* Explorer / Functions panel — slides in/out */}
       <div
         className={`h-full overflow-hidden transition-[width] duration-200 ease-in-out border-r border-gray-200 ${
-          explorerOpen ? 'w-56 sm:w-60' : 'w-0 border-r-0'
+          panelOpen ? 'w-64 sm:w-72' : 'w-0 border-r-0'
         }`}
       >
-        <div className="w-56 sm:w-60 h-full bg-gray-50 flex flex-col">
+        <div className="w-64 sm:w-72 h-full bg-gray-50 flex flex-col">
           <div className="h-10 px-3 flex items-center justify-between border-b border-gray-100 shrink-0">
-            <span className="font-label-sm text-gray-500 uppercase tracking-wider text-[10px]">Explorer</span>
+            <span className="font-label-sm text-gray-500 uppercase tracking-wider text-[10px]">{panelTitle}</span>
           </div>
-          <div className="flex-1 overflow-y-auto py-1">
-            <FileTree nodes={nodes} selectedNodeId={selectedNodeId} onFileSelect={onFileSelect} />
+          <div className="flex-1 overflow-y-auto py-1 pr-2 min-h-0">
+            {activeTab === 'functions' ? (
+              <FunctionList nodes={nodes} selectedNodeId={selectedNodeId} onSelect={onFunctionSelect} />
+            ) : (
+              <FileTree
+                nodes={nodes}
+                selectedNodeId={selectedNodeId}
+                selectedFile={selectedFile}
+                onFileOpen={onFileOpen}
+                onFunctionSelect={onFunctionSelect}
+              />
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Functions Panel (grouped by file → container, with chip filters + search) ---
+
+const FUNCTION_FILTERS = [
+  { id: 'tests', label: 'tests', match: (n) => n.category === 'test' },
+  { id: 'throws', label: 'throws', match: (n) => /\bthrows\b/.test(n.signature || '') },
+  { id: 'private', label: 'private', match: (n) => /\bprivate\b/.test(n.signature || '') },
+  { id: 'override', label: 'override', match: (n) => /\boverride\b/.test(n.signature || '') },
+  { id: 'recursive', label: 'recursive', match: (n) => n.isSelfRecursive || n.isMutualRecursive },
+  { id: 'entry', label: 'entry', match: (n) => (n.inDegree ?? 0) === 0 },
+  { id: 'leaf', label: 'leaf', match: (n) => (n.outDegree ?? 0) === 0 },
+];
+
+function FunctionList({ nodes, selectedNodeId, onSelect }) {
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState(() => new Set());
+
+  const toggleChip = (id) => {
+    setActive((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const filtered = nodes.filter((n) => {
+    for (const f of FUNCTION_FILTERS) {
+      if (active.has(f.id) && !f.match(n)) return false;
+    }
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      (n.qualifiedName || n.functionName).toLowerCase().includes(q) ||
+      (n.signature || '').toLowerCase().includes(q) ||
+      (n.filePath || '').toLowerCase().includes(q)
+    );
+  });
+
+  // file -> container -> nodes[]
+  const grouped = {};
+  filtered.forEach((n) => {
+    const file = n.filePath;
+    const container = n.container || '(top-level)';
+    if (!grouped[file]) grouped[file] = {};
+    if (!grouped[file][container]) grouped[file][container] = [];
+    grouped[file][container].push(n);
+  });
+  Object.values(grouped).forEach((containers) => {
+    Object.values(containers).forEach((arr) => arr.sort((a, b) => a.startLine - b.startLine));
+  });
+
+  const fileEntries = Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+
+  return (
+    <div className="flex flex-col">
+      {/* Search */}
+      <div className="px-2 pt-1 pb-2 sticky top-0 bg-gray-50 z-10">
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[14px]">search</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search functions…"
+            className="w-full text-[12px] bg-white border border-gray-200 rounded pl-7 pr-7 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+            >
+              <span className="material-symbols-outlined text-[14px]">close</span>
+            </button>
+          )}
+        </div>
+
+        {/* Filter chips */}
+        <div className="mt-2 flex gap-1 flex-wrap">
+          {FUNCTION_FILTERS.map((f) => {
+            const on = active.has(f.id);
+            return (
+              <button
+                key={f.id}
+                onClick={() => toggleChip(f.id)}
+                className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                  on
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-primary/40 hover:text-gray-900'
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+          {(active.size > 0 || query) && (
+            <button
+              onClick={() => { setActive(new Set()); setQuery(''); }}
+              className="text-[10px] px-1.5 py-0.5 rounded text-gray-400 hover:text-gray-900"
+            >
+              clear
+            </button>
+          )}
+        </div>
+
+        <div className="mt-2 text-[10px] text-gray-400 font-label-sm uppercase tracking-wider">
+          {filtered.length} of {nodes.length}
+        </div>
+      </div>
+
+      {/* Tree */}
+      <div className="text-[12px] font-inter select-none">
+        {fileEntries.length === 0 ? (
+          <div className="px-3 py-4 text-[11px] text-gray-400">No matches.</div>
+        ) : (
+          fileEntries.map(([file, containers]) => (
+            <FunctionFileGroup
+              key={file}
+              file={file}
+              containers={containers}
+              selectedNodeId={selectedNodeId}
+              onSelect={onSelect}
+              defaultOpen
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FunctionFileGroup({ file, containers, selectedNodeId, onSelect, defaultOpen }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const isTestFile = /(^|\/)Tests\//.test(file);
+  const fileName = file.split('/').pop();
+  const total = Object.values(containers).reduce((s, arr) => s + arr.length, 0);
+
+  return (
+    <div>
+      <button
+        className="relative w-full flex items-center gap-1.5 py-[5px] pl-2 pr-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className="material-symbols-outlined text-[14px] shrink-0 transition-transform duration-150"
+          style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+        >
+          expand_more
+        </span>
+        <span className={`material-symbols-outlined text-[14px] shrink-0 ${isTestFile ? 'text-green-600' : 'text-indigo-500'}`}>
+          {isTestFile ? 'science' : 'description'}
+        </span>
+        <span className="truncate flex-1 text-[12px]" title={file}>{fileName}</span>
+        <span className="text-[9px] text-gray-400 font-label-sm">{total}</span>
+      </button>
+      {open && (
+        <div>
+          {Object.entries(containers).sort(([a], [b]) => a.localeCompare(b)).map(([container, arr]) => (
+            <FunctionContainerGroup
+              key={container}
+              container={container}
+              nodes={arr}
+              selectedNodeId={selectedNodeId}
+              onSelect={onSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FunctionContainerGroup({ container, nodes, selectedNodeId, onSelect }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div>
+      <button
+        className="w-full flex items-center gap-1 py-[3px] pl-6 pr-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className="material-symbols-outlined text-[12px] shrink-0 transition-transform duration-150"
+          style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+        >
+          expand_more
+        </span>
+        <span className="material-symbols-outlined text-[12px] shrink-0 text-amber-500">
+          {container === '(top-level)' ? 'data_object' : 'category'}
+        </span>
+        <span className="truncate text-[11px] uppercase tracking-wider font-label-sm text-gray-500">{container}</span>
+        <span className="ml-auto text-[9px] text-gray-400 font-label-sm">{nodes.length}</span>
+      </button>
+      {open && (
+        <div>
+          {nodes.map((n) => (
+            <FunctionRow key={n.id} node={n} active={n.id === selectedNodeId} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FunctionRow({ node, active, onSelect }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (active && ref.current) {
+      ref.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [active]);
+
+  const tagsToShow = [];
+  if (node.isSelfRecursive) tagsToShow.push({ label: '↻', color: 'text-amber-600' });
+  else if (node.isMutualRecursive) tagsToShow.push({ label: '⇄', color: 'text-amber-600' });
+  if (/\bthrows\b/.test(node.signature || '')) tagsToShow.push({ label: 'th', color: 'text-rose-600' });
+  if (/\boverride\b/.test(node.signature || '')) tagsToShow.push({ label: 'ov', color: 'text-violet-600' });
+  if (/\bprivate\b/.test(node.signature || '')) tagsToShow.push({ label: 'pr', color: 'text-gray-500' });
+
+  return (
+    <button
+      ref={ref}
+      onClick={() => onSelect(node.id)}
+      className={`w-full flex items-center gap-1.5 py-[4px] pl-12 pr-2 text-left transition-colors group ${
+        active ? 'bg-indigo-50 text-gray-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      }`}
+    >
+      <span className={`material-symbols-outlined text-[12px] shrink-0 ${active ? 'text-primary' : 'text-gray-400'}`}>
+        {node.icon || 'function'}
+      </span>
+      <span className="truncate flex-1 text-[12px] code-font" title={node.signature || node.qualifiedName}>
+        {node.functionName}
+      </span>
+      <span className="flex items-center gap-0.5 shrink-0">
+        {tagsToShow.map((t, i) => (
+          <span key={i} className={`text-[8px] font-label-sm ${t.color}`}>{t.label}</span>
+        ))}
+      </span>
+      <span className="text-[9px] font-label-sm text-gray-400 shrink-0 ml-1" title={`${node.inDegree ?? 0} callers · ${node.outDegree ?? 0} callees`}>
+        {node.inDegree ?? 0}·{node.outDegree ?? 0}
+      </span>
+    </button>
   );
 }
 
@@ -450,6 +771,10 @@ function NodeCard({ node, isSelected, edges, onSelect, onMove, zoom = 1 }) {
   const iconColor =
     isSelected ? 'text-primary' : node.icon === 'warning' ? 'text-error' : 'text-gray-500';
 
+  const isTest = node.category === 'test';
+  const cardBorder = isTest ? { borderTopColor: '#16a34a' } : undefined;
+  const fileLabel = node.filePath.split('/').pop();
+
   return (
     <div
       className="absolute z-10"
@@ -461,28 +786,58 @@ function NodeCard({ node, isSelected, edges, onSelect, onMove, zoom = 1 }) {
       }}
     >
       <div
-        className={`node-card ${isSelected ? 'active' : ''} rounded px-3 py-4 cursor-move h-full overflow-hidden ${!isSelected ? 'opacity-80' : ''}`}
+        className={`node-card ${isSelected ? 'active' : ''} rounded px-3 py-3 cursor-move h-full overflow-hidden ${!isSelected ? 'opacity-90' : ''}`}
+        style={cardBorder}
         onMouseDown={handleMouseDown}
       >
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-2">
+        <div className="flex justify-between items-center mb-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span className={`material-symbols-outlined text-[16px] ${iconColor}`}>{node.icon}</span>
-            <span className="font-label-sm text-gray-600 truncate">{node.filePath}</span>
+            <span className="font-label-sm text-gray-600 truncate text-[11px]" title={node.filePath}>
+              {fileLabel}:{node.startLine}
+            </span>
           </div>
           {isSelected && (
             <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(79,70,229,0.4)] shrink-0" />
           )}
         </div>
-        <div className="font-body-md text-gray-900 truncate">{node.functionName}()</div>
-        {node.tags && node.tags.length > 0 && (
-          <div className="mt-2 flex gap-1">
-            {node.tags.map((tag) => (
-              <span key={tag} className="px-1.5 py-0.5 rounded bg-gray-100 text-[10px] font-label-sm text-gray-500">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="font-body-md text-gray-900 truncate text-[14px]" title={node.qualifiedName || node.functionName}>
+          {node.container ? (
+            <>
+              <span className="text-gray-400">{node.container}.</span>
+              <span>{node.functionName}</span>
+            </>
+          ) : (
+            node.functionName
+          )}
+          <span className="text-gray-400">()</span>
+        </div>
+        <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+          {isTest && (
+            <span className="px-1.5 py-0.5 rounded bg-green-50 text-[9px] font-label-sm text-green-700 border border-green-200">
+              TEST
+            </span>
+          )}
+          {node.isSelfRecursive && (
+            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-[9px] font-label-sm text-amber-700 border border-amber-200" title="Self-recursive">
+              ↻ rec
+            </span>
+          )}
+          {node.isMutualRecursive && !node.isSelfRecursive && (
+            <span className="px-1.5 py-0.5 rounded bg-amber-50 text-[9px] font-label-sm text-amber-700 border border-amber-200" title="Mutual recursion">
+              ⇄ rec
+            </span>
+          )}
+          {node.tags && node.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-label-sm text-gray-500">
+              {tag}
+            </span>
+          ))}
+          <span className="ml-auto text-[9px] font-label-sm text-gray-400 flex items-center gap-0.5" title={`${node.inDegree ?? 0} callers · ${node.outDegree ?? 0} callees`}>
+            <span>←{node.inDegree ?? 0}</span>
+            <span>→{node.outDegree ?? 0}</span>
+          </span>
+        </div>
       </div>
 
     </div>
@@ -561,9 +916,36 @@ function CodePanel({ node, open, onClose }) {
           {node && node.analysis ? (
             <>
               <p className="font-body-md text-sm text-gray-500 mb-3">{node.analysis.description}</p>
+              {node.signature && (
+                <div className="mb-3 px-2 py-1.5 rounded bg-gray-50 border border-gray-200 code-font text-[11px] text-gray-700 break-all">
+                  {node.signature}
+                </div>
+              )}
               <div className="space-y-2">
-                {node.analysis.dependencies && <DependenciesList value={node.analysis.dependencies} />}
-                <AnalysisRow label="Return Type" value={node.analysis.returnType || '-'} />
+                {node.container && <AnalysisRow label="Container" value={node.container} />}
+                <AnalysisRow label="Return Type" value={node.returnType || node.analysis.returnType || 'Void'} />
+                {node.lineEnd != null && (
+                  <AnalysisRow label="Lines" value={`${node.startLine}–${node.lineEnd}`} />
+                )}
+                <AnalysisRow
+                  label="Callers / Callees"
+                  value={`${node.inDegree ?? 0} ← · → ${node.outDegree ?? 0}`}
+                  highlight={(node.inDegree ?? 0) === 0 || (node.outDegree ?? 0) === 0}
+                />
+                {node.category && (
+                  <AnalysisRow label="Category" value={node.category} />
+                )}
+                {(node.isSelfRecursive || node.isMutualRecursive) && (
+                  <AnalysisRow
+                    label="Recursion"
+                    value={node.isSelfRecursive ? 'self-recursive' : 'mutual'}
+                    highlight
+                  />
+                )}
+                {node.params && node.params.length > 0 && <ParamsList params={node.params} />}
+                {node.analysis.dependencies && node.analysis.dependencies !== '-' && (
+                  <DependenciesList value={node.analysis.dependencies} />
+                )}
               </div>
             </>
           ) : (
@@ -589,6 +971,139 @@ function CodePanel({ node, open, onClose }) {
         )}
       </div>
     </aside>
+  );
+}
+
+// --- Full-panel File Overlay (whole file view that covers the workspace) ---
+
+function FileOverlay({ file, nodes, onClose, onJumpToFunction }) {
+  const source = SOURCE_FILES[file] || '';
+  const fnNodes = nodes.filter((n) => n.filePath === file).sort((a, b) => a.startLine - b.startLine);
+  const totalLines = source ? source.split('\n').length : 0;
+  const tests = fnNodes.filter((n) => n.category === 'test').length;
+  const sources = fnNodes.length - tests;
+  const codeRef = useRef(null);
+
+  const jumpToLine = (line) => {
+    if (!codeRef.current) return;
+    const target = codeRef.current.querySelector(`[data-line="${line}"]`);
+    if (target) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+
+  const goToFunction = (id) => {
+    onClose();
+    if (onJumpToFunction) onJumpToFunction(id);
+  };
+
+  return (
+    <div className="absolute inset-0 z-40 bg-white flex flex-col animate-[fadeIn_120ms_ease-out]">
+      {/* Tab bar — single tab spanning the panel */}
+      <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-stretch shrink-0">
+        <div className="flex items-center gap-2 pl-3 pr-2 border-r border-gray-200 bg-white border-t-2 border-t-primary -mt-px max-w-[320px]">
+          <span className="material-symbols-outlined text-[15px] text-primary shrink-0">description</span>
+          <span className="text-[12px] code-font truncate" title={file}>{file}</span>
+          <button
+            onClick={onClose}
+            className="ml-1 p-0.5 rounded text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+            title="Close file (Esc)"
+          >
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-end pr-3 text-[10px] text-gray-400 font-label-sm uppercase tracking-wider">
+          {totalLines} lines · {fnNodes.length} function{fnNodes.length === 1 ? '' : 's'}
+        </div>
+      </div>
+
+      {/* Directions banner */}
+      <div className="px-4 py-2 bg-indigo-50 border-b border-indigo-100 flex items-start gap-2 shrink-0">
+        <span className="material-symbols-outlined text-[15px] text-indigo-500 mt-0.5 shrink-0">tips_and_updates</span>
+        <div className="text-[12px] text-indigo-900 leading-snug">
+          <strong>File view.</strong>{' '}
+          Click a function chip to jump back to the canvas, or any{' '}
+          <span className="code-font">L42</span> to scroll its definition into view.{' '}
+          <span className="text-indigo-400">▸</span> markers in the gutter mark where each function starts.{' '}
+          Press <span className="code-font px-1 rounded bg-indigo-100">Esc</span> or the{' '}
+          <span className="code-font">×</span> above to return to the graph.
+        </div>
+      </div>
+
+      {/* Body — two columns: outline on the left, source on the right */}
+      <div className="flex-1 flex min-h-0">
+        {/* Outline */}
+        <aside className="w-72 border-r border-gray-200 bg-gray-50 flex flex-col shrink-0">
+          <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+            <span className="font-label-sm text-gray-500 uppercase tracking-wider text-[10px]">Outline</span>
+            <div className="flex gap-1">
+              {sources > 0 && (
+                <span className="px-1.5 py-0.5 rounded bg-gray-100 text-[9px] font-label-sm text-gray-600 border border-gray-200">
+                  {sources} src
+                </span>
+              )}
+              {tests > 0 && (
+                <span className="px-1.5 py-0.5 rounded bg-green-50 text-[9px] font-label-sm text-green-700 border border-green-200">
+                  {tests} test
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {fnNodes.length === 0 ? (
+              <p className="text-[11px] text-gray-400 px-2 py-2">No parsed functions in this file.</p>
+            ) : (
+              <ul className="space-y-0.5">
+                {fnNodes.map((fn) => (
+                  <li key={fn.id} className="group">
+                    <div className="flex items-center gap-1 text-xs">
+                      <button
+                        onClick={() => jumpToLine(fn.startLine)}
+                        className="text-gray-400 text-[10px] code-font hover:text-primary w-9 shrink-0 text-right"
+                        title="Scroll source to this line"
+                      >
+                        L{fn.startLine}
+                      </button>
+                      <button
+                        onClick={() => goToFunction(fn.id)}
+                        className="flex-1 flex items-center gap-1.5 text-left px-2 py-1 rounded hover:bg-white text-gray-700 hover:text-primary transition-colors min-w-0"
+                        title={fn.signature}
+                      >
+                        <span className="material-symbols-outlined text-[12px] text-gray-400 group-hover:text-primary shrink-0">
+                          {fn.icon || 'function'}
+                        </span>
+                        <span className="truncate code-font text-[11px]">
+                          {fn.container && <span className="text-gray-400">{fn.container}.</span>}
+                          {fn.functionName}
+                        </span>
+                        {fn.category === 'test' && (
+                          <span className="text-[8px] font-label-sm text-green-700 shrink-0">TEST</span>
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+
+        {/* Source */}
+        <div className="flex-1 overflow-y-auto p-4 bg-white" ref={codeRef}>
+          {source ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
+              <div className="px-3 py-1.5 border-b border-gray-200 bg-gray-100/60 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px] text-gray-400">description</span>
+                <span className="font-label-sm text-[10px] text-gray-500 uppercase tracking-wider">{file}</span>
+              </div>
+              <div className="p-4 overflow-x-auto">
+                <CodeView code={source} startLine={1} highlightLine={null} markerLines={fnNodes.map((n) => n.startLine)} />
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm font-label-sm">No source available.</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -685,37 +1200,63 @@ function highlightLine(text) {
   return tokens;
 }
 
-function CodeView({ code, startLine, highlightLine: hlLine }) {
+function CodeView({ code, startLine, highlightLine: hlLine, markerLines }) {
   const lines = code.split('\n');
   const start = startLine || 1;
+  const markers = new Set(markerLines || []);
 
   return (
     <div className="flex font-label-sm text-[12px] code-font leading-relaxed">
       <div className="flex flex-col text-gray-400 pr-4 select-none text-right border-r border-gray-200 mr-4 shrink-0">
-        {lines.map((_, i) => (
-          <span key={i} className={start + i === hlLine ? 'text-primary' : ''}>
-            {start + i}
-          </span>
-        ))}
+        {lines.map((_, i) => {
+          const ln = start + i;
+          const isHl = ln === hlLine;
+          const isMarker = markers.has(ln);
+          return (
+            <span key={i} className={isHl ? 'text-primary font-semibold' : isMarker ? 'text-indigo-500' : ''}>
+              {isMarker && !isHl ? <span className="text-indigo-400 mr-0.5">▸</span> : null}
+              {ln}
+            </span>
+          );
+        })}
       </div>
       <pre className="flex-1 whitespace-pre overflow-x-auto">
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            className={
-              start + i === hlLine
-                ? 'bg-primary/10 -ml-4 pl-4 border-l-2 border-primary'
-                : ''
-            }
-          >
-            {line
-              ? highlightLine(line).map((tok, ti) => (
-                  <span key={ti} style={{ color: tok.color }}>{tok.text}</span>
-                ))
-              : ' '}
-          </div>
-        ))}
+        {lines.map((line, i) => {
+          const ln = start + i;
+          const isHl = ln === hlLine;
+          const isMarker = markers.has(ln);
+          let cls = '';
+          if (isHl) cls = 'bg-primary/10 -ml-4 pl-4 border-l-2 border-primary';
+          else if (isMarker) cls = 'bg-indigo-50/40 -ml-4 pl-4 border-l-2 border-indigo-200';
+          return (
+            <div key={i} data-line={ln} className={cls}>
+              {line
+                ? highlightLine(line).map((tok, ti) => (
+                    <span key={ti} style={{ color: tok.color }}>{tok.text}</span>
+                  ))
+                : ' '}
+            </div>
+          );
+        })}
       </pre>
+    </div>
+  );
+}
+
+function ParamsList({ params }) {
+  return (
+    <div>
+      <span className="font-label-sm text-gray-500 text-xs">Parameters</span>
+      <ul className="mt-1 space-y-0.5">
+        {params.map((p, i) => (
+          <li key={i} className="flex items-center gap-1.5 text-xs text-gray-700 font-label-sm code-font">
+            <span className="w-1 h-1 rounded-full bg-gray-400 shrink-0"></span>
+            {p.label && p.label !== p.name && <span className="text-gray-400">{p.label} </span>}
+            <span>{p.name}</span>
+            {p.type && <span className="text-teal-600">: {p.type}</span>}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -835,7 +1376,7 @@ function NodeEditorPanel({ existingNodes, onClose, onSubmit }) {
             >
               <option value="">None (Entry point)</option>
               {existingNodes.map((n) => (
-                <option key={n.id} value={n.id}>{n.functionName}()</option>
+                <option key={n.id} value={n.id}>{n.qualifiedName || n.functionName}()</option>
               ))}
             </select>
             <select
@@ -860,7 +1401,7 @@ function NodeEditorPanel({ existingNodes, onClose, onSubmit }) {
             >
               <option value="">Select node...</option>
               {existingNodes.map((n) => (
-                <option key={n.id} value={n.id}>{n.functionName}()</option>
+                <option key={n.id} value={n.id}>{n.qualifiedName || n.functionName}()</option>
               ))}
             </select>
             <select
@@ -895,30 +1436,35 @@ function NodeEditorPanel({ existingNodes, onClose, onSubmit }) {
 
 // --- File Tree (Explorer panel) ---
 
-function FileTree({ nodes, selectedNodeId, onFileSelect }) {
-  // Build a lookup: filePath → nodeId for files that map to graph nodes
-  const nodeByFile = {};
+function FileTree({ nodes, selectedNodeId, selectedFile, onFileOpen, onFunctionSelect }) {
+  // Group all nodes by their file path so each file can list its functions
+  const nodesByFile = {};
   nodes.forEach((n) => {
-    nodeByFile[n.filePath] = n.id;
+    if (!nodesByFile[n.filePath]) nodesByFile[n.filePath] = [];
+    nodesByFile[n.filePath].push(n);
   });
+  Object.values(nodesByFile).forEach((arr) => arr.sort((a, b) => a.startLine - b.startLine));
 
   const renderItem = (item, parentPath = '', depth = 0) => {
     const fullPath = parentPath ? `${parentPath}/${item.name}` : item.name;
     if (item.type === 'folder') {
       return (
-        <TreeFolder key={fullPath} name={item.name} defaultOpen={item.name === 'Sources'} depth={depth}>
+        <TreeFolder key={fullPath} name={item.name} defaultOpen depth={depth}>
           {item.children.map((child) => renderItem(child, fullPath, depth + 1))}
         </TreeFolder>
       );
     }
-    const nodeId = nodeByFile[fullPath];
     return (
-      <TreeFile
+      <TreeFileWithFunctions
         key={fullPath}
         name={item.name}
+        fullPath={fullPath}
         depth={depth}
-        active={nodeId != null && nodeId === selectedNodeId}
-        onClick={nodeId ? () => onFileSelect(nodeId) : undefined}
+        functions={nodesByFile[fullPath] || []}
+        selectedNodeId={selectedNodeId}
+        selectedFile={selectedFile}
+        onFileOpen={onFileOpen}
+        onFunctionSelect={onFunctionSelect}
       />
     );
   };
@@ -927,6 +1473,94 @@ function FileTree({ nodes, selectedNodeId, onFileSelect }) {
     <div className="text-[13px] font-inter select-none">
       {defaultFileTree.map((item) => renderItem(item))}
     </div>
+  );
+}
+
+function TreeFileWithFunctions({ name, fullPath, depth, functions, selectedNodeId, selectedFile, onFileOpen, onFunctionSelect }) {
+  // Auto-open if this file is currently selected, OR contains the selected function
+  const containsSelected = functions.some((f) => f.id === selectedNodeId);
+  const [open, setOpen] = useState(containsSelected || selectedFile === fullPath);
+  const fileActive = selectedFile === fullPath;
+  const pad = 4 + depth * INDENT_W;
+  const hasFunctions = functions.length > 0;
+
+  return (
+    <div>
+      <div
+        className={`relative w-full flex items-center gap-1 transition-colors ${
+          fileActive ? 'bg-indigo-50 text-gray-900' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+        }`}
+        style={{ paddingLeft: pad }}
+      >
+        <IndentGuides depth={depth} />
+        {hasFunctions ? (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="shrink-0 flex items-center justify-center w-4 h-5 text-gray-400 hover:text-gray-700"
+          >
+            <span
+              className="material-symbols-outlined text-[14px] transition-transform duration-150"
+              style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+            >
+              expand_more
+            </span>
+          </button>
+        ) : (
+          <span className="w-4 shrink-0" />
+        )}
+        <button
+          onClick={onFileOpen ? () => onFileOpen(fullPath) : undefined}
+          className="flex-1 flex items-center gap-1.5 py-[5px] text-left min-w-0"
+        >
+          <img src={getMaterialFileIcon(name)} alt="" className="w-4 h-4 shrink-0" />
+          <span className="truncate flex-1 text-[12px]">{name}</span>
+          {hasFunctions && (
+            <span className="text-[9px] text-gray-400 font-label-sm pr-1.5">{functions.length}</span>
+          )}
+        </button>
+      </div>
+      {open && hasFunctions && (
+        <div>
+          {functions.map((fn) => (
+            <FileFunctionRow
+              key={fn.id}
+              node={fn}
+              depth={depth + 1}
+              active={fn.id === selectedNodeId}
+              onSelect={onFunctionSelect}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileFunctionRow({ node, depth, active, onSelect }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (active && ref.current) ref.current.scrollIntoView({ block: 'nearest' });
+  }, [active]);
+  const pad = 4 + depth * INDENT_W + 22;
+  return (
+    <button
+      ref={ref}
+      onClick={onSelect ? () => onSelect(node.id) : undefined}
+      className={`relative w-full flex items-center gap-1.5 py-[3px] text-left transition-colors ${
+        active ? 'bg-indigo-50 text-gray-900' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+      }`}
+      style={{ paddingLeft: pad }}
+    >
+      <IndentGuides depth={depth} />
+      <span className={`material-symbols-outlined text-[12px] shrink-0 ${active ? 'text-primary' : 'text-gray-400'}`}>
+        {node.icon || 'function'}
+      </span>
+      <span className="truncate flex-1 text-[11px] code-font" title={node.signature || node.qualifiedName}>
+        {node.container ? <span className="text-gray-400">{node.container}.</span> : null}
+        {node.functionName}
+      </span>
+      <span className="text-[9px] text-gray-400 font-label-sm pr-1.5">L{node.startLine}</span>
+    </button>
   );
 }
 

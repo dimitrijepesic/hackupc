@@ -1,280 +1,198 @@
-export const defaultNodes = [
-  {
-    id: 'node-1',
-    functionName: 'dispatch',
-    filePath: 'Sources/Store.swift',
-    complexity: 'O(1)',
-    tags: ['async'],
-    position: { x: 50, y: 200 },
-    icon: 'hub',
-    code: `@discardableResult
-public func dispatch<T: AnySideEffect>(
-  _ dispatchable: T
-) -> Promise<Void> {
-  let promise = Promise<Void>(in: .background) {
-    resolve, reject, _ in
-    self.sideEffectQueue.async {
-      do {
-        try Hydra.await(
-          self.interceptAndPerform(dispatchable)
-        )
-        resolve(())
-      } catch {
-        reject(error)
-      }
-    }
+// Test fixture: testcase6_sources (Animal Shelter — Swift). Real graph + sources.
+import graphJson from '../../test/testcase6_sources/testcase6_output.json';
+import animalSwift from '../../test/testcase6_sources/Sources/Animal.swift?raw';
+import shelterSwift from '../../test/testcase6_sources/Sources/Shelter.swift?raw';
+import shelterTestsSwift from '../../test/testcase6_sources/Tests/ShelterTests.swift?raw';
+
+export const SOURCE_FILES = {
+  'Sources/Animal.swift': animalSwift,
+  'Sources/Shelter.swift': shelterSwift,
+  'Tests/ShelterTests.swift': shelterTestsSwift,
+};
+
+const SIG_FLAGS = ['override', 'private', 'fileprivate', 'public', 'static', 'class', 'mutating', 'throws', 'rethrows', 'async', 'final'];
+
+function tagsFromSignature(sig) {
+  if (!sig) return [];
+  const out = [];
+  for (const flag of SIG_FLAGS) {
+    if (new RegExp(`\\b${flag}\\b`).test(sig)) out.push(flag);
   }
-  return promise
-}`,
-    startLine: 130,
-    highlightLine: 133,
-    analysis: {
-      description:
-        'Central dispatch method for the Store. Enqueues a side effect on the concurrent sideEffectQueue, runs interceptors, then resolves a Promise.',
-      dependencies: 'Hydra (Promise), sideEffectQueue, interceptors',
-      returnType: 'Promise<Void>',
-      executionTime: '<1ms (async)',
-    },
-  },
-  {
-    id: 'node-2',
-    functionName: 'updatedState',
-    filePath: 'Sources/StateUpdater.swift',
-    complexity: 'O(n)',
-    tags: ['mutating'],
-    position: { x: 400, y: 80 },
-    icon: 'sync_alt',
-    code: `public protocol AnyStateUpdater: Dispatchable {
-  func updatedState(
-    currentState: State
-  ) -> State
+  return out;
 }
 
-public protocol StateUpdater: AnyStateUpdater {
-  associatedtype StateType: State
-
-  func updateState(
-    _ currentState: inout StateType
-  )
+function iconFor(node, isSelfRecursive) {
+  if (node.category === 'test') return 'science';
+  if (isSelfRecursive) return 'loop';
+  const sig = node.signature || '';
+  if (/\binit\b/.test(sig)) return 'add_circle';
+  if (/\bprivate\b/.test(sig)) return 'lock';
+  if (/\boverride\b/.test(sig)) return 'subdirectory_arrow_right';
+  if (!node.container) return 'function';
+  return 'code';
 }
 
-extension StateUpdater {
-  public func updatedState(
-    currentState: State
-  ) -> State {
-    guard var state = currentState
-      as? StateType else {
-      fatalError("wrong state type")
-    }
-    self.updateState(&state)
-    return state
+function describe(n) {
+  if (n.category === 'test') {
+    return `XCTest case ${n.qualified_name}${n.return_type ? ` returning ${n.return_type}` : ''}.`;
   }
-}`,
-    startLine: 16,
-    highlightLine: 23,
-    analysis: {
-      description:
-        'Protocol that defines how to produce a new state from the current one. The Store calls updatedState after interceptors pass.',
-      dependencies: 'State protocol',
-      returnType: 'State',
-      executionTime: 'varies',
-    },
-  },
-  {
-    id: 'node-3',
-    functionName: 'sideEffect',
-    filePath: 'Sources/SideEffect.swift',
-    complexity: 'O(1)',
-    tags: ['async', 'throws'],
-    position: { x: 400, y: 340 },
-    icon: 'bolt',
-    code: `public protocol AnySideEffect: Dispatchable {
-  func anySideEffect(
-    _ context: AnySideEffectContext
-  ) throws -> Void
+  const where = n.container ? `Method on ${n.container}` : 'Top-level function';
+  const ret = n.return_type ? ` returning ${n.return_type}` : '';
+  const params = n.params && n.params.length ? `, ${n.params.length} parameter${n.params.length === 1 ? '' : 's'}` : '';
+  return `${where} ${n.name}${ret}${params}.`;
 }
 
-public protocol SideEffect: AnySideEffect {
-  associatedtype StateType: State
-  associatedtype Dependencies:
-    SideEffectDependencyContainer
+function dependenciesFor(n) {
+  const parts = [];
+  if (n.container) parts.push(n.container);
+  (n.params || []).forEach((p) => p.type && parts.push(p.type));
+  return [...new Set(parts)].join(', ') || '-';
+}
 
-  func sideEffect(
-    _ context: SideEffectContext<
-      StateType, Dependencies
-    >
-  ) throws -> Void
-}`,
-    startLine: 60,
-    highlightLine: 67,
-    analysis: {
-      description:
-        'Protocol for async side effects dispatched through the Store. Side effects can read state, dispatch other items, and access dependencies.',
-      dependencies: 'SideEffectContext, SideEffectDependencyContainer',
-      returnType: 'Void (throws)',
-      executionTime: 'varies (async)',
-    },
-  },
-  {
-    id: 'node-4',
-    functionName: 'execute',
-    filePath: 'Sources/Interceptor/ObserverInterceptor.swift',
-    complexity: 'O(n)',
-    tags: [],
-    position: { x: 750, y: 80 },
-    icon: 'visibility',
-    code: `public class ObserverInterceptor: StoreInterceptor {
-  public static func handler(
-    dispatchable: Dispatchable,
-    state: State,
-    dispatch: @escaping AnyDispatch,
-    next: @escaping Next
-  ) throws -> Void {
-    try next()
+function extractCode(file, line, lineEnd) {
+  const src = SOURCE_FILES[file];
+  if (!src) return '';
+  return src.split('\n').slice(line - 1, lineEnd).join('\n');
+}
 
-    let prevState = state
-    let currentState = state
+// --- Pre-pass: detect self-loops + mutual-recursion partners ---
 
-    for observer in self.stateObservers {
-      if let d = observer.init(
-        prevState: prevState,
-        currentState: currentState
-      ) {
-        dispatch(d)
-      }
+const selfLoops = new Set();
+const mutualRec = new Set();
+const edgeKey = (s, t) => `${s}→${t}`;
+const edgeSet = new Set(graphJson.edges.map((e) => edgeKey(e.source, e.target)));
+graphJson.edges.forEach((e) => {
+  if (e.source === e.target) {
+    selfLoops.add(e.source);
+  } else if (edgeSet.has(edgeKey(e.target, e.source))) {
+    mutualRec.add(e.source);
+    mutualRec.add(e.target);
+  }
+});
+
+// --- Layered BFS layout (kept stable on first render) ---
+
+function computeLayout(nodes, edges) {
+  const inDeg = {}, children = {};
+  nodes.forEach((n) => { inDeg[n.id] = 0; children[n.id] = []; });
+  edges.forEach((e) => {
+    if (e.source === e.target) return;
+    inDeg[e.target] = (inDeg[e.target] || 0) + 1;
+    children[e.source].push(e.target);
+  });
+  const roots = nodes.filter((n) => !inDeg[n.id]);
+  if (!roots.length) roots.push(nodes[0]);
+  const depth = {}, visited = new Set();
+  const queue = roots.map((n) => ({ id: n.id, d: 0 }));
+  while (queue.length) {
+    const { id, d } = queue.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    depth[id] = d;
+    for (const c of children[id] || []) {
+      if (!visited.has(c)) queue.push({ id: c, d: d + 1 });
     }
   }
-}`,
-    startLine: 42,
-    highlightLine: 48,
-    analysis: {
-      description:
-        'Interceptor that watches for state changes and dispatches observer-created items in response. Runs after the next interceptor in the chain.',
-      dependencies: 'StoreInterceptor, StateObserverDispatchable',
-      returnType: 'Void (throws)',
-      executionTime: '~2ms',
-    },
-  },
-  {
-    id: 'node-5',
-    functionName: 'addListener',
-    filePath: 'Sources/Store.swift',
-    complexity: 'O(1)',
-    tags: [],
-    position: { x: 750, y: 340 },
-    icon: 'hearing',
-    code: `public func addListener(
-  _ listener: @escaping StoreListener<S>
-) -> StoreUnsubscribe {
-  let id = UUID().uuidString
-  self.listeners[id] = listener
-
-  return { [weak self] in
-    self?.listeners.removeValue(forKey: id)
+  let maxD = Math.max(0, ...Object.values(depth));
+  nodes.forEach((n) => { if (!visited.has(n.id)) depth[n.id] = ++maxD; });
+  const layers = {};
+  for (const [id, d] of Object.entries(depth)) (layers[d] = layers[d] || []).push(id);
+  const H_GAP = 280, V_GAP = 150, START_X = 80, CENTER_Y = 400;
+  const positions = {};
+  for (const [d, ids] of Object.entries(layers)) {
+    const totalH = (ids.length - 1) * V_GAP;
+    const startY = CENTER_Y - totalH / 2;
+    ids.forEach((id, i) => {
+      positions[id] = { x: START_X + Number(d) * H_GAP, y: Math.round(startY + i * V_GAP) };
+    });
   }
-}`,
-    startLine: 153,
-    highlightLine: 155,
-    analysis: {
-      description:
-        'Registers a closure to be called on every state change. Returns an unsubscribe closure. Listeners fire on the main queue.',
-      dependencies: 'listeners dictionary',
-      returnType: 'StoreUnsubscribe (() -> Void)',
-      executionTime: '<1ms',
-    },
-  },
-];
+  return positions;
+}
 
-export const defaultEdges = [
-  {
-    id: 'edge-1',
-    source: 'node-1',
-    target: 'node-2',
-    type: 'normal',
-    sourceHandle: 'output-top',
-    targetHandle: 'input',
+// --- Build nodes ---
+
+const rawNodes = graphJson.nodes.map((n) => ({
+  id: n.id,
+  // existing UI shape
+  functionName: n.name,
+  filePath: n.file,
+  complexity: '',
+  tags: tagsFromSignature(n.signature),
+  position: { x: 0, y: 0 },
+  icon: iconFor(n, selfLoops.has(n.id)),
+  code: extractCode(n.file, n.line, n.line_end),
+  startLine: n.line,
+  highlightLine: n.line,
+  analysis: {
+    description: describe(n),
+    dependencies: dependenciesFor(n),
+    returnType: n.return_type || 'Void',
+    executionTime: '-',
   },
-  {
-    id: 'edge-2',
-    source: 'node-1',
-    target: 'node-3',
-    type: 'normal',
-    sourceHandle: 'output-bottom',
-    targetHandle: 'input',
-  },
-  {
-    id: 'edge-3',
-    source: 'node-2',
-    target: 'node-4',
-    type: 'if',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-  },
-  {
-    id: 'edge-4',
-    source: 'node-3',
-    target: 'node-5',
-    type: 'normal',
-    sourceHandle: 'output',
-    targetHandle: 'input',
-  },
-];
+  // new metadata exposed by the graph contract
+  qualifiedName: n.qualified_name,
+  signature: n.signature,
+  params: n.params || [],
+  returnType: n.return_type,
+  container: n.container,
+  inDegree: n.in_degree,
+  outDegree: n.out_degree,
+  category: n.category,
+  lineEnd: n.line_end,
+  isSelfRecursive: selfLoops.has(n.id),
+  isMutualRecursive: mutualRec.has(n.id),
+}));
+
+const rawEdges = graphJson.edges.map((e, i) => ({
+  id: `edge-${i}`,
+  source: e.source,
+  target: e.target,
+  type: e.source === e.target ? 'loop' : (mutualRec.has(e.source) && mutualRec.has(e.target) ? 'loop' : 'normal'),
+  sourceHandle: 'output',
+  targetHandle: 'input',
+  weight: e.weight,
+}));
+
+const positions = computeLayout(rawNodes, rawEdges);
+export const defaultNodes = rawNodes.map((n) => ({ ...n, position: positions[n.id] || { x: 0, y: 0 } }));
+export const defaultEdges = rawEdges;
 
 export const defaultProject = {
-  name: 'katana-swift',
+  name: graphJson.graph_id, // 'animal-shelter'
   branch: 'main',
 };
 
-export const defaultFileTree = [
-  {
-    type: 'folder', name: '.github', children: [
-      { type: 'file', name: 'PULL_REQUEST_TEMPLATE.md' },
-      {
-        type: 'folder', name: 'workflows', children: [
-          { type: 'file', name: 'build_and_test.yml' },
-        ],
-      },
-    ],
-  },
-  {
-    type: 'folder', name: 'Sources', children: [
-      {
-        type: 'folder', name: 'Interceptor', children: [
-          { type: 'file', name: 'DispatchableLogger.swift' },
-          { type: 'file', name: 'Interceptor.swift' },
-          { type: 'file', name: 'ObserverInterceptor.swift' },
-        ],
-      },
-      { type: 'file', name: 'Dispatchable.swift' },
-      { type: 'file', name: 'SideEffect.swift' },
-      { type: 'file', name: 'SideEffectDependencyContainer.swift' },
-      { type: 'file', name: 'SignpostLogger.swift' },
-      { type: 'file', name: 'State.swift' },
-      { type: 'file', name: 'StateUpdater.swift' },
-      { type: 'file', name: 'Store.swift' },
-      { type: 'file', name: 'Types.swift' },
-    ],
-  },
-  {
-    type: 'folder', name: 'Tests', children: [
-      {
-        type: 'folder', name: 'Mocks', children: [
-          { type: 'file', name: 'Dispatchables.swift' },
-          { type: 'file', name: 'State.swift' },
-          { type: 'file', name: 'TestDependenciesContainer.swift' },
-        ],
-      },
-      { type: 'file', name: 'ObserverInterceptorTests.swift' },
-      { type: 'file', name: 'SideEffectTests.swift' },
-      { type: 'file', name: 'StateUpdaterTests.swift' },
-      { type: 'file', name: 'StoreInterceptorsTests.swift' },
-      { type: 'file', name: 'StoreTests.swift' },
-      { type: 'file', name: 'XCTestCase+Promise.swift' },
-    ],
-  },
-  { type: 'file', name: '.swiftlint.yml' },
-  { type: 'file', name: 'LICENSE' },
-  { type: 'file', name: 'Package.swift' },
-  { type: 'file', name: 'Project.swift' },
-  { type: 'file', name: 'README.md' },
-];
+// --- File tree built from the unique file paths in the graph ---
+
+function buildFileTree(files) {
+  const root = { children: {} };
+  files.forEach((file) => {
+    const parts = file.split('/');
+    let current = root;
+    parts.forEach((part, idx) => {
+      if (idx === parts.length - 1) {
+        current.children[part] = { type: 'file', name: part };
+      } else {
+        if (!current.children[part]) {
+          current.children[part] = { type: 'folder', name: part, children: {} };
+        }
+        current = current.children[part];
+      }
+    });
+  });
+  function flatten(node) {
+    return Object.values(node.children).map((c) =>
+      c.type === 'folder'
+        ? { type: 'folder', name: c.name, children: flatten(c) }
+        : c,
+    );
+  }
+  return flatten(root);
+}
+
+const uniqueFiles = [...new Set(graphJson.nodes.map((n) => n.file))];
+export const defaultFileTree = buildFileTree(uniqueFiles);
+
+// First selectable node — first source-category function
+export const defaultSelectedNodeId =
+  defaultNodes.find((n) => n.category === 'source')?.id || defaultNodes[0]?.id || null;

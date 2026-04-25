@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import { defaultNodes, defaultEdges } from '../data/mockData';
+import { defaultNodes, defaultEdges, defaultSelectedNodeId } from '../data/mockData';
 
 const useGraphStore = create((set, get) => ({
   nodes: defaultNodes,
   edges: defaultEdges,
-  selectedNodeId: 'node-2',
+  selectedNodeId: defaultSelectedNodeId,
+  selectedFile: null,
 
-  selectNode: (id) => set({ selectedNodeId: id }),
+  selectNode: (id) => set({ selectedNodeId: id, selectedFile: null }),
+  selectFile: (filePath) => set({ selectedFile: filePath }),
+  closeFile: () => set({ selectedFile: null }),
 
   getSelectedNode: () => {
     const { nodes, selectedNodeId } = get();
