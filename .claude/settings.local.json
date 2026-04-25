@@ -1,7 +1,21 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git status:*)",
+      "Bash(python:*)",
+      "Bash(ls backend/requirements*)",
+      "Bash(curl -s http://127.0.0.1:8000/health)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/analyze -H \"Content-Type: application/json\" -d '{\"repo_url\":\"x\"}')",
+      "Bash(curl -s http://127.0.0.1:8000/graph/katana)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://127.0.0.1:8000/graph/fake)",
+      "Bash(curl -s \"http://127.0.0.1:8000/node/func:Sources/Store.swift:Store.dispatch:498\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://127.0.0.1:8000/node/nonexistent)",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/predict-impact -H \"Content-Type: application/json\" -d '{\"node_id\":\"func:Sources/Interceptor/ObserverInterceptor.swift:ObserverInterceptor.observe:90\"}')",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" -X POST http://127.0.0.1:8000/predict-impact -H \"Content-Type: application/json\" -d '{\"node_id\":\"fake\"}')",
+      "Bash(curl -s http://127.0.0.1:8000/query/hotspots)",
+      "Bash(curl -s http://127.0.0.1:8000/query/dead_code)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" http://127.0.0.1:8000/query/fake)"
     ]
   }
 }
