@@ -94,10 +94,6 @@ export default function Landing() {
             <Link to="/home" className="bg-deep-olive text-white px-6 py-3 rounded text-sm font-semibold hover:bg-deep-olive/90 transition-colors inline-flex items-center justify-center leading-none">
               Import your first project
             </Link>
-            <Link to="/workspace/call-graph" className="bg-transparent border border-gray-300 text-deep-olive px-6 py-3 rounded text-sm font-semibold hover:border-soft-sage hover:text-soft-sage transition-colors inline-flex items-center justify-center gap-2 leading-none">
-              <span className="material-symbols-outlined text-[18px]">play_circle</span>
-              Try a sample repo
-            </Link>
           </div>
         </section>
 
