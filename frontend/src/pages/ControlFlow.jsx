@@ -197,9 +197,16 @@ function ConditionLabel({ from, to, edge }) {
 // --- Main Control Flow page ---
 
 export default function ControlFlow() {
-  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, drillIntoCluster, exitDrill, drillStack, portNodes, portEdges, drillPositions, containerClusters, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
   const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab, setProject } = useProjectStore();
   const [searchParams] = useSearchParams();
+
+  // Derive drill state from the stack
+  const currentDrill = drillStack.length > 0 ? drillStack[drillStack.length - 1] : null;
+  const drilledCluster = currentDrill?.clusterId || null;
+  const drillLevel = currentDrill?.level || null;
+  const isDrilledIntoNodes = drillLevel === 'container';
+  const isDrilledIntoContainers = drillLevel === 'mega';
 
   // Load graph from API if graph_id is in the URL
   useEffect(() => {
@@ -432,8 +439,9 @@ export default function ControlFlow() {
 
       if (e.ctrlKey || e.metaKey) {
         // Pinch-to-zoom on trackpad (or ctrl+scroll with mouse)
-        const step = -e.deltaY * 0.008;
-        const next = Math.max(0.15, Math.min(2.5, z + step));
+        // Use multiplicative scaling for smooth, consistent zoom
+        const factor = Math.pow(0.998, e.deltaY);
+        const next = Math.max(0.15, Math.min(2.5, z * factor));
         const ratio = next / z;
         setZoom(next);
         setPan({ x: mx - (mx - p.x) * ratio, y: my - (my - p.y) * ratio });
@@ -442,8 +450,8 @@ export default function ControlFlow() {
         setPan({ x: p.x - e.deltaX, y: p.y - e.deltaY });
       } else {
         // Vertical scroll → zoom toward cursor (smooth)
-        const step = -e.deltaY * 0.003;
-        const next = Math.max(0.15, Math.min(2.5, z + step));
+        const factor = Math.pow(0.999, e.deltaY);
+        const next = Math.max(0.15, Math.min(2.5, z * factor));
         const ratio = next / z;
         setZoom(next);
         setPan({ x: mx - (mx - p.x) * ratio, y: my - (my - p.y) * ratio });
@@ -491,7 +499,7 @@ export default function ControlFlow() {
     return () => window.removeEventListener('keydown', handler);
   }, [closeNodeEditor]);
 
-  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+  const resetView = () => { _fitControlFlow(); };
 
   const handleFileOpen = useCallback((filePath) => {
     selectFile(filePath);
@@ -659,6 +667,27 @@ export default function ControlFlow() {
                 </span>
               ))}
             </div>
+            {drillStack.length > 0 && (
+              <button
+                onClick={exitDrill}
+                className="glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors border border-gray-200"
+                title="Back"
+              >
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                <span className="font-label-sm">Back</span>
+              </button>
+            )}
+            {drillStack.map((entry, i) => {
+              const store = useGraphStore.getState();
+              const all = [...(store.topLevelClusters || []), ...(store.containerClusters || [])];
+              const dc = all.find((c) => c.id === entry.clusterId);
+              return (
+                <span key={i} className="text-[12px] text-deep-olive font-semibold self-center flex items-center gap-1">
+                  {i > 0 && <span className="text-gray-400">/</span>}
+                  {dc?.label || entry.clusterId}
+                </span>
+              );
+            })}
           </div>
 
           {/* Canvas */}
@@ -672,113 +701,176 @@ export default function ControlFlow() {
             <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0', willChange: 'transform' }}>
 
               {clusterView ? (
-                <>
-                  {/* === CLUSTER / PACKAGE VIEW === */}
-
-                  {/* Cluster-level edges */}
-                  <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
-                    {clusterEdges.map((ce, i) => {
-                      const sp = clusterPositions[ce.source];
-                      const tp = clusterPositions[ce.target];
-                      if (!sp || !tp) return null;
-                      const from = { x: sp.x + sp.width, y: sp.y + sp.height / 2 };
-                      const to = { x: tp.x, y: tp.y + tp.height / 2 };
-                      return (
-                        <g key={`ce-${i}`}>
-                          <path
-                            className="connection-line"
-                            d={computeEdgePath(from, to)}
-                            style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }}
-                          />
-                          <path
-                            className="connection-line"
-                            d={computeArrowHead(to)}
-                            style={{ opacity: 0.5 }}
-                          />
-                          {ce.weight > 1 && (
-                            <text
-                              x={(from.x + to.x) / 2}
-                              y={(from.y + to.y) / 2 - 8}
-                              textAnchor="middle"
-                              className="fill-gray-400"
-                              style={{ fontSize: 10, fontFamily: 'inherit' }}
-                            >
-                              {ce.weight}
-                            </text>
-                          )}
-                        </g>
-                      );
-                    })}
-
-                    {/* Edges between nodes in expanded clusters */}
-                    {viewportEdges.map((edge) => {
-                      const srcCluster = nodeClusterMap[edge.source];
-                      const tgtCluster = nodeClusterMap[edge.target];
-                      // Only show node-level edges if both ends are in expanded clusters
-                      const srcExpanded = srcCluster && expandedClusters.has(srcCluster);
-                      const tgtExpanded = tgtCluster && expandedClusters.has(tgtCluster);
-                      if (!srcExpanded && !tgtExpanded) return null;
-
-                      const sourceNode = visibleNodeById.get(edge.source);
-                      const targetNode = visibleNodeById.get(edge.target);
-                      if (!sourceNode || !targetNode) return null;
-
-                      if (edge.source === edge.target) {
+                isDrilledIntoNodes ? (
+                  <>
+                    {/* === NODE-LEVEL DRILL-DOWN (inside a container) === */}
+                    <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
+                      {edges.map((edge) => {
+                        const drillCluster = (containerClusters || []).find((c) => c.id === drilledCluster) || clusters.find((c) => c.id === drilledCluster);
+                        const drillNodeIds = drillCluster ? new Set(drillCluster.node_ids) : new Set();
+                        if (!drillNodeIds.has(edge.source) || !drillNodeIds.has(edge.target)) return null;
+                        if (edge.source === edge.target) return null;
+                        const sourceNode = visibleNodeById.get(edge.source);
+                        const targetNode = visibleNodeById.get(edge.target);
+                        if (!sourceNode || !targetNode) return null;
+                        const from = getHandlePosition(sourceNode, edge.sourceHandle || 'output');
+                        const to = getHandlePosition(targetNode, edge.targetHandle || 'input');
                         return (
                           <g key={edge.id}>
-                            <path className={getEdgeClasses(edge, selectedNodeId)} d={computeSelfLoopPath(sourceNode)} />
-                            <path className={getEdgeClasses(edge, selectedNodeId)} d={computeSelfLoopArrow(sourceNode)} />
+                            <path className={getEdgeClasses(edge, selectedNodeId)} style={edgeStrokeStyle(edge)} d={computeEdgePath(from, to)} />
+                            <path className={getEdgeClasses(edge, selectedNodeId)} style={edgeStrokeStyle(edge)} d={computeArrowHead(to)} />
+                            <ConditionLabel from={from} to={to} edge={edge} />
                           </g>
                         );
-                      }
-                      const from = getHandlePosition(sourceNode, edge.sourceHandle);
-                      const to = getHandlePosition(targetNode, edge.targetHandle);
+                      })}
+                      {portEdges.map((pe) => {
+                        const PORT_R = 14;
+                        const srcPos = drillPositions[pe.source] || (visibleNodeById.get(pe.source) || {}).position;
+                        const tgtPos = drillPositions[pe.target] || (visibleNodeById.get(pe.target) || {}).position;
+                        if (!srcPos || !tgtPos) return null;
+                        const srcIsPort = pe.source.startsWith('port:');
+                        const tgtIsPort = pe.target.startsWith('port:');
+                        const from = srcIsPort
+                          ? { x: srcPos.x + PORT_R, y: srcPos.y + PORT_R }
+                          : { x: srcPos.x + NODE_WIDTH, y: srcPos.y + NODE_HEIGHT / 2 };
+                        const to = tgtIsPort
+                          ? { x: tgtPos.x + PORT_R, y: tgtPos.y + PORT_R }
+                          : { x: tgtPos.x, y: tgtPos.y + NODE_HEIGHT / 2 };
+                        return (
+                          <g key={pe.id}>
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: 1.4, opacity: 0.5, strokeDasharray: '6 4' }} />
+                            <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.4 }} />
+                          </g>
+                        );
+                      })}
+                    </svg>
+                    {portNodes.map((port) => {
+                      const pos = drillPositions[port.id];
+                      if (!pos) return null;
+                      return <PortNode key={port.id} port={port} position={pos} />;
+                    })}
+                    {(() => {
+                      const drillCluster = (containerClusters || []).find((c) => c.id === drilledCluster) || clusters.find((c) => c.id === drilledCluster);
+                      const drillNodeIds = drillCluster ? new Set(drillCluster.node_ids) : new Set();
+                      return viewportNodes.filter((n) => drillNodeIds.has(n.id)).map((node) => (
+                        <NodeCard key={node.id} node={node} isSelected={node.id === selectedNodeId} isDimmed={false} onSelect={handleNodeSelect} onOpenCode={handleNodeOpenCode} onMove={handleNodeMove} zoom={zoom} />
+                      ));
+                    })()}
+                  </>
+                ) : isDrilledIntoContainers ? (
+                  <>
+                    {/* === CONTAINER-LEVEL DRILL-DOWN (inside a mega-group) === */}
+                    <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
+                      {clusterEdges.map((ce, i) => {
+                        const sp = clusterPositions[ce.source];
+                        const tp = clusterPositions[ce.target];
+                        if (!sp || !tp) return null;
+                        const CLUSTER_W = sp.width || 200;
+                        const CLUSTER_H = sp.height || 120;
+                        const from = { x: sp.x + CLUSTER_W, y: sp.y + CLUSTER_H / 2 };
+                        const TGT_H = tp.height || 120;
+                        const to = { x: tp.x, y: tp.y + TGT_H / 2 };
+                        return (
+                          <g key={`ce-${i}`}>
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }} />
+                            <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.5 }} />
+                          </g>
+                        );
+                      })}
+                      {portEdges.map((pe) => {
+                        const PORT_R = 14;
+                        const srcPos = clusterPositions[pe.source] || drillPositions[pe.source];
+                        const tgtPos = clusterPositions[pe.target] || drillPositions[pe.target];
+                        if (!srcPos || !tgtPos) return null;
+                        const srcIsPort = pe.source.startsWith('port:');
+                        const tgtIsPort = pe.target.startsWith('port:');
+                        const CLUSTER_W = srcPos.width || 200;
+                        const CLUSTER_H = srcPos.height || 120;
+                        const from = srcIsPort
+                          ? { x: srcPos.x + PORT_R, y: srcPos.y + PORT_R }
+                          : { x: srcPos.x + CLUSTER_W, y: srcPos.y + CLUSTER_H / 2 };
+                        const TGT_W = tgtPos.width || 200;
+                        const TGT_H = tgtPos.height || 120;
+                        const to = tgtIsPort
+                          ? { x: tgtPos.x + PORT_R, y: tgtPos.y + PORT_R }
+                          : { x: tgtPos.x, y: tgtPos.y + TGT_H / 2 };
+                        return (
+                          <g key={pe.id}>
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: 1.4, opacity: 0.5, strokeDasharray: '6 4' }} />
+                            <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.4 }} />
+                          </g>
+                        );
+                      })}
+                    </svg>
+                    {portNodes.map((port) => {
+                      const pos = drillPositions[port.id];
+                      if (!pos) return null;
+                      return <PortNode key={port.id} port={port} position={pos} />;
+                    })}
+                    {clusters.map((cluster) => {
+                      const pos = clusterPositions[cluster.id];
+                      if (!pos) return null;
                       return (
-                        <g key={edge.id}>
-                          <path className={getEdgeClasses(edge, selectedNodeId)} style={edgeStrokeStyle(edge)} d={computeEdgePath(from, to)} />
-                          <path className={getEdgeClasses(edge, selectedNodeId)} style={edgeStrokeStyle(edge)} d={computeArrowHead(to)} />
-                          <ConditionLabel from={from} to={to} edge={edge} />
-                        </g>
+                        <ClusterCard key={cluster.id} cluster={cluster} position={pos} isExpanded={false} onToggle={() => drillIntoCluster(cluster.id)} />
                       );
                     })}
-                  </svg>
+                  </>
+                ) : (
+                  <>
+                    {/* === CLUSTER / PACKAGE OVERVIEW === */}
 
-                  {/* Cluster cards */}
-                  {clusters.map((cluster) => {
-                    const pos = clusterPositions[cluster.id];
-                    if (!pos) return null;
-                    const isExpanded = expandedClusters.has(cluster.id);
-                    return (
-                      <ClusterCard
-                        key={cluster.id}
-                        cluster={cluster}
-                        position={pos}
-                        isExpanded={isExpanded}
-                        onToggle={() => toggleCluster(cluster.id)}
-                      />
-                    );
-                  })}
+                    {/* Cluster-level edges */}
+                    <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
+                      {clusterEdges.map((ce, i) => {
+                        const sp = clusterPositions[ce.source];
+                        const tp = clusterPositions[ce.target];
+                        if (!sp || !tp) return null;
+                        const from = { x: sp.x + sp.width, y: sp.y + sp.height / 2 };
+                        const to = { x: tp.x, y: tp.y + tp.height / 2 };
+                        return (
+                          <g key={`ce-${i}`}>
+                            <path
+                              className="connection-line"
+                              d={computeEdgePath(from, to)}
+                              style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }}
+                            />
+                            <path
+                              className="connection-line"
+                              d={computeArrowHead(to)}
+                              style={{ opacity: 0.5 }}
+                            />
+                            {ce.weight > 1 && (
+                              <text
+                                x={(from.x + to.x) / 2}
+                                y={(from.y + to.y) / 2 - 8}
+                                textAnchor="middle"
+                                className="fill-gray-400"
+                                style={{ fontSize: 10, fontFamily: 'inherit' }}
+                              >
+                                {ce.weight}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      })}
+                    </svg>
 
-                  {/* Nodes inside expanded clusters */}
-                  {viewportNodes.map((node) => {
-                    const clusterId = nodeClusterMap[node.id];
-                    if (!clusterId || !expandedClusters.has(clusterId)) return null;
-                    const dimByNeighbor = neighborIds ? !neighborIds.has(node.id) : false;
-                    const dimByFilter = !matchesClassFilter(node);
-                    return (
-                      <NodeCard
-                        key={node.id}
-                        node={node}
-                        isSelected={node.id === selectedNodeId}
-                        isDimmed={dimByNeighbor || dimByFilter}
-                        onSelect={handleNodeSelect}
-                        onOpenCode={handleNodeOpenCode}
-                        onMove={handleNodeMove}
-                        zoom={zoom}
-                      />
-                    );
-                  })}
-                </>
+                    {/* Cluster cards — click to drill in */}
+                    {clusters.map((cluster) => {
+                      const pos = clusterPositions[cluster.id];
+                      if (!pos) return null;
+                      return (
+                        <ClusterCard
+                          key={cluster.id}
+                          cluster={cluster}
+                          position={pos}
+                          isExpanded={false}
+                          onToggle={() => drillIntoCluster(cluster.id)}
+                        />
+                      );
+                    })}
+                  </>
+                )
               ) : (
                 <>
                   {/* === FLAT VIEW (original) === */}
@@ -842,11 +934,11 @@ export default function ControlFlow() {
 
             {/* Zoom controls */}
             <div className="absolute bottom-2 sm:bottom-4 right-2 sm:right-4 z-10 glass-panel rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 flex items-center gap-1 sm:gap-2">
-              <button onClick={() => setZoom((z) => Math.max(0.15, z - 0.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
+              <button onClick={() => setZoom((z) => Math.max(0.15, z / 1.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
                 <span className="material-symbols-outlined text-[14px] sm:text-[16px]">remove</span>
               </button>
               <span className="font-label-sm text-gray-600 w-8 sm:w-10 text-center select-none text-[10px] sm:text-[12px]">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(2.5, z + 0.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
+              <button onClick={() => setZoom((z) => Math.min(2.5, z * 1.15))} className="text-gray-500 hover:text-gray-900 transition-colors px-0.5 sm:px-1">
                 <span className="material-symbols-outlined text-[14px] sm:text-[16px]">add</span>
               </button>
               <div className="w-px h-4 bg-gray-300 mx-0.5 sm:mx-1"></div>
@@ -1575,6 +1667,42 @@ function clusterColorIndex(clusterId) {
   let hash = 0;
   for (let i = 0; i < clusterId.length; i++) hash = ((hash << 5) - hash + clusterId.charCodeAt(i)) | 0;
   return Math.abs(hash) % CLUSTER_COLORS.length;
+}
+
+// --- Port Node (black dot for external connections in drill-down) ---
+
+function PortNode({ port, position }) {
+  const isIncoming = port.direction === 'incoming';
+  return (
+    <div
+      className="absolute z-10 flex items-center gap-2"
+      style={{
+        top: position.y,
+        left: position.x,
+      }}
+    >
+      {!isIncoming && (
+        <div className="w-7 h-7 rounded-full bg-gray-900 border-2 border-gray-700 shadow-md shrink-0" title={`${port.edgeCount} connection${port.edgeCount > 1 ? 's' : ''} to ${port.clusterLabel}`} />
+      )}
+      <div
+        className={`flex flex-col ${isIncoming ? 'items-end' : 'items-start'}`}
+        style={{ whiteSpace: 'nowrap' }}
+      >
+        <span className="text-[10px] text-gray-400 font-medium leading-tight">
+          {isIncoming ? 'from' : 'to'}
+        </span>
+        <span className="text-[12px] text-gray-700 font-semibold leading-tight">
+          {port.clusterLabel}
+        </span>
+        <span className="text-[9px] text-gray-400 leading-tight">
+          {port.edgeCount} call{port.edgeCount > 1 ? 's' : ''}
+        </span>
+      </div>
+      {isIncoming && (
+        <div className="w-7 h-7 rounded-full bg-gray-900 border-2 border-gray-700 shadow-md shrink-0" title={`${port.edgeCount} connection${port.edgeCount > 1 ? 's' : ''} from ${port.clusterLabel}`} />
+      )}
+    </div>
+  );
 }
 
 function ClusterCard({ cluster, position, isExpanded, onToggle }) {
