@@ -1,21 +1,56 @@
 """LLM use cases: explain node, codebase overview, impact narrative, graph chat."""
+from collections import Counter
+from pathlib import Path
+
 from .cache import cached_complete
+
+
+_EXT_TO_LANG = {
+    ".swift": ("Swift", "swift"),
+    ".py": ("Python", "python"),
+    ".js": ("JavaScript", "javascript"),
+    ".jsx": ("JavaScript", "jsx"),
+    ".mjs": ("JavaScript", "javascript"),
+    ".cjs": ("JavaScript", "javascript"),
+    ".ts": ("TypeScript", "typescript"),
+    ".tsx": ("TypeScript", "tsx"),
+    ".java": ("Java", "java"),
+    ".go": ("Go", "go"),
+}
+
+
+def _lang_from_file(file_path: str) -> tuple[str, str]:
+    """Return (display_name, code_fence) for a file path."""
+    ext = Path(file_path or "").suffix.lower()
+    return _EXT_TO_LANG.get(ext, ("software", ""))
+
+
+def _dominant_lang(files: list[str]) -> tuple[str, str]:
+    """Pick the most common language across a list of file paths."""
+    langs = [_lang_from_file(f) for f in files if f]
+    langs = [l for l in langs if l[0] != "software"]
+    if not langs:
+        return ("software", "")
+    return Counter(langs).most_common(1)[0][0]
 
 
 # --- explain_node ---
 
-EXPLAIN_NODE_SYSTEM = """You are a senior Swift engineer explaining a function to a developer.
-Be concise (3-5 sentences). Focus on:
-- What the function does
-- How it fits in the call graph (mention notable callers/callees)
-- Any non-obvious behavior
-
-Plain prose, no markdown headers, no bullets."""
+def _explain_system(language: str) -> str:
+    return (
+        f"You are a senior {language} engineer explaining a function to a developer.\n"
+        "Be concise (3-5 sentences). Focus on:\n"
+        "- What the function does\n"
+        "- How it fits in the call graph (mention notable callers/callees)\n"
+        "- Any non-obvious behavior\n\n"
+        "Plain prose, no markdown headers, no bullets."
+    )
 
 
 def explain_node(node: dict, callers: list, callees: list, code_snippet: str) -> dict:
     caller_names = ", ".join(c["qualified_name"] for c in callers[:5]) or "none"
     callee_names = ", ".join(c["qualified_name"] for c in callees[:5]) or "none"
+    language, fence = _lang_from_file(node.get("file", ""))
 
     user = f"""Function: {node['qualified_name']}
 File: {node['file']}:{node['line']}
@@ -24,7 +59,7 @@ Called by: {caller_names}
 Calls: {callee_names}
 
 Source:
-```swift
+```{fence}
 {code_snippet}
 ```
 
@@ -34,7 +69,7 @@ Explain this function."""
         use_case="explain_node",
         params={"node_id": node["id"]},
         content_signature=f"{node['signature']}|{code_snippet[:500]}",
-        system=EXPLAIN_NODE_SYSTEM,
+        system=_explain_system(language),
         user=user,
         max_tokens=400,
     )
@@ -47,22 +82,31 @@ Explain this function."""
 
 # --- codebase_overview ---
 
-OVERVIEW_SYSTEM = """You are a senior Swift engineer summarizing a codebase for a new contributor.
-4-6 sentences total. Cover:
-- What the library does
-- Core architectural pattern (e.g. Redux-like, MVC, etc.)
-- The most important entry points
+def _overview_system(language: str) -> str:
+    return (
+        f"You are a senior {language} engineer summarizing a codebase for a new contributor.\n"
+        "4-6 sentences total. Cover:\n"
+        "- What the library does\n"
+        "- Core architectural pattern (e.g. Redux-like, MVC, etc.)\n"
+        "- The most important entry points\n\n"
+        "Plain prose."
+    )
 
-Plain prose."""
 
-
-def codebase_overview(top_hotspots: list, total_nodes: int, total_edges: int) -> dict:
+def codebase_overview(
+    top_hotspots: list,
+    total_nodes: int,
+    total_edges: int,
+    repo_name: str | None = None,
+) -> dict:
     hotspot_lines = "\n".join(
         f"- {h['qualified_name']} ({h['file']}, in_degree={h['in_degree']})"
         for h in top_hotspots[:10]
     )
+    language, _ = _dominant_lang([h.get("file", "") for h in top_hotspots])
+    label = repo_name or "this repository"
 
-    user = f"""Codebase: BendingSpoons/katana-swift
+    user = f"""Codebase: {label}
 Total functions: {total_nodes}
 Total call edges: {total_edges}
 
@@ -73,9 +117,9 @@ Summarize this codebase."""
 
     resp = cached_complete(
         use_case="codebase_overview",
-        params={"node_count": total_nodes},
+        params={"node_count": total_nodes, "repo": label},
         content_signature=hotspot_lines,
-        system=OVERVIEW_SYSTEM,
+        system=_overview_system(language),
         user=user,
         max_tokens=400,
     )
@@ -88,14 +132,16 @@ Summarize this codebase."""
 
 # --- impact_narrative ---
 
-IMPACT_SYSTEM = """You are a senior Swift engineer assessing change risk.
-Given a target function and the functions a change to it would affect, write a 3-4 sentence narrative.
-Cover:
-- The blast radius (how much breaks)
-- Most critical affected paths
-- Risk level (low/medium/high) with one-line justification
-
-Plain prose."""
+def _impact_system(language: str) -> str:
+    return (
+        f"You are a senior {language} engineer assessing change risk.\n"
+        "Given a target function and the functions a change to it would affect, write a 3-4 sentence narrative.\n"
+        "Cover:\n"
+        "- The blast radius (how much breaks)\n"
+        "- Most critical affected paths\n"
+        "- Risk level (low/medium/high) with one-line justification\n\n"
+        "Plain prose."
+    )
 
 
 def impact_narrative(node: dict, affected: list) -> dict:
@@ -103,6 +149,7 @@ def impact_narrative(node: dict, affected: list) -> dict:
         f"- {a['id'].split(':')[2]} (distance={a['distance']}, risk={a['risk_score']})"
         for a in affected[:10]
     )
+    language, _ = _lang_from_file(node.get("file", ""))
 
     user = f"""Target function: {node['qualified_name']} ({node['file']}:{node['line']})
 
@@ -115,7 +162,7 @@ Write the impact narrative."""
         use_case="impact_narrative",
         params={"node_id": node["id"], "affected_count": len(affected)},
         content_signature=affected_lines,
-        system=IMPACT_SYSTEM,
+        system=_impact_system(language),
         user=user,
         max_tokens=400,
     )

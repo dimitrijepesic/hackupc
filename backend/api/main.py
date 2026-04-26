@@ -47,6 +47,20 @@ GRAPH: dict = {}
 # Cached cluster results keyed by graph_id
 CLUSTERS: dict[str, dict] = {}
 
+# Live job state for /analyze, keyed by graph_id. Polled by the frontend
+# while a long-running clone+parse is in flight.
+JOBS: dict[str, dict] = {}
+
+
+def _set_job(graph_id: str, stage: str, percent: int, message: str, error: str | None = None) -> None:
+    JOBS[graph_id] = {
+        "graph_id": graph_id,
+        "stage": stage,
+        "percent": percent,
+        "message": message,
+        "error": error,
+    }
+
 
 def _read_snippet(repo_dir: Path, file_rel: str, line: int, before: int = 2, after: int = 25) -> str:
     try:
@@ -212,8 +226,10 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
         }
 
     token = get_token_from_cookie(synapsis_sid)
+    # Authenticated URL keeps username only; the secret is delivered via
+    # GIT_ASKPASS so it never lands in argv / process listings.
     clone_url = (
-        f"https://x-access-token:{token}@github.com/{full_name}.git"
+        f"https://x-access-token@github.com/{full_name}.git"
         if token
         else f"https://github.com/{full_name}.git"
     )
@@ -221,6 +237,15 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
     # Clone into a temp dir
     tmp_dir = tempfile.mkdtemp(prefix="synapsis_")
     clone_path = Path(tmp_dir) / repo_name
+    clone_env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+    if token:
+        askpass_path = Path(tmp_dir) / "askpass.sh"
+        askpass_path.write_text('#!/bin/sh\nprintf %s "$GH_TOKEN"\n')
+        askpass_path.chmod(0o700)
+        clone_env["GH_TOKEN"] = token
+        clone_env["GIT_ASKPASS"] = str(askpass_path)
+
+    _set_job(graph_id, "cloning", 5, f"Cloning {full_name}...")
     try:
         print(f"[analyze] cloning {full_name} (auth={'yes' if token else 'no'}) ...")
         subprocess.run(
@@ -228,13 +253,16 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
             check=True,
             capture_output=True,
             timeout=120,
+            env=clone_env,
         )
 
         # Step 1: Parse
+        _set_job(graph_id, "parsing", 30, "Parsing source files...")
         print(f"[analyze] parsing ...")
         ir = parse_repo(str(clone_path), repo_name=full_name)
 
         # Step 2: Build call graph
+        _set_job(graph_id, "building", 60, "Building call graph...")
         print(f"[analyze] building call graph ...")
         graph = build_call_graph(ir)
         graph["graph_id"] = graph_id
@@ -242,6 +270,7 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
         graph["repo_full_name"] = full_name
 
         # Step 3: Inline code snippets
+        _set_job(graph_id, "snippets", 80, f"Inlining {len(graph['nodes'])} code snippets...")
         snippets_ok = 0
         for node in graph["nodes"]:
             node["code_snippet"] = _read_snippet(clone_path, node["file"], node["line"])
@@ -250,6 +279,7 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
         print(f"[analyze] {snippets_ok}/{len(graph['nodes'])} snippets inlined")
 
         # Step 4: Build source file contents for the frontend
+        _set_job(graph_id, "snippets", 92, "Loading source files...")
         source_files = {}
         seen_files = set()
         for node in graph["nodes"]:
@@ -266,6 +296,7 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
         GRAPHS[graph_id] = graph
         GRAPH = graph
 
+        _set_job(graph_id, "ready", 100, "Done")
         return {
             "graph_id": graph_id,
             "status": "ready",
@@ -278,11 +309,39 @@ def analyze(body: AnalyzeRequest, synapsis_sid: str | None = Cookie(default=None
         stderr = e.stderr.decode()[:500]
         if token:
             stderr = stderr.replace(token, "***")
+        _set_job(graph_id, "error", 0, "Clone failed", error=stderr)
         raise HTTPException(400, f"git clone failed: {stderr}")
     except Exception as e:
+        _set_job(graph_id, "error", 0, "Analysis failed", error=str(e))
         raise HTTPException(500, f"Analysis failed: {str(e)}")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def _progress_payload(graph_id: str) -> dict:
+    job = JOBS.get(graph_id)
+    if job:
+        return job
+    if graph_id in GRAPHS:
+        return {"graph_id": graph_id, "stage": "ready", "percent": 100, "message": "Done", "error": None}
+    raise HTTPException(404, f"No analyze job for {graph_id}")
+
+
+@app.get("/progress/{graph_id}")
+def analyze_progress(graph_id: str):
+    """Live status for an in-flight or recently-finished /analyze run."""
+    return _progress_payload(graph_id)
+
+
+@app.get("/progress")
+def analyze_progress_by_repo(repo_url: str):
+    """Same as /progress/{graph_id} but resolves the id from a GitHub URL."""
+    try:
+        _, repo_name = _parse_github_url(repo_url)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    graph_id = repo_name.lower().replace("-swift", "").replace("-", "_")
+    return _progress_payload(graph_id)
 
 @app.post("/upload")
 async def upload_codebase(file: UploadFile = File(...)):
@@ -452,6 +511,7 @@ def llm_overview(body: OverviewRequest):
         top_hotspots=hotspots(GRAPH, top_n=10),
         total_nodes=len(GRAPH["nodes"]),
         total_edges=len(GRAPH["edges"]),
+        repo_name=GRAPH.get("repo_full_name") or GRAPH.get("repo_url"),
     )
 
 

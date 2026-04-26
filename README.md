@@ -1,14 +1,14 @@
-# Synapse
+# Synapsis
 
-Interactive call-graph explorer for Swift codebases. Map every function, every call, every dependency — then click any node to read the source, ask the AI what it does, or predict what breaks if you change it.
+Interactive call-graph explorer for unfamiliar codebases. Drop in a repo (Swift, Python, JavaScript/TypeScript), map every function and every call, then click any node to read the source, ask the AI what it does, or predict what breaks if you change it. Built to shorten the "first day on a new repo" ramp.
 
 ## How It Works
 
-1. **Import** a Swift codebase from GitHub
-2. **tree-sitter** parses the source via a pluggable language registry (Swift today, more languages drop in)
+1. **Import** a codebase from GitHub or upload an archive
+2. **tree-sitter** parses the source via a pluggable language registry — Swift, Python, JavaScript/TypeScript today; new languages drop in as adapters
 3. **Call graph** is built from the parsed IR — nodes are functions, edges are calls
 4. **Interactive visualization** — explore the graph, click nodes to see source code and neighbors
-5. **AI summaries** — Groq (Llama 3.3 70B) explains individual functions, summarizes the codebase, narrates impact predictions
+5. **AI summaries** — Groq (Llama 3.3 70B) explains individual functions, summarizes the codebase, narrates impact predictions; prompts adapt to the repo's language
 6. **Deterministic queries** — predict impact, find hotspots and dead code with zero LLM calls
 
 ## Tech Stack
@@ -19,7 +19,7 @@ Interactive call-graph explorer for Swift codebases. Map every function, every c
 | Graph viz | Custom SVG canvas + dagre layout |
 | Frontend state | Zustand |
 | Backend | FastAPI (Python 3.12) |
-| AST parsing | tree-sitter (Swift now, multi-language pluggable) |
+| AST parsing | tree-sitter (Swift, Python, JavaScript/TypeScript; multi-language pluggable) |
 | LLM | Groq (Llama 3.3 70B) via OpenAI-compatible SDK |
 | LLM cache | SQLite |
 | Storage | Filesystem (cloned repos in temp dirs, graphs as JSON) |
@@ -31,7 +31,7 @@ backend/
   api/                    FastAPI app + endpoints
   ir_compiler/            IR → graph, predict_impact, hotspots, dead_code, clustering
   llm/                    Groq LLM provider, SQLite cache, use cases
-  parser/                 tree-sitter parsing (Swift, multi-language registry)
+  parser/                 tree-sitter parsing (Swift / Python / JS-TS, multi-language registry)
   cached/                 Pre-built katana.ir.json + katana.graph.json
   scripts/                build_katana_graph, prefill_cache
   data/katana/            Cloned katana-swift repo (for code snippets)
@@ -76,7 +76,7 @@ npm run dev                       # http://localhost:5173
 
 | Person | Role | Owns |
 |--------|------|------|
-| **P1** | Swift Parser | `backend/parser/` — tree-sitter, language adapters, IR JSON output |
+| **P1** | Parsers | `backend/parser/` — tree-sitter, language adapters (Swift / Python / JS-TS), IR JSON output |
 | **P2** | IR → Graph | `backend/ir_compiler/ir_compiler.py` — graph builder, predict_impact, hotspots, dead_code |
 | **P3** | Backend API + LLM | `backend/api/` — FastAPI routes, Groq integration, SQLite cache |
 | **P4** | Frontend | `frontend/` — React app, graph viz, code panel, node editor |
@@ -84,8 +84,8 @@ npm run dev                       # http://localhost:5173
 ## Pipeline
 
 ```
-Swift source ──▶ IR JSON ──▶ Graph JSON ──▶ HTTP API + LLM ──▶ React UI
-   (P1)            (P2)         (P3)              (P3)          (P4)
+Source code ──▶ IR JSON ──▶ Graph JSON ──▶ HTTP API + LLM ──▶ React UI
+   (P1)           (P2)         (P3)              (P3)          (P4)
 ```
 
 Each stage has one owner and one output format. Mock-first development means each downstream stage hand-writes a fake input from the upstream stage and stays unblocked until the real one ships.

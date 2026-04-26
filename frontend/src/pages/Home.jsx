@@ -17,6 +17,7 @@ export default function Home() {
   const [repos, setRepos] = useState(null);
   const [reposLoading, setReposLoading] = useState(false);
   const [repoFilter, setRepoFilter] = useState('');
+  const [progress, setProgress] = useState(null);
   const navigate = useNavigate();
 
   // Check existing session on mount
@@ -64,6 +65,20 @@ export default function Home() {
   const analyzeRepoUrl = async (url) => {
     setLoading(true);
     setError('');
+    setProgress({ stage: 'cloning', percent: 1, message: 'Starting...' });
+
+    const pollHandle = setInterval(async () => {
+      try {
+        const r = await fetch(`${API_BASE}/progress?repo_url=${encodeURIComponent(url)}`, {
+          credentials: 'include',
+        });
+        if (r.ok) {
+          const p = await r.json();
+          setProgress(p);
+        }
+      } catch { /* poll errors are non-fatal */ }
+    }, 600);
+
     try {
       const res = await fetch(`${API_BASE}/analyze`, {
         method: 'POST',
@@ -80,7 +95,9 @@ export default function Home() {
     } catch (e) {
       setError(e.message);
     } finally {
+      clearInterval(pollHandle);
       setLoading(false);
+      setProgress(null);
     }
   };
 
@@ -275,7 +292,17 @@ export default function Home() {
                 <p className="text-sm text-red-600 mt-1">{error}</p>
               )}
               {loading && (
-                <p className="text-sm text-deep-olive mt-1">Cloning and analyzing repository... this may take a minute.</p>
+                <div className="mt-2 flex flex-col gap-2">
+                  <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                    <div
+                      className="h-full bg-deep-olive transition-all duration-300 ease-out"
+                      style={{ width: `${Math.max(2, Math.min(100, progress?.percent ?? 1))}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-deep-olive font-mono">
+                    {progress?.message || 'Cloning and analyzing repository...'}
+                  </p>
+                </div>
               )}
             </div>
 
