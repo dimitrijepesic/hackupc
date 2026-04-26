@@ -305,3 +305,12 @@ samp {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------- Landing feature graph edges ---------- */
+.feat-edge {
+  stroke: rgba(122, 153, 110, 0.85);
+  stroke-width: 2.25;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
