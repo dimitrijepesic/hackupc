@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import CallGraph from './pages/CallGraph';
 import ControlFlow from './pages/ControlFlow';
+import Dependencies from './pages/Dependencies';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/workspace/call-graph" element={<CallGraph />} />
         <Route path="/workspace/control-flow" element={<ControlFlow />} />
+        <Route path="/workspace/dependencies" element={<Dependencies />} />
         <Route path="/workspace" element={<RedirectWithSearch to="/workspace/call-graph" />} />
       </Routes>
     </BrowserRouter>

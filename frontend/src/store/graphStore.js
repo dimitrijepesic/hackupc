@@ -320,30 +320,31 @@ const useGraphStore = create((set, get) => ({
   error: null,
 
   // Cluster state
-  clusters: [],          // flat file-level list (back-compat)
-  clusterTree: [],       // hierarchical: dir -> [files] -> [function ids]
-  clusterEdges: [],      // file-level aggregated edges
-  nodeClusterMap: {},    // node_id -> file-level cluster id
+  clusters: [],          // top-level clusters (mega-groups or containers)
+  clusterTree: [],       // (unused)
+  clusterEdges: [],      // edges between top-level clusters
+  nodeClusterMap: {},    // node_id -> container cluster id
   expandedClusters: new Set(),
   clusterView: false,  // false = flat view, true = package/cluster view
   clusterPositions: {},
+
+  // Multi-level clustering data from backend
+  hasMegaGroups: false,
+  topLevelClusters: [],        // original top-level clusters (stashed when drilling)
+  topLevelEdges: [],           // original top-level edges
+  containerClusters: [],       // all container-level clusters
+  containerEdges: [],          // edges between containers
+  containerMegaMap: {},        // container_id -> mega_group_id
+
+  // Drill-down stack: each entry = { clusterId, level: 'mega'|'container' }
+  drillStack: [],
+  portNodes: [],          // synthetic port nodes for external connections
+  portEdges: [],          // edges connecting ports ↔ internal nodes
+  drillPositions: {},     // { nodeId/portId: {x,y} } layout for the drill view
   // Snapshot of node positions in flat view, captured on first switch INTO
   // cluster mode. Used to tween nodes back to their flat layout when cluster
   // view is turned off.
   flatPositions: {},
-
-  // AI high-level cluster state
-  // 'clusterMode' tracks which grouping is active: null = flat, 'package' = file-level, 'ai' = LLM-generated
-  clusterMode: null,
-  aiClusters: null,       // cached AI cluster response from backend
-  aiClusterLoading: false,
-  _packageClusters: null,  // stashed package cluster data so AI mode can swap in/out
-
-  // AI drill-down state (when user clicks an AI cluster to expand it)
-  aiDrilledCluster: null,  // cluster id currently drilled into, or null
-  aiPortNodes: [],         // synthetic port nodes for external connections
-  aiPortEdges: [],         // edges connecting ports ↔ internal nodes
-  aiDrillPositions: {},    // { nodeId/portId: {x,y} } layout for the drill view
 
   // Importance threshold ∈ [0, 1]. Nodes with importance < threshold are
   // hidden in the rendered graph. 0 = show all.
@@ -550,17 +551,28 @@ const useGraphStore = create((set, get) => ({
         graphId: graphId,
         metadata: graph.metadata || null,
         loading: false,
-        // New graph -> stale per-view caches, drop them so each view recomputes.
+        // New graph -> stale caches
         viewLayouts: {},
         viewCameras: {},
-        aiClusters: null,
-        aiClusterLoading: false,
-        clusterMode: null,
-        _packageClusters: null,
-        aiDrilledCluster: null,
-        aiPortNodes: [],
-        aiPortEdges: [],
-        aiDrillPositions: {},
+        // Reset cluster/drill state so packaged view re-fetches for the new graph
+        clusters: [],
+        clusterTree: [],
+        clusterEdges: [],
+        nodeClusterMap: {},
+        clusterView: false,
+        clusterPositions: {},
+        expandedClusters: new Set(),
+        flatPositions: {},
+        hasMegaGroups: false,
+        topLevelClusters: [],
+        topLevelEdges: [],
+        containerClusters: [],
+        containerEdges: [],
+        containerMegaMap: {},
+        drillStack: [],
+        portNodes: [],
+        portEdges: [],
+        drillPositions: {},
       });
     } catch (e) {
       set({ loading: false, error: e.message });
@@ -665,17 +677,19 @@ const useGraphStore = create((set, get) => ({
       if (!res.ok) return;
       const data = await res.json();
       const clusters = data.clusters || [];
-      const clusterTree = data.tree || [];
-      // Seed cards at member centroids so they animate out from their
-      // original on-canvas region rather than popping into final dagre slots.
       const seed = _seedClusterPositionsFromMembers(clusters, get().nodes);
       set({
         clusters,
-        clusterTree,
+        clusterTree: [],
         clusterEdges: data.cluster_edges || [],
         nodeClusterMap: data.node_cluster_map || {},
         clusterPositions: seed,
-        _packageClusters: data,
+        hasMegaGroups: !!data.has_mega_groups,
+        topLevelClusters: clusters,
+        topLevelEdges: data.cluster_edges || [],
+        containerClusters: data.container_clusters || [],
+        containerEdges: data.container_edges || [],
+        containerMegaMap: data.container_mega_map || {},
       });
       get().layoutClusters({ animate: true });
     } catch (e) {
@@ -702,13 +716,12 @@ const useGraphStore = create((set, get) => ({
       nodeTargets: layoutTargets,
       clusterTargets: shrinkTargets,
       nodeClusterMap: memberToCluster,
-      onComplete: () => set({ clusterView: false, clusterMode: null, expandedClusters: new Set(), clusterPositions: {}, aiDrilledCluster: null, aiPortNodes: [], aiPortEdges: [], aiDrillPositions: {} }),
+      onComplete: () => set({ clusterView: false, expandedClusters: new Set(), clusterPositions: {}, drillStack: [], portNodes: [], portEdges: [], drillPositions: {} }),
     }, set, get);
   },
 
-  // Enter a cluster mode ('package' or 'ai') with the given cluster data,
-  // or exit back to flat if already in that mode.
-  _enterClusterMode: (mode, clusterData) => {
+  // Enter package cluster mode with the given cluster data.
+  _enterClusterMode: (clusterData) => {
     const { nodes } = get();
     const snapshot = {};
     nodes.forEach((n) => {
@@ -718,7 +731,6 @@ const useGraphStore = create((set, get) => ({
       ? _seedClusterPositionsFromMembers(clusterData.clusters, nodes) : {};
     set({
       clusterView: true,
-      clusterMode: mode,
       clusters: clusterData.clusters,
       clusterTree: clusterData.tree || [],
       clusterEdges: clusterData.cluster_edges || [],
@@ -731,30 +743,27 @@ const useGraphStore = create((set, get) => ({
   },
 
   toggleClusterView: () => {
-    const { clusterView, clusterMode, _packageClusters, graphId, nodes } = get();
-
-    // If currently in AI cluster mode, exit that first
-    if (clusterView && clusterMode === 'ai') {
-      get()._exitClusterMode();
-      return;
-    }
+    const { clusterView, graphId, nodes, clusters: cachedClusters } = get();
 
     const next = !clusterView;
     if (next && !graphId) return;
 
     if (next) {
-      // Entering package cluster mode — use stashed data if available
-      if (_packageClusters) {
-        get()._enterClusterMode('package', _packageClusters);
+      if (cachedClusters.length > 0) {
+        // Re-enter with cached data
+        get()._enterClusterMode({
+          clusters: cachedClusters,
+          tree: get().clusterTree,
+          cluster_edges: get().clusterEdges,
+          node_cluster_map: get().nodeClusterMap,
+        });
       } else {
-        // No cached package data — snapshot positions and load
         const snapshot = {};
         nodes.forEach((n) => {
           snapshot[n.id] = { x: n.position.x, y: n.position.y };
         });
         set({
           clusterView: true,
-          clusterMode: 'package',
           flatPositions: snapshot,
           expandedClusters: new Set(),
           clusterPositions: {},
@@ -766,58 +775,124 @@ const useGraphStore = create((set, get) => ({
     }
   },
 
-  toggleAiClusterView: async () => {
-    const { clusterView, clusterMode, graphId, aiClusters } = get();
-
-    // If already in AI mode, exit
-    if (clusterView && clusterMode === 'ai') {
-      get()._exitClusterMode();
-      return;
-    }
-
-    if (!graphId) return;
-
-    // If in package mode, exit first (instant), then enter AI mode
-    if (clusterView && clusterMode === 'package') {
-      get()._exitClusterMode();
-      // Wait for the exit animation to complete before entering AI mode
-      await new Promise((r) => setTimeout(r, CLUSTER_ANIM_MS + 50));
-    }
-
-    // Use cached AI clusters if available
-    if (aiClusters) {
-      get()._enterClusterMode('ai', aiClusters);
-      return;
-    }
-
-    // Fetch from backend
-    set({ aiClusterLoading: true });
-    try {
-      const res = await fetch(`${API_BASE}/graph/${graphId}/ai-clusters`);
-      if (!res.ok) throw new Error(`AI clustering failed: ${res.status}`);
-      const data = await res.json();
-      set({ aiClusters: data, aiClusterLoading: false });
-      get()._enterClusterMode('ai', data);
-    } catch (e) {
-      set({ aiClusterLoading: false });
-      console.warn('AI clustering error:', e);
-    }
+  toggleCluster: (clusterId) => {
+    const { expandedClusters } = get();
+    const next = new Set(expandedClusters);
+    if (next.has(clusterId)) next.delete(clusterId);
+    else next.add(clusterId);
+    set({ expandedClusters: next });
+    get().layoutClusters({ animate: true });
   },
 
-  // ── AI drill-down ──────────────────────────────────────────────────
+  // ── Drill-down (supports mega → container → nodes) ─────────────────
 
-  drillIntoAiCluster: (clusterId) => {
-    const { clusters, clusterPositions, edges, nodes, nodeClusterMap } = get();
-    const cluster = clusters.find((c) => c.id === clusterId);
+  drillIntoCluster: (clusterId) => {
+    const state = get();
+    const { drillStack, clusters, clusterPositions, edges, nodes, nodeClusterMap,
+            hasMegaGroups, containerClusters, containerEdges, containerMegaMap } = state;
+    const currentLevel = drillStack.length === 0
+      ? (hasMegaGroups ? 'top-mega' : 'top-container')
+      : drillStack[drillStack.length - 1].level;
+
+    // Drilling into a mega-group → show its child containers with ports
+    if (currentLevel === 'top-mega') {
+      const mega = clusters.find((c) => c.id === clusterId);
+      if (!mega || !mega.child_cluster_ids) return;
+      const childIds = new Set(mega.child_cluster_ids);
+      const childClusters = containerClusters.filter((c) => childIds.has(c.id));
+      const childEdges = containerEdges.filter(
+        (e) => childIds.has(e.source) && childIds.has(e.target)
+      );
+
+      // Build port nodes for external container connections
+      const pNodes = [];
+      const pEdges = [];
+      const inMap = new Map();
+      const outMap = new Map();
+      containerEdges.forEach((ce) => {
+        const srcIn = childIds.has(ce.source);
+        const tgtIn = childIds.has(ce.target);
+        if (srcIn && !tgtIn) {
+          const extMega = containerMegaMap[ce.target];
+          if (!extMega) return;
+          if (!outMap.has(extMega)) outMap.set(extMega, { containerIds: new Set(), count: 0 });
+          outMap.get(extMega).containerIds.add(ce.source);
+          outMap.get(extMega).count += ce.weight || 1;
+        } else if (!srcIn && tgtIn) {
+          const extMega = containerMegaMap[ce.source];
+          if (!extMega) return;
+          if (!inMap.has(extMega)) inMap.set(extMega, { containerIds: new Set(), count: 0 });
+          inMap.get(extMega).containerIds.add(ce.target);
+          inMap.get(extMega).count += ce.weight || 1;
+        }
+      });
+
+      inMap.forEach((data, extMegaId) => {
+        const extMega = clusters.find((c) => c.id === extMegaId);
+        const portId = `port:in:${extMegaId}`;
+        pNodes.push({
+          id: portId, type: 'port', direction: 'incoming',
+          clusterId: extMegaId, clusterLabel: extMega?.label || extMegaId, edgeCount: data.count,
+        });
+        data.containerIds.forEach((cid) => {
+          pEdges.push({ id: `pe-${portId}-${cid}`, source: portId, target: cid, type: 'port' });
+        });
+      });
+      outMap.forEach((data, extMegaId) => {
+        const extMega = clusters.find((c) => c.id === extMegaId);
+        const portId = `port:out:${extMegaId}`;
+        pNodes.push({
+          id: portId, type: 'port', direction: 'outgoing',
+          clusterId: extMegaId, clusterLabel: extMega?.label || extMegaId, edgeCount: data.count,
+        });
+        data.containerIds.forEach((cid) => {
+          pEdges.push({ id: `pe-${cid}-${portId}`, source: cid, target: portId, type: 'port' });
+        });
+      });
+
+      // Layout child clusters + ports with dagre
+      const g = new dagre.graphlib.Graph();
+      g.setGraph({ rankdir: 'LR', nodesep: 60, ranksep: 140, marginx: 60, marginy: 60, acyclicer: 'greedy', ranker: 'tight-tree' });
+      g.setDefaultEdgeLabel(() => ({}));
+      childClusters.forEach((c) => g.setNode(c.id, { width: CLUSTER_NODE_WIDTH, height: CLUSTER_NODE_HEIGHT }));
+      pNodes.forEach((p) => g.setNode(p.id, { width: PORT_NODE_SIZE, height: PORT_NODE_SIZE }));
+      childEdges.forEach((e) => g.setEdge(e.source, e.target));
+      pEdges.forEach((pe) => g.setEdge(pe.source, pe.target));
+      dagre.layout(g);
+
+      const positions = {};
+      childClusters.forEach((c) => {
+        const p = g.node(c.id);
+        if (p) positions[c.id] = { x: Math.round(p.x - CLUSTER_NODE_WIDTH / 2), y: Math.round(p.y - CLUSTER_NODE_HEIGHT / 2), width: CLUSTER_NODE_WIDTH, height: CLUSTER_NODE_HEIGHT };
+      });
+      pNodes.forEach((pn) => {
+        const p = g.node(pn.id);
+        if (p) positions[pn.id] = { x: Math.round(p.x - PORT_NODE_SIZE / 2), y: Math.round(p.y - PORT_NODE_SIZE / 2) };
+      });
+
+      set({
+        drillStack: [...drillStack, { clusterId, level: 'mega' }],
+        portNodes: pNodes,
+        portEdges: pEdges,
+        drillPositions: positions,
+        // Swap displayed clusters to the children
+        clusters: childClusters,
+        clusterEdges: childEdges,
+        clusterPositions: positions,
+      });
+      return;
+    }
+
+    // Drilling into a container → show its nodes with ports (same as before)
+    const allContainers = containerClusters.length > 0 ? containerClusters : clusters;
+    const cluster = allContainers.find((c) => c.id === clusterId);
     if (!cluster) return;
 
     const clusterNodeIds = new Set(cluster.node_ids);
     const internalNodes = nodes.filter((n) => clusterNodeIds.has(n.id));
 
-    // ── Build port nodes for external connections ──
-    const incomingMap = new Map(); // extClusterId -> { nodeIds: Set, count }
+    const incomingMap = new Map();
     const outgoingMap = new Map();
-
     edges.forEach((e) => {
       if (e.source === e.target) return;
       const srcIn = clusterNodeIds.has(e.source);
@@ -837,54 +912,37 @@ const useGraphStore = create((set, get) => ({
       }
     });
 
-    const portNodes = [];
-    const portEdges = [];
-
+    const pNodes = [];
+    const pEdges = [];
     incomingMap.forEach((data, extId) => {
-      const extCluster = clusters.find((c) => c.id === extId);
+      const extCluster = allContainers.find((c) => c.id === extId);
       const portId = `port:in:${extId}`;
-      portNodes.push({
-        id: portId, type: 'port', direction: 'incoming',
-        clusterId: extId,
-        clusterLabel: extCluster?.ai_label || extCluster?.label || extId,
-        edgeCount: data.count,
-      });
+      pNodes.push({ id: portId, type: 'port', direction: 'incoming', clusterId: extId, clusterLabel: extCluster?.label || extId, edgeCount: data.count });
       data.nodeIds.forEach((nid) => {
-        portEdges.push({ id: `pe-${portId}-${nid}`, source: portId, target: nid, type: 'port' });
+        pEdges.push({ id: `pe-${portId}-${nid}`, source: portId, target: nid, type: 'port' });
       });
     });
-
     outgoingMap.forEach((data, extId) => {
-      const extCluster = clusters.find((c) => c.id === extId);
+      const extCluster = allContainers.find((c) => c.id === extId);
       const portId = `port:out:${extId}`;
-      portNodes.push({
-        id: portId, type: 'port', direction: 'outgoing',
-        clusterId: extId,
-        clusterLabel: extCluster?.ai_label || extCluster?.label || extId,
-        edgeCount: data.count,
-      });
+      pNodes.push({ id: portId, type: 'port', direction: 'outgoing', clusterId: extId, clusterLabel: extCluster?.label || extId, edgeCount: data.count });
       data.nodeIds.forEach((nid) => {
-        portEdges.push({ id: `pe-${nid}-${portId}`, source: nid, target: portId, type: 'port' });
+        pEdges.push({ id: `pe-${nid}-${portId}`, source: nid, target: portId, type: 'port' });
       });
     });
 
-    // ── Dagre layout: internal nodes + port nodes ──
+    // Layout internal nodes + ports
     const g = new dagre.graphlib.Graph();
     g.setGraph({ rankdir: 'LR', nodesep: 50, ranksep: 120, marginx: 60, marginy: 60, acyclicer: 'greedy', ranker: 'tight-tree' });
     g.setDefaultEdgeLabel(() => ({}));
-
     internalNodes.forEach((n) => g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT }));
-    portNodes.forEach((p) => g.setNode(p.id, { width: PORT_NODE_SIZE, height: PORT_NODE_SIZE }));
-
-    // Internal edges
+    pNodes.forEach((p) => g.setNode(p.id, { width: PORT_NODE_SIZE, height: PORT_NODE_SIZE }));
     edges.forEach((e) => {
       if (e.source !== e.target && clusterNodeIds.has(e.source) && clusterNodeIds.has(e.target)) {
         g.setEdge(e.source, e.target);
       }
     });
-    // Port edges
-    portEdges.forEach((pe) => g.setEdge(pe.source, pe.target));
-
+    pEdges.forEach((pe) => g.setEdge(pe.source, pe.target));
     dagre.layout(g);
 
     const positions = {};
@@ -892,39 +950,33 @@ const useGraphStore = create((set, get) => ({
       const p = g.node(n.id);
       if (p) positions[n.id] = { x: Math.round(p.x - NODE_WIDTH / 2), y: Math.round(p.y - NODE_HEIGHT / 2) };
     });
-    portNodes.forEach((pn) => {
+    pNodes.forEach((pn) => {
       const p = g.node(pn.id);
       if (p) positions[pn.id] = { x: Math.round(p.x - PORT_NODE_SIZE / 2), y: Math.round(p.y - PORT_NODE_SIZE / 2) };
     });
 
-    // Balance the layout
     const balanced = _balanceLayoutAspect(positions, { nodeW: NODE_WIDTH, nodeH: NODE_HEIGHT });
 
-    // ── Animate: nodes start at clicked cluster center, spread to dagre positions ──
+    // Animate from cluster center
     const cp = clusterPositions[clusterId];
     const cx = cp ? cp.x + (cp.width || 0) / 2 : 400;
     const cy = cp ? cp.y + (cp.height || 0) / 2 : 300;
 
-    // Place all nodes at cluster center first
-    set((state) => ({
-      aiDrilledCluster: clusterId,
-      aiPortNodes: portNodes,
-      aiPortEdges: portEdges,
-      aiDrillPositions: balanced,
-      nodes: state.nodes.map((n) => {
+    set((s) => ({
+      drillStack: [...drillStack, { clusterId, level: 'container' }],
+      portNodes: pNodes,
+      portEdges: pEdges,
+      drillPositions: balanced,
+      nodes: s.nodes.map((n) => {
         if (!clusterNodeIds.has(n.id)) return n;
         return { ...n, position: { x: cx - NODE_WIDTH / 2, y: cy - NODE_HEIGHT / 2 } };
       }),
     }));
 
-    // Tween from center to dagre positions
+    // Tween
     const starts = {};
-    internalNodes.forEach((n) => {
-      starts[n.id] = { x: cx - NODE_WIDTH / 2, y: cy - NODE_HEIGHT / 2 };
-    });
-    portNodes.forEach((pn) => {
-      starts[pn.id] = { x: cx - PORT_NODE_SIZE / 2, y: cy - PORT_NODE_SIZE / 2 };
-    });
+    internalNodes.forEach((n) => { starts[n.id] = { x: cx - NODE_WIDTH / 2, y: cy - NODE_HEIGHT / 2 }; });
+    pNodes.forEach((pn) => { starts[pn.id] = { x: cx - PORT_NODE_SIZE / 2, y: cy - PORT_NODE_SIZE / 2 }; });
 
     if (layoutRaf) cancelAnimationFrame(layoutRaf);
     const t0 = performance.now();
@@ -933,91 +985,51 @@ const useGraphStore = create((set, get) => ({
       const k = ease(t);
       const drillPos = {};
       Object.keys(balanced).forEach((id) => {
-        const s = starts[id];
-        const e = balanced[id];
+        const s = starts[id]; const e = balanced[id];
         if (!s || !e) return;
-        drillPos[id] = {
-          x: Math.round(s.x + (e.x - s.x) * k),
-          y: Math.round(s.y + (e.y - s.y) * k),
-        };
+        drillPos[id] = { x: Math.round(s.x + (e.x - s.x) * k), y: Math.round(s.y + (e.y - s.y) * k) };
       });
-      set((state) => ({
-        aiDrillPositions: drillPos,
-        nodes: state.nodes.map((n) => {
-          if (!drillPos[n.id]) return n;
-          return { ...n, position: drillPos[n.id] };
-        }),
+      set((s) => ({
+        drillPositions: drillPos,
+        nodes: s.nodes.map((n) => drillPos[n.id] ? { ...n, position: drillPos[n.id] } : n),
       }));
-      if (t < 1) {
-        layoutRaf = requestAnimationFrame(tick);
-      } else {
-        layoutRaf = null;
-      }
+      if (t < 1) layoutRaf = requestAnimationFrame(tick);
+      else layoutRaf = null;
     };
     layoutRaf = requestAnimationFrame(tick);
   },
 
-  exitAiDrill: () => {
-    const { aiDrilledCluster, clusters, nodes, clusterPositions } = get();
-    if (!aiDrilledCluster) return;
+  exitDrill: () => {
+    const { drillStack, topLevelClusters, topLevelEdges, nodes } = get();
+    if (drillStack.length === 0) return;
 
-    const cluster = clusters.find((c) => c.id === aiDrilledCluster);
-    const clusterNodeIds = new Set(cluster ? cluster.node_ids : []);
+    const popped = drillStack[drillStack.length - 1];
+    const newStack = drillStack.slice(0, -1);
 
-    // Animate nodes back to cluster center, then clear drill state
-    const cp = clusterPositions[aiDrilledCluster];
-    const cx = cp ? cp.x + (cp.width || 0) / 2 : 400;
-    const cy = cp ? cp.y + (cp.height || 0) / 2 : 300;
-    const targetPos = { x: cx - NODE_WIDTH / 2, y: cy - NODE_HEIGHT / 2 };
+    if (popped.level === 'container') {
+      // Going back from node view to container/mega view
+      set({ drillStack: newStack, portNodes: [], portEdges: [], drillPositions: {} });
+      return;
+    }
 
-    const starts = {};
-    nodes.forEach((n) => {
-      if (clusterNodeIds.has(n.id)) starts[n.id] = { ...n.position };
-    });
-    // Also collapse port positions
-    const { aiPortNodes, aiDrillPositions } = get();
-    aiPortNodes.forEach((pn) => {
-      if (aiDrillPositions[pn.id]) starts[pn.id] = { ...aiDrillPositions[pn.id] };
-    });
-
-    if (layoutRaf) cancelAnimationFrame(layoutRaf);
-    const t0 = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - t0) / DRILL_ANIM_MS);
-      const k = ease(t);
-      const drillPos = {};
-      Object.keys(starts).forEach((id) => {
-        const s = starts[id];
-        drillPos[id] = {
-          x: Math.round(s.x + (targetPos.x - s.x) * k),
-          y: Math.round(s.y + (targetPos.y - s.y) * k),
-        };
+    if (popped.level === 'mega') {
+      // Going back from container view to mega-group overview
+      // Restore top-level mega-group clusters
+      const seed = _seedClusterPositionsFromMembers(topLevelClusters, nodes);
+      set({
+        drillStack: [],
+        portNodes: [],
+        portEdges: [],
+        drillPositions: {},
+        clusters: topLevelClusters,
+        clusterEdges: topLevelEdges,
+        clusterPositions: seed,
       });
-      set((state) => ({
-        aiDrillPositions: drillPos,
-        nodes: state.nodes.map((n) => {
-          if (!drillPos[n.id]) return n;
-          return { ...n, position: drillPos[n.id] };
-        }),
-      }));
-      if (t < 1) {
-        layoutRaf = requestAnimationFrame(tick);
-      } else {
-        layoutRaf = null;
-        set({ aiDrilledCluster: null, aiPortNodes: [], aiPortEdges: [], aiDrillPositions: {} });
-      }
-    };
-    layoutRaf = requestAnimationFrame(tick);
-  },
+      get().layoutClusters({ animate: true });
+      return;
+    }
 
-  toggleCluster: (clusterId) => {
-    const { expandedClusters } = get();
-    const next = new Set(expandedClusters);
-    if (next.has(clusterId)) next.delete(clusterId);
-    else next.add(clusterId);
-    set({ expandedClusters: next });
-    // Re-layout (animated) to account for the size change.
-    get().layoutClusters({ animate: true });
+    set({ drillStack: newStack, portNodes: [], portEdges: [], drillPositions: {} });
   },
 
   layoutClusters: ({ animate = true } = {}) => {

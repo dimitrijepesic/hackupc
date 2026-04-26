@@ -8,6 +8,8 @@ import { FilterPanel } from '../components/FilterPanel';
 
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 120;
+const CLUSTER_NODE_WIDTH = 240;
+const CLUSTER_NODE_HEIGHT = 180;
 
 // --- Reachability classification ---
 // "Unused" = isolated nodes with zero callers AND zero callees (no edges at all).
@@ -150,9 +152,18 @@ function computeSelfLoopArrow(node) {
 // --- Main Call Graph page ---
 
 export default function Workspace() {
-  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, filters, filteredCounts, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, toggleAiClusterView, clusterMode, aiClusterLoading, aiDrilledCluster, aiPortNodes, aiPortEdges, aiDrillPositions, drillIntoAiCluster, exitAiDrill, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, filters, filteredCounts, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, drillIntoCluster, exitDrill, drillStack, portNodes, portEdges, drillPositions, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
   const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab, setProject } = useProjectStore();
   const [searchParams] = useSearchParams();
+
+  // Derive drill state from the stack
+  const currentDrill = drillStack.length > 0 ? drillStack[drillStack.length - 1] : null;
+  const drilledCluster = currentDrill?.clusterId || null;
+  const drillLevel = currentDrill?.level || null;
+  // Are we inside a container showing nodes? (level === 'container')
+  const isDrilledIntoNodes = drillLevel === 'container';
+  // Are we inside a mega-group showing containers? (level === 'mega')
+  const isDrilledIntoContainers = drillLevel === 'mega';
 
   // Load graph from API if graph_id is in the URL
   useEffect(() => {
@@ -169,17 +180,27 @@ export default function Workspace() {
     enterView('call-graph');
   }, [enterView, graphId]);
 
-  // Auto-load abstract (AI cluster) view on first graph load — trigger
-  // immediately so the user never sees the raw flat node canvas.
-  const abstractTriggered = useRef(false);
+  // Auto-load packaged (cluster) view on first graph load — trigger
+  // immediately so the user sees packages, not the raw flat canvas.
+  const packageTriggered = useRef(false);
   useEffect(() => {
-    if (graphId && nodes.length > 0 && !graphLoading && !abstractTriggered.current) {
-      abstractTriggered.current = true;
-      toggleAiClusterView();
+    if (graphId && nodes.length > 0 && !graphLoading && !clusterView && !packageTriggered.current) {
+      packageTriggered.current = true;
+      // Enter cluster mode directly: snapshot positions, set clusterView, load clusters
+      const store = useGraphStore.getState();
+      const snapshot = {};
+      store.nodes.forEach((n) => { snapshot[n.id] = { x: n.position.x, y: n.position.y }; });
+      useGraphStore.setState({
+        clusterView: true,
+        flatPositions: snapshot,
+        expandedClusters: new Set(),
+        clusterPositions: {},
+      });
+      store.loadClusters();
     }
-  }, [graphId, nodes.length, graphLoading]);
+  }, [graphId, nodes.length, graphLoading, clusterView]);
   useEffect(() => {
-    abstractTriggered.current = false;
+    packageTriggered.current = false;
   }, [graphId]);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
@@ -309,9 +330,8 @@ export default function Workspace() {
 
   // --- Zoom / Pan state (persisted per view in graphStore.viewCameras) ---
   const canvasRef = useRef(null);
-  const initialCam = viewCameras['call-graph'];
-  const [zoom, setZoom] = useState(initialCam?.zoom ?? 1);
-  const [pan, setPan] = useState(initialCam?.pan ?? { x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const zoomRef = useRef(zoom);
   const panRef = useRef(pan);
   zoomRef.current = zoom;
@@ -459,6 +479,11 @@ export default function Workspace() {
   // Fit all visible content into the viewport with some padding
   const fitToView = useCallback((positions, nodeW = NODE_WIDTH, nodeH = NODE_HEIGHT) => {
     if (!positions || Object.keys(positions).length === 0) return;
+    const el = canvasRef.current;
+    if (!el) return;
+    const elW = el.clientWidth;
+    const elH = el.clientHeight;
+    if (elW === 0 || elH === 0) return;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     Object.values(positions).forEach((p) => {
       const w = p.width || nodeW;
@@ -472,44 +497,48 @@ export default function Workspace() {
     const contentH = maxY - minY;
     if (contentW <= 0 || contentH <= 0) return;
     const PAD = 80;
-    const cw = canvasSize.w - PAD * 2;
-    const ch = canvasSize.h - PAD * 2;
+    const cw = elW - PAD * 2;
+    const ch = elH - PAD * 2;
     const z = Math.max(0.15, Math.min(1.5, Math.min(cw / contentW, ch / contentH)));
     const cx = minX + contentW / 2;
     const cy = minY + contentH / 2;
     setZoom(z);
-    setPan({ x: canvasSize.w / 2 - cx * z, y: canvasSize.h / 2 - cy * z });
-  }, [canvasSize.w, canvasSize.h]);
+    setPan({ x: elW / 2 - cx * z, y: elH / 2 - cy * z });
+  }, []);
 
-  // Auto-fit viewport whenever the view mode changes or layout settles.
-  // Read positions from the store at fire time (not from the closure) so we
-  // get the final post-animation values instead of intermediate seed positions.
-  const prevViewState = useRef(null);
-  useEffect(() => {
-    const key = aiDrilledCluster
-      ? `drill:${aiDrilledCluster}`
-      : clusterView
-        ? `cluster:${clusterMode}`
-        : 'flat';
-    if (key === prevViewState.current) return;
-
-    const delay = prevViewState.current === null ? 100 : 500;
-    prevViewState.current = key;
-    const timer = setTimeout(() => {
-      // Read fresh state from the store so we see post-animation positions
-      const st = useGraphStore.getState();
-      if (st.aiDrilledCluster) {
-        fitToView(st.aiDrillPositions);
-      } else if (st.clusterView && Object.keys(st.clusterPositions).length > 0) {
-        fitToView(st.clusterPositions);
-      } else if (!st.clusterView && st.nodes.length > 0) {
-        const nodePos = {};
-        st.nodes.forEach((n) => { nodePos[n.id] = { ...n.position, width: NODE_WIDTH, height: NODE_HEIGHT }; });
-        fitToView(nodePos);
+  // ── Fit-to-view: center content EVERY time state changes ──────────
+  // Runs a delayed fit after layout animations settle. No guards — every
+  // dependency change triggers a fresh fit so the user always sees centered content.
+  const _doFit = useCallback(() => {
+    const s = useGraphStore.getState();
+    if (s.drillStack.length > 0) {
+      const lastLevel = s.drillStack[s.drillStack.length - 1].level;
+      if (lastLevel === 'container') {
+        fitToView(s.drillPositions);
+      } else {
+        fitToView(s.clusterPositions);
       }
-    }, delay);
+    } else if (s.clusterView && Object.keys(s.clusterPositions).length > 0) {
+      fitToView(s.clusterPositions);
+    } else if (!s.clusterView && s.nodes.length > 0) {
+      const nodePos = {};
+      s.nodes.forEach((n) => { nodePos[n.id] = { ...n.position, width: NODE_WIDTH, height: NODE_HEIGHT }; });
+      fitToView(nodePos);
+    }
+  }, [fitToView]);
+
+  // Fit whenever view mode, clusters, drill, or node count changes
+  useEffect(() => {
+    const timer = setTimeout(_doFit, 500);
     return () => clearTimeout(timer);
-  }, [clusterView, clusterMode, aiDrilledCluster, fitToView]);
+  }, [clusterView, drillStack, clusters.length, nodes.length, _doFit]);
+
+  // Also fit on initial mount (component just appeared on screen)
+  useEffect(() => {
+    const timer = setTimeout(_doFit, 600);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFunctionSelect = useCallback((nodeId) => {
     selectNode(nodeId);
@@ -650,102 +679,69 @@ export default function Workspace() {
             <button
               onClick={toggleClusterView}
               className={`rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-colors border ${
-                clusterView && clusterMode === 'package'
+                clusterView
                   ? 'bg-deep-olive text-white border-deep-olive hover:bg-deep-olive/90 shadow-sm'
                   : 'glass-panel text-gray-500 hover:text-gray-900 border-transparent'
               }`}
-              title={clusterView && clusterMode === 'package' ? 'Switch to flat view' : 'Switch to package view'}
+              title={clusterView ? 'Switch to flat view' : 'Switch to package view'}
             >
               <span
                 className="material-symbols-outlined text-[16px]"
-                style={clusterView && clusterMode === 'package' ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                style={clusterView ? { fontVariationSettings: "'FILL' 1" } : undefined}
               >
-                {clusterView && clusterMode === 'package' ? 'check' : 'package_2'}
+                {clusterView ? 'check' : 'package_2'}
               </span>
-              <span className="font-label-sm">{clusterView && clusterMode === 'package' ? 'Packaged' : 'Packages'}</span>
-            </button>
-            <button
-              onClick={toggleAiClusterView}
-              disabled={aiClusterLoading}
-              className={`rounded-lg px-3 py-1.5 flex items-center gap-1.5 transition-colors border ${
-                clusterView && clusterMode === 'ai'
-                  ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-500 shadow-sm'
-                  : 'glass-panel text-gray-500 hover:text-gray-900 border-transparent'
-              } ${aiClusterLoading ? 'opacity-60 cursor-wait' : ''}`}
-              title={clusterView && clusterMode === 'ai' ? 'Switch to flat view' : 'Group by high-level architecture (AI)'}
-            >
-              <span
-                className="material-symbols-outlined text-[16px]"
-                style={clusterView && clusterMode === 'ai' ? { fontVariationSettings: "'FILL' 1" } : undefined}
-              >
-                {aiClusterLoading ? 'hourglass_top' : clusterView && clusterMode === 'ai' ? 'check' : 'hub'}
-              </span>
-              <span className="font-label-sm">{aiClusterLoading ? 'Analyzing...' : clusterView && clusterMode === 'ai' ? 'Abstracted' : 'Abstract'}</span>
+              <span className="font-label-sm">{clusterView ? 'Packaged' : 'Packages'}</span>
             </button>
             {filteredCounts && (
               <span className="text-[11px] text-gray-500 font-label-sm self-center">
                 {filteredCounts.filtered_nodes}/{filteredCounts.total_nodes} nodes
               </span>
             )}
-            {aiDrilledCluster && (() => {
-              const dc = clusters.find((c) => c.id === aiDrilledCluster);
+            {drillStack.length > 0 && (
+              <button
+                onClick={exitDrill}
+                className="glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors border border-gray-200"
+                title="Back"
+              >
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                <span className="font-label-sm">Back</span>
+              </button>
+            )}
+            {drillStack.map((entry, i) => {
+              const store = useGraphStore.getState();
+              const all = [...(store.topLevelClusters || []), ...(store.containerClusters || [])];
+              const dc = all.find((c) => c.id === entry.clusterId);
               return (
-                <button
-                  onClick={exitAiDrill}
-                  className="glass-panel rounded-lg px-3 py-1.5 flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors border border-gray-200"
-                  title="Back to abstract overview"
-                >
-                  <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-                  <span className="font-label-sm">Back to overview</span>
-                </button>
-              );
-            })()}
-            {aiDrilledCluster && (() => {
-              const dc = clusters.find((c) => c.id === aiDrilledCluster);
-              return dc ? (
-                <span className="text-[12px] text-indigo-600 font-semibold self-center">
-                  {dc.ai_label || dc.label}
+                <span key={i} className="text-[12px] text-deep-olive font-semibold self-center flex items-center gap-1">
+                  {i > 0 && <span className="text-gray-400">/</span>}
+                  {dc?.label || entry.clusterId}
                 </span>
-              ) : null;
-            })()}
+              );
+            })}
           </div>
 
           {/* Canvas */}
           <div
             ref={canvasRef}
             className="flex-1 node-canvas-bg relative overflow-hidden h-full"
-            style={{ cursor: aiClusterLoading && !clusterView ? 'default' : 'grab' }}
+            style={{ cursor: 'grab' }}
             onMouseDown={handleCanvasMouseDown}
           >
-            {/* Loading overlay while AI abstract is being generated */}
-            {aiClusterLoading && !clusterView && (
-              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-10 h-10 rounded-full border-3 border-indigo-200 border-t-indigo-600 animate-spin" />
-                  <div className="text-center">
-                    <div className="text-[15px] font-semibold text-gray-800">Analyzing architecture</div>
-                    <div className="text-[12px] text-gray-400 mt-1">Grouping functions into high-level components...</div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Transform wrapper — everything inside zooms/pans together */}
             <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
 
               {clusterView ? (
-                clusterMode === 'ai' && aiDrilledCluster ? (
+                isDrilledIntoNodes ? (
                   <>
-                    {/* === AI DRILL-DOWN VIEW === */}
-
-                    {/* Internal edges between nodes in drilled cluster */}
+                    {/* === NODE-LEVEL DRILL-DOWN (inside a container) === */}
                     <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
                       {edges.map((edge) => {
-                        const drillCluster = clusters.find((c) => c.id === aiDrilledCluster);
+                        const drillCluster = useGraphStore.getState().containerClusters.find((c) => c.id === drilledCluster) || clusters.find((c) => c.id === drilledCluster);
                         const drillNodeIds = drillCluster ? new Set(drillCluster.node_ids) : new Set();
                         if (!drillNodeIds.has(edge.source) || !drillNodeIds.has(edge.target)) return null;
                         if (edge.source === edge.target) return null;
-
                         const sourceNode = visibleNodeById.get(edge.source);
                         const targetNode = visibleNodeById.get(edge.target);
                         if (!sourceNode || !targetNode) return null;
@@ -759,14 +755,11 @@ export default function Workspace() {
                           </g>
                         );
                       })}
-
-                      {/* Port edges */}
-                      {aiPortEdges.map((pe) => {
+                      {portEdges.map((pe) => {
                         const PORT_R = 14;
-                        const srcPos = aiDrillPositions[pe.source] || (visibleNodeById.get(pe.source) || {}).position;
-                        const tgtPos = aiDrillPositions[pe.target] || (visibleNodeById.get(pe.target) || {}).position;
+                        const srcPos = drillPositions[pe.source] || (visibleNodeById.get(pe.source) || {}).position;
+                        const tgtPos = drillPositions[pe.target] || (visibleNodeById.get(pe.target) || {}).position;
                         if (!srcPos || !tgtPos) return null;
-
                         const srcIsPort = pe.source.startsWith('port:');
                         const tgtIsPort = pe.target.startsWith('port:');
                         const from = srcIsPort
@@ -777,43 +770,75 @@ export default function Workspace() {
                           : { x: tgtPos.x, y: tgtPos.y + NODE_HEIGHT / 2 };
                         return (
                           <g key={pe.id}>
-                            <path
-                              className="connection-line"
-                              d={computeEdgePath(from, to)}
-                              style={{ strokeWidth: 1.4, opacity: 0.5, strokeDasharray: '6 4' }}
-                            />
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: 1.4, opacity: 0.5, strokeDasharray: '6 4' }} />
                             <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.4 }} />
                           </g>
                         );
                       })}
                     </svg>
-
-                    {/* Port nodes (black dots with labels) */}
-                    {aiPortNodes.map((port) => {
-                      const pos = aiDrillPositions[port.id];
+                    {portNodes.map((port) => {
+                      const pos = drillPositions[port.id];
                       if (!pos) return null;
-                      return (
-                        <PortNode key={port.id} port={port} position={pos} />
-                      );
+                      return <PortNode key={port.id} port={port} position={pos} />;
                     })}
-
-                    {/* Internal nodes — full NodeCard */}
                     {(() => {
-                      const drillCluster = clusters.find((c) => c.id === aiDrilledCluster);
+                      const drillCluster = useGraphStore.getState().containerClusters.find((c) => c.id === drilledCluster) || clusters.find((c) => c.id === drilledCluster);
                       const drillNodeIds = drillCluster ? new Set(drillCluster.node_ids) : new Set();
                       return viewportNodes.filter((n) => drillNodeIds.has(n.id)).map((node) => (
-                        <NodeCard
-                          key={node.id}
-                          node={node}
-                          isSelected={node.id === selectedNodeId}
-                          isDimmed={false}
-                          onSelect={handleNodeSelect}
-                          onOpenCode={handleNodeOpenCode}
-                          onMove={handleNodeMove}
-                          zoom={zoom}
-                        />
+                        <NodeCard key={node.id} node={node} isSelected={node.id === selectedNodeId} isDimmed={false} onSelect={handleNodeSelect} onOpenCode={handleNodeOpenCode} onMove={handleNodeMove} zoom={zoom} />
                       ));
                     })()}
+                  </>
+                ) : isDrilledIntoContainers ? (
+                  <>
+                    {/* === CONTAINER-LEVEL DRILL-DOWN (inside a mega-group) === */}
+                    <svg className="absolute pointer-events-none" style={{ top: 0, left: 0, width: 8000, height: 8000, overflow: 'visible' }}>
+                      {clusterEdges.map((ce, i) => {
+                        const sp = clusterPositions[ce.source];
+                        const tp = clusterPositions[ce.target];
+                        if (!sp || !tp) return null;
+                        const from = { x: sp.x + (sp.width || CLUSTER_NODE_WIDTH), y: sp.y + (sp.height || CLUSTER_NODE_HEIGHT) / 2 };
+                        const to = { x: tp.x, y: tp.y + (tp.height || CLUSTER_NODE_HEIGHT) / 2 };
+                        return (
+                          <g key={`ce-${i}`}>
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }} />
+                            <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.5 }} />
+                          </g>
+                        );
+                      })}
+                      {portEdges.map((pe) => {
+                        const PORT_R = 14;
+                        const srcPos = clusterPositions[pe.source] || drillPositions[pe.source];
+                        const tgtPos = clusterPositions[pe.target] || drillPositions[pe.target];
+                        if (!srcPos || !tgtPos) return null;
+                        const srcIsPort = pe.source.startsWith('port:');
+                        const tgtIsPort = pe.target.startsWith('port:');
+                        const from = srcIsPort
+                          ? { x: srcPos.x + PORT_R, y: srcPos.y + PORT_R }
+                          : { x: srcPos.x + (srcPos.width || CLUSTER_NODE_WIDTH), y: srcPos.y + (srcPos.height || CLUSTER_NODE_HEIGHT) / 2 };
+                        const to = tgtIsPort
+                          ? { x: tgtPos.x + PORT_R, y: tgtPos.y + PORT_R }
+                          : { x: tgtPos.x, y: tgtPos.y + (tgtPos.height || CLUSTER_NODE_HEIGHT) / 2 };
+                        return (
+                          <g key={pe.id}>
+                            <path className="connection-line" d={computeEdgePath(from, to)} style={{ strokeWidth: 1.4, opacity: 0.5, strokeDasharray: '6 4' }} />
+                            <path className="connection-line" d={computeArrowHead(to)} style={{ opacity: 0.4 }} />
+                          </g>
+                        );
+                      })}
+                    </svg>
+                    {portNodes.map((port) => {
+                      const pos = drillPositions[port.id];
+                      if (!pos) return null;
+                      return <PortNode key={port.id} port={port} position={pos} />;
+                    })}
+                    {clusters.map((cluster) => {
+                      const pos = clusterPositions[cluster.id];
+                      if (!pos) return null;
+                      return (
+                        <ClusterCard key={cluster.id} cluster={cluster} position={pos} isExpanded={false} onToggle={() => drillIntoCluster(cluster.id)} />
+                      );
+                    })}
                   </>
                 ) : (
                   <>
@@ -853,71 +878,19 @@ export default function Workspace() {
                           </g>
                         );
                       })}
-
-                      {/* Edges between nodes in expanded clusters (package mode) */}
-                      {clusterMode === 'package' && viewportEdges.map((edge) => {
-                        const srcCluster = nodeClusterMap[edge.source];
-                        const tgtCluster = nodeClusterMap[edge.target];
-                        const srcExpanded = srcCluster && expandedClusters.has(srcCluster);
-                        const tgtExpanded = tgtCluster && expandedClusters.has(tgtCluster);
-                        if (!srcExpanded && !tgtExpanded) return null;
-
-                        const sourceNode = visibleNodeById.get(edge.source);
-                        const targetNode = visibleNodeById.get(edge.target);
-                        if (!sourceNode || !targetNode) return null;
-
-                        if (edge.source === edge.target) {
-                          return (
-                            <g key={edge.id}>
-                              <path className={getEdgeClasses(edge, selectedNodeId)} d={computeSelfLoopPath(sourceNode)} />
-                              <path className={getEdgeClasses(edge, selectedNodeId)} d={computeSelfLoopArrow(sourceNode)} />
-                            </g>
-                          );
-                        }
-                        const from = getHandlePosition(sourceNode, edge.sourceHandle);
-                        const to = getHandlePosition(targetNode, edge.targetHandle);
-                        const wStyle = edgeWeightStyle(edge);
-                        return (
-                          <g key={edge.id}>
-                            <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeEdgePath(from, to)} />
-                            <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeArrowHead(to)} />
-                          </g>
-                        );
-                      })}
                     </svg>
 
                     {/* Cluster cards */}
                     {clusters.map((cluster) => {
                       const pos = clusterPositions[cluster.id];
                       if (!pos) return null;
-                      const isExpanded = expandedClusters.has(cluster.id);
                       return (
                         <ClusterCard
                           key={cluster.id}
                           cluster={cluster}
                           position={pos}
-                          isExpanded={isExpanded}
-                          onToggle={() => clusterMode === 'ai' ? drillIntoAiCluster(cluster.id) : toggleCluster(cluster.id)}
-                        />
-                      );
-                    })}
-
-                    {/* Nodes inside expanded clusters — compact mode (package only) */}
-                    {clusterMode === 'package' && viewportNodes.map((node) => {
-                      const clusterId = nodeClusterMap[node.id];
-                      if (!clusterId || !expandedClusters.has(clusterId)) return null;
-                      const dimByNeighbor = neighborIds ? !neighborIds.has(node.id) : false;
-                      const dimByFilter = !matchesClassFilter(node);
-                      return (
-                        <CompactNodeCard
-                          key={node.id}
-                          node={node}
-                          isSelected={node.id === selectedNodeId}
-                          isDimmed={dimByNeighbor || dimByFilter}
-                          onSelect={handleNodeSelect}
-                          onOpenCode={handleNodeOpenCode}
-                          onMove={handleNodeMove}
-                          zoom={zoom}
+                          isExpanded={false}
+                          onToggle={() => drillIntoCluster(cluster.id)}
                         />
                       );
                     })}
@@ -1230,6 +1203,7 @@ function SideNav({
   const navLinks = [
     { to: '/workspace/call-graph', icon: 'hub', label: 'Call Graph', page: 'call-graph' },
     { to: '/workspace/control-flow', icon: 'fork_right', label: 'Control Flow', page: 'control-flow' },
+    { to: '/workspace/dependencies', icon: 'account_tree', label: 'Dependencies', page: 'dependencies' },
   ];
 
   const panelOpen = activeTab === 'explorer' || activeTab === 'functions';
@@ -1774,24 +1748,28 @@ function ClusterCard({ cluster, position, isExpanded, onToggle }) {
           onClick={isExpanded ? onToggle : undefined}
         >
           <span className={`material-symbols-outlined text-[20px] ${colors.accent}`}>
-            {isExpanded ? 'folder_open' : 'folder'}
+            {cluster.kind === 'mega' ? 'hub' : cluster.container ? 'class' : 'functions'}
           </span>
           <div className="flex-1 min-w-0">
             <div className={`font-semibold text-[14px] ${colors.accent} truncate`}>
-              {cluster.ai_label || cluster.label}
+              {cluster.label}
             </div>
-            {cluster.directory && (
+            {cluster.kind === 'mega' && cluster.child_count ? (
               <div className="text-[10px] text-gray-400 truncate">
-                {cluster.directory}
+                {cluster.child_count} containers
               </div>
-            )}
+            ) : cluster.file ? (
+              <div className="text-[10px] text-gray-400 truncate">
+                {cluster.file}
+              </div>
+            ) : null}
           </div>
-          <span className={`material-symbols-outlined text-[18px] ${colors.accent} transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-            expand_more
+          <span className={`material-symbols-outlined text-[18px] ${colors.accent}`}>
+            arrow_forward
           </span>
         </div>
 
-        {/* Collapsed body: stats */}
+        {/* Collapsed body: stats + testability heatmap */}
         {!isExpanded && (
           <div className="px-4 py-3 flex flex-col gap-2">
             <div className="flex items-center gap-3">
@@ -1808,27 +1786,7 @@ function ClusterCard({ cluster, position, isExpanded, onToggle }) {
                 </div>
               )}
             </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {sourceCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-white/70 text-[10px] text-gray-500 border border-gray-200">
-                  {sourceCount} source
-                </span>
-              )}
-              {testCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-green-50 text-[10px] text-green-600 border border-green-200">
-                  {testCount} test
-                </span>
-              )}
-              {cluster.container && (
-                <span className={`px-2 py-0.5 rounded-full bg-white/70 text-[10px] ${colors.accent} border ${colors.border}`}>
-                  {cluster.container}
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px]">touch_app</span>
-              Click to expand
-            </div>
+
           </div>
         )}
       </div>
@@ -2065,7 +2023,8 @@ const CompactNodeCard = memo(function CompactNodeCard({ node, isSelected, isDimm
   );
 });
 
-// --- Port Node (black dot for external connections in AI drill-down) ---
+
+// --- Port Node (black dot for external connections in drill-down) ---
 
 function PortNode({ port, position }) {
   const isIncoming = port.direction === 'incoming';
@@ -2077,7 +2036,6 @@ function PortNode({ port, position }) {
         left: position.x,
       }}
     >
-      {/* Label on the outside */}
       {!isIncoming && (
         <div className="w-7 h-7 rounded-full bg-gray-900 border-2 border-gray-700 shadow-md shrink-0" title={`${port.edgeCount} connection${port.edgeCount > 1 ? 's' : ''} to ${port.clusterLabel}`} />
       )}

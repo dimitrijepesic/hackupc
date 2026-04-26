@@ -7,7 +7,7 @@ export default function Header({ activePage }) {
 
   const navLinks = [
     { to: '/home', label: 'Dashboard', pages: ['home'] },
-    { to: '/workspace', label: 'Workspace', pages: ['workspace', 'call-graph', 'control-flow'] },
+    { to: '/workspace', label: 'Workspace', pages: ['workspace', 'call-graph', 'control-flow', 'dependencies'] },
   ];
 
   return (

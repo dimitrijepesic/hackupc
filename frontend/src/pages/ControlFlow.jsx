@@ -339,9 +339,8 @@ export default function ControlFlow() {
 
   // --- Zoom / Pan state (persisted per view in graphStore.viewCameras) ---
   const canvasRef = useRef(null);
-  const initialCam = viewCameras['control-flow'];
-  const [zoom, setZoom] = useState(initialCam?.zoom ?? 1);
-  const [pan, setPan] = useState(initialCam?.pan ?? { x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const zoomRef = useRef(zoom);
   const panRef = useRef(pan);
   zoomRef.current = zoom;
@@ -365,39 +364,58 @@ export default function ControlFlow() {
     return () => obs.disconnect();
   }, [graphLoading, graphError]);
 
-  // After a graph loads and enterView populates the dagre cache, fit the
-  // viewport to the graph so the user sees the whole layout instead of an
-  // off-screen mess. Gated on viewLayouts['control-flow'] so we read post-dagre
-  // positions, not the transient BFS positions from loadGraph.
-  const fittedGraphId = useRef(null);
+  // ── Fit-to-view: center visible nodes in the viewport ─────────────
+  // Uses visible node positions (not layout cache) so filtered/hidden nodes
+  // don't affect framing. Reads canvas size from the DOM.
   const controlFlowLayout = viewLayouts['control-flow'];
-  useEffect(() => {
-    if (!graphId || graphLoading || graphError) return;
-    if (fittedGraphId.current === graphId) return;
-    if (!controlFlowLayout || Object.keys(controlFlowLayout).length === 0) return;
-    if (canvasSize.w === 0 || canvasSize.h === 0) return;
+  const _fitControlFlow = useCallback(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const cw = el.clientWidth;
+    const ch = el.clientHeight;
+    if (cw === 0 || ch === 0) return;
+
+    // Use current visible nodes' actual positions
+    const st = useGraphStore.getState();
+    const nodeList = st.nodes;
+    if (nodeList.length === 0) return;
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    const visibleIds = new Set(visibleNodes.map((n) => n.id));
-    for (const [id, p] of Object.entries(controlFlowLayout)) {
-      if (!visibleIds.has(id)) continue;
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x + NODE_WIDTH > maxX) maxX = p.x + NODE_WIDTH;
-      if (p.y + NODE_HEIGHT > maxY) maxY = p.y + NODE_HEIGHT;
+    for (const n of nodeList) {
+      const x = n.position.x;
+      const y = n.position.y;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + NODE_WIDTH > maxX) maxX = x + NODE_WIDTH;
+      if (y + NODE_HEIGHT > maxY) maxY = y + NODE_HEIGHT;
     }
     if (minX === Infinity) return;
-
-    const PADDING = 60;
-    const graphW = maxX - minX + 2 * PADDING;
-    const graphH = maxY - minY + 2 * PADDING;
-    const z = Math.max(0.15, Math.min(1, canvasSize.w / graphW, canvasSize.h / graphH));
+    const PAD = 80;
+    const gw = maxX - minX + PAD * 2;
+    const gh = maxY - minY + PAD * 2;
+    const z = Math.max(0.15, Math.min(1, cw / gw, ch / gh));
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
     setZoom(z);
-    setPan({ x: canvasSize.w / 2 - cx * z, y: canvasSize.h / 2 - cy * z });
-    fittedGraphId.current = graphId;
-  }, [graphId, graphLoading, graphError, controlFlowLayout, visibleNodes, canvasSize.w, canvasSize.h]);
+    setPan({ x: cw / 2 - cx * z, y: ch / 2 - cy * z });
+  }, []);
+
+  // Fit when layout arrives, nodes change, or canvas resizes
+  useEffect(() => {
+    if (!controlFlowLayout || Object.keys(controlFlowLayout).length === 0) return;
+    const timer = setTimeout(_fitControlFlow, 500);
+    return () => clearTimeout(timer);
+  }, [controlFlowLayout, visibleNodes.length, canvasSize.w, canvasSize.h, _fitControlFlow]);
+
+  // Fit on every mount
+  useEffect(() => {
+    // Try multiple times to catch late layout
+    const t1 = setTimeout(_fitControlFlow, 200);
+    const t2 = setTimeout(_fitControlFlow, 600);
+    const t3 = setTimeout(_fitControlFlow, 1200);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Wheel: pinch-to-zoom (ctrlKey) or two-finger-scroll to pan
   useEffect(() => {
@@ -408,20 +426,27 @@ export default function ControlFlow() {
       e.preventDefault();
       const z = zoomRef.current;
       const p = panRef.current;
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
 
       if (e.ctrlKey || e.metaKey) {
         // Pinch-to-zoom on trackpad (or ctrl+scroll with mouse)
-        const rect = el.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        const step = -e.deltaY * 0.01;
+        const step = -e.deltaY * 0.008;
         const next = Math.max(0.15, Math.min(2.5, z + step));
         const ratio = next / z;
         setZoom(next);
         setPan({ x: mx - (mx - p.x) * ratio, y: my - (my - p.y) * ratio });
-      } else {
-        // Two-finger scroll → pan
+      } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5) {
+        // Horizontal scroll → pan
         setPan({ x: p.x - e.deltaX, y: p.y - e.deltaY });
+      } else {
+        // Vertical scroll → zoom toward cursor (smooth)
+        const step = -e.deltaY * 0.003;
+        const next = Math.max(0.15, Math.min(2.5, z + step));
+        const ratio = next / z;
+        setZoom(next);
+        setPan({ x: mx - (mx - p.x) * ratio, y: my - (my - p.y) * ratio });
       }
     };
     el.addEventListener('wheel', handler, { passive: false });
@@ -644,7 +669,7 @@ export default function ControlFlow() {
             onMouseDown={handleCanvasMouseDown}
           >
             {/* Transform wrapper — everything inside zooms/pans together */}
-            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0' }}>
+            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0', willChange: 'transform' }}>
 
               {clusterView ? (
                 <>
@@ -1055,6 +1080,7 @@ function SideNav({
   const navLinks = [
     { to: '/workspace/call-graph', icon: 'hub', label: 'Call Graph', page: 'call-graph' },
     { to: '/workspace/control-flow', icon: 'fork_right', label: 'Control Flow', page: 'control-flow' },
+    { to: '/workspace/dependencies', icon: 'account_tree', label: 'Dependencies', page: 'dependencies' },
   ];
 
   const panelOpen = activeTab === 'explorer' || activeTab === 'functions';

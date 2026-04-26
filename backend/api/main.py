@@ -47,9 +47,6 @@ GRAPH: dict = {}
 # Cached cluster results keyed by graph_id
 CLUSTERS: dict[str, dict] = {}
 
-# Cached AI high-level cluster results keyed by graph_id
-AI_CLUSTERS: dict[str, dict] = {}
-
 # Live job state for /analyze, keyed by graph_id. Polled by the frontend
 # while a long-running clone+parse is in flight.
 JOBS: dict[str, dict] = {}
@@ -708,19 +705,120 @@ def get_clusters(graph_id: str, ai_labels: bool = False):
     return result
 
 
-@app.get("/graph/{graph_id}/ai-clusters")
-def get_ai_clusters(graph_id: str):
+# --- dependency diagram endpoint ---
+@app.get("/graph/{graph_id}/dependencies")
+def get_dependencies(graph_id: str):
+    """Module-level dependency diagram derived from the call graph.
+
+    Returns container-level nodes with fan-in/fan-out metrics and
+    directed dependency edges (A depends on B if A calls B).
+    Also includes testability coverage per module and dependency layers.
+    """
     g = GRAPHS.get(graph_id)
     if g is None:
         raise HTTPException(404, f"Unknown graph: {graph_id}. Available: {list(GRAPHS.keys())}")
 
-    if graph_id in AI_CLUSTERS:
-        return AI_CLUSTERS[graph_id]
+    from ir_compiler.clustering import compute_clusters, _get_container
+    from collections import defaultdict
 
-    from ir_compiler.clustering import compute_ai_clusters
-    result = compute_ai_clusters(g)
-    AI_CLUSTERS[graph_id] = result
-    return result
+    nodes = g.get("nodes", [])
+    edges = g.get("edges", [])
+
+    # Group by container
+    by_container: dict[str, list[dict]] = defaultdict(list)
+    for node in nodes:
+        container = _get_container(node) or "_free"
+        by_container[container].append(node)
+
+    # Build container → container directed edges
+    node_to_container = {}
+    for cname, cnodes in by_container.items():
+        for n in cnodes:
+            node_to_container[n["id"]] = cname
+
+    dep_weights: dict[tuple[str, str], int] = defaultdict(int)
+    for e in edges:
+        src_c = node_to_container.get(e["source"])
+        dst_c = node_to_container.get(e["target"])
+        if src_c and dst_c and src_c != dst_c:
+            dep_weights[(src_c, dst_c)] += e.get("weight", 1)
+
+    # Fan-in / fan-out per container
+    fan_in: dict[str, int] = defaultdict(int)
+    fan_out: dict[str, int] = defaultdict(int)
+    dep_in_containers: dict[str, set] = defaultdict(set)
+    dep_out_containers: dict[str, set] = defaultdict(set)
+    for (src, dst), w in dep_weights.items():
+        fan_out[src] += w
+        fan_in[dst] += w
+        dep_out_containers[src].add(dst)
+        dep_in_containers[dst].add(src)
+
+    # Testability per container
+    dep_nodes = []
+    for cname, cnodes in by_container.items():
+        test_count = sum(1 for n in cnodes if n.get("category") == "test")
+        source_count = sum(1 for n in cnodes if n.get("category") != "test")
+        total = test_count + source_count
+        coverage = round(test_count / total, 2) if total > 0 else 0
+
+        # Primary file
+        files: dict[str, int] = defaultdict(int)
+        for n in cnodes:
+            f = n.get("file", "")
+            if f:
+                files[f] += 1
+        primary_file = max(files, key=files.get) if files else ""
+
+        label = cname if cname != "_free" else "Free Functions"
+
+        dep_nodes.append({
+            "id": cname,
+            "label": label,
+            "file": primary_file,
+            "function_count": len(cnodes),
+            "test_count": test_count,
+            "source_count": source_count,
+            "test_coverage": coverage,
+            "fan_in": fan_in.get(cname, 0),
+            "fan_out": fan_out.get(cname, 0),
+            "depends_on_count": len(dep_out_containers.get(cname, set())),
+            "depended_by_count": len(dep_in_containers.get(cname, set())),
+        })
+
+    dep_edges = [
+        {"source": s, "target": t, "weight": w}
+        for (s, t), w in sorted(dep_weights.items(), key=lambda kv: kv[1], reverse=True)
+    ]
+
+    # Compute dependency layers (topological depth)
+    # BFS from roots (containers with no incoming deps)
+    roots = [n["id"] for n in dep_nodes if n["depended_by_count"] == 0 and n["depends_on_count"] > 0]
+    if not roots:
+        roots = [n["id"] for n in dep_nodes if n["fan_in"] == 0]
+    layers: dict[str, int] = {}
+    queue = [(r, 0) for r in roots]
+    visited = set()
+    while queue:
+        cid, depth = queue.pop(0)
+        if cid in visited:
+            continue
+        visited.add(cid)
+        layers[cid] = depth
+        for other in dep_out_containers.get(cid, set()):
+            if other not in visited:
+                queue.append((other, depth + 1))
+    # Assign unvisited to layer 0
+    for n in dep_nodes:
+        if n["id"] not in layers:
+            layers[n["id"]] = 0
+        n["layer"] = layers[n["id"]]
+
+    return {
+        "nodes": dep_nodes,
+        "edges": dep_edges,
+        "layer_count": max(layers.values(), default=0) + 1,
+    }
 
 
 # --- safe-to-refactor endpoint ---
