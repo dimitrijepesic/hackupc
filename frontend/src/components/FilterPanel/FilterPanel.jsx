@@ -178,6 +178,35 @@ function RangeFilter({ label, icon, minVal, maxVal, onMinChange, onMaxChange }) 
   );
 }
 
+function ImportanceSlider({ value, onChange, hiddenCount, totalCount }) {
+  const pct = Math.round(value * 100);
+  return (
+    <div className="border-b border-gray-100 last:border-b-0 px-3 py-2">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="material-symbols-outlined text-[14px] text-gray-400">trending_up</span>
+        <span className="text-[12px] text-gray-700 font-medium flex-1">Importance</span>
+        <span className="text-[10px] text-gray-500 tabular-nums">≥ {pct}%</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={pct}
+        onChange={(e) => onChange(Number(e.target.value) / 100)}
+        className="w-full accent-deep-olive cursor-pointer"
+      />
+      {totalCount > 0 && (
+        <div className="text-[10px] text-gray-500 mt-1">
+          {hiddenCount > 0
+            ? `Hiding ${hiddenCount} of ${totalCount} less-central nodes`
+            : `Showing all ${totalCount} nodes`}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ToggleFilter({ label, icon, value, onChange }) {
   const on = value === true;
   return (
@@ -207,7 +236,15 @@ export default function FilterPanel({ open, onClose }) {
   const {
     filters, filterOptions, filterLoading, filteredCounts,
     setFilter, clearFilters, applyFilters, loadFilterOptions, graphId,
+    importanceThreshold, setImportanceThreshold, nodes,
   } = useGraphStore();
+
+  // Live count of how many nodes the importance slider currently hides.
+  const totalNodes = nodes.length;
+  const hiddenByImportance = nodes.reduce(
+    (acc, n) => acc + ((n.importance || 0) < importanceThreshold ? 1 : 0),
+    0,
+  );
 
   // Load filter options when panel opens
   useEffect(() => {
@@ -274,6 +311,12 @@ export default function FilterPanel({ open, onClose }) {
             </div>
           ) : (
             <>
+              <ImportanceSlider
+                value={importanceThreshold}
+                onChange={setImportanceThreshold}
+                hiddenCount={hiddenByImportance}
+                totalCount={totalNodes}
+              />
               <CheckboxGroup
                 label="Category"
                 icon="category"

@@ -121,7 +121,15 @@ function _computeAutoLayoutTargets(nodes, edges) {
 
   if (connectedNodes.length > 0) {
     const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: 'LR', nodesep: 40, ranksep: 100, marginx: 40, marginy: 40 });
+    g.setGraph({
+      rankdir: 'LR',
+      nodesep: 60,
+      ranksep: 140,
+      marginx: 40,
+      marginy: 40,
+      acyclicer: 'greedy',
+      ranker: 'tight-tree',
+    });
     g.setDefaultEdgeLabel(() => ({}));
     connectedNodes.forEach((n) => g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT }));
     edges.forEach((e) => {
@@ -268,9 +276,10 @@ const useGraphStore = create((set, get) => ({
   error: null,
 
   // Cluster state
-  clusters: [],
-  clusterEdges: [],
-  nodeClusterMap: {},
+  clusters: [],          // flat file-level list (back-compat)
+  clusterTree: [],       // hierarchical: dir -> [files] -> [function ids]
+  clusterEdges: [],      // file-level aggregated edges
+  nodeClusterMap: {},    // node_id -> file-level cluster id
   expandedClusters: new Set(),
   clusterView: false,  // false = flat view, true = package/cluster view
   clusterPositions: {},
@@ -278,6 +287,10 @@ const useGraphStore = create((set, get) => ({
   // cluster mode. Used to tween nodes back to their flat layout when cluster
   // view is turned off.
   flatPositions: {},
+
+  // Importance threshold ∈ [0, 1]. Nodes with importance < threshold are
+  // hidden in the rendered graph. 0 = show all.
+  importanceThreshold: 0,
 
     // Filter state
   filters: {},
@@ -413,6 +426,7 @@ const useGraphStore = create((set, get) => ({
         functionKind: n.function_kind || null,
         reachableFromPublicApi: n.reachable_from_public_api,
         synthetic: !!n.synthetic,
+        importance: typeof n.importance === 'number' ? n.importance : 0,
       }));
 
       const rawEdges = graph.edges.map((e, i) => {
@@ -585,11 +599,13 @@ const useGraphStore = create((set, get) => ({
       if (!res.ok) return;
       const data = await res.json();
       const clusters = data.clusters || [];
+      const clusterTree = data.tree || [];
       // Seed cards at member centroids so they animate out from their
       // original on-canvas region rather than popping into final dagre slots.
       const seed = _seedClusterPositionsFromMembers(clusters, get().nodes);
       set({
         clusters,
+        clusterTree,
         clusterEdges: data.cluster_edges || [],
         nodeClusterMap: data.node_cluster_map || {},
         clusterPositions: seed,
@@ -598,6 +614,11 @@ const useGraphStore = create((set, get) => ({
     } catch (e) {
       console.warn('Failed to load clusters:', e);
     }
+  },
+
+  setImportanceThreshold: (value) => {
+    const v = Math.max(0, Math.min(1, Number(value) || 0));
+    set({ importanceThreshold: v });
   },
 
   toggleClusterView: () => {
@@ -659,7 +680,15 @@ const useGraphStore = create((set, get) => ({
 
     // ── Compute target cluster + node positions via dagre ──
     const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: 'LR', nodesep: 60, ranksep: 120, marginx: 60, marginy: 60 });
+    g.setGraph({
+      rankdir: 'LR',
+      nodesep: 80,
+      ranksep: 160,
+      marginx: 60,
+      marginy: 60,
+      acyclicer: 'greedy',
+      ranker: 'tight-tree',
+    });
     g.setDefaultEdgeLabel(() => ({}));
 
     clusters.forEach((c) => {

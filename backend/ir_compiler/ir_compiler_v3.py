@@ -923,6 +923,13 @@ def build_call_graph(ir: dict) -> dict:
     for n in nodes:
         n["reachable_from_public_api"] = n["id"] in reachable_from_public
 
+    # Step 7b: Importance scoring (weighted PageRank + out-degree blend).
+    # Drives the frontend's "show top N% by importance" filter.
+    from ir_compiler.importance import compute_importance
+    importance = compute_importance(nodes, edges)
+    for n in nodes:
+        n["importance"] = importance.get(n["id"], 0.0)
+
     # Step 8: Compute graph-level metadata
     metadata = _build_graph_metadata(nodes, edges, registry, ir)
 

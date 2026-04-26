@@ -1,293 +1,264 @@
 """
-Automatic node clustering for call graphs.
+Hierarchical filesystem-tree clustering for call graphs.
 
-Groups function nodes into logical clusters based on:
-  1. Directory structure (primary)
-  2. Container type — class/struct (secondary)
-  3. Graph connectivity — merge tiny groups, split huge ones
+Produces a 2-level tree:
+  Top:   each unique directory containing source files
+  Leaf:  each file is its own cluster
 
-Each cluster gets a stable ID and a human-readable label.
-Inter-cluster edges are aggregated so the frontend can render
-a "zoomed-out" architecture view.
+Functions live inside file clusters. Containers (classes/structs) are kept
+as a layout hint (`container_groups`) on each file cluster, not as a separate
+cluster level — this matches how engineers actually navigate codebases ("show
+me what's in auth/jwt.py") and avoids the singleton-bucket problem the old
+(directory, container) grouping created.
+
+Inter-cluster edges are aggregated at the file level so the frontend can
+collapse to either dir-level or file-level and recompute visible edges
+client-side from the same data.
 """
+
+from __future__ import annotations
 
 from collections import defaultdict
 import re
-
-
-# ─── Constants ───────────────────────────────────────────────────────────────
-
-MIN_CLUSTER_SIZE = 2   # clusters smaller than this get merged into parent
-MAX_CLUSTER_SIZE = 40  # clusters larger than this get sub-split by container
 
 
 # ─── Main entry point ────────────────────────────────────────────────────────
 
 def compute_clusters(graph: dict) -> dict:
     """
-    Assign every node in `graph` to a cluster.
+    Build hierarchical clusters from a call graph.
 
     Returns:
         {
-            "clusters": [
-                {
-                    "id": "cluster:sources_store",
-                    "label": "Store",
-                    "directory": "Sources",
-                    "container": "Store",       # None for mixed clusters
-                    "node_ids": [...],
-                    "node_count": 12,
-                    "internal_edge_count": 8,
-                    "category_breakdown": {"source": 10, "test": 2},
-                },
-                ...
-            ],
-            "cluster_edges": [
-                {"source": "cluster:a", "target": "cluster:b", "weight": 5},
-                ...
-            ],
-            "node_cluster_map": {"func:...": "cluster:x", ...},
+          "tree": [
+            {
+              "id": "dir:Sources/Foo",
+              "label": "Foo",
+              "kind": "dir",
+              "directory": "Sources/Foo",
+              "node_count": <transitive>,
+              "file_count": <int>,
+              "category_breakdown": {...},   # rolled up from children
+              "children": [<file cluster>, ...]
+            }, ...
+          ],
+          "clusters": [<file cluster>, ...],   # flat list, file-level only
+          "cluster_edges": [
+            {"source": "file:...", "target": "file:...", "weight": int}
+          ],
+          "node_cluster_map": {"func:...": "file:..."}
+        }
+
+    Each file cluster:
+        {
+          "id": "file:Sources/Foo/Bar.swift",
+          "label": "Bar.swift",
+          "kind": "file",
+          "directory": "Sources/Foo",
+          "file": "Sources/Foo/Bar.swift",
+          "container": "ClassName" | None,    # set only if file holds one
+          "node_ids": [...],
+          "node_count": int,
+          "internal_edge_count": int,
+          "category_breakdown": {...},
+          "container_groups": {"ClassName": [ids], "_free": [ids]}
         }
     """
     nodes = graph.get("nodes", [])
     edges = graph.get("edges", [])
 
     if not nodes:
-        return {"clusters": [], "cluster_edges": [], "node_cluster_map": {}}
+        return {
+            "tree": [],
+            "clusters": [],
+            "cluster_edges": [],
+            "node_cluster_map": {},
+        }
 
-    # Step 1: initial grouping  (directory + container)
-    raw_groups = _initial_grouping(nodes)
+    # ── Group nodes by file ─────────────────────────────────────────────
+    by_file: dict[str, list[dict]] = defaultdict(list)
+    for node in nodes:
+        f = node.get("file") or "_root"
+        by_file[f].append(node)
 
-    # Step 2: merge tiny groups into their directory parent
-    merged_groups = _merge_small_groups(raw_groups)
+    # ── Build file-level clusters ───────────────────────────────────────
+    file_clusters: list[dict] = []
+    node_cluster_map: dict[str, str] = {}
 
-    # Step 3: split oversized groups by container
-    final_groups = _split_large_groups(merged_groups)
+    for file_path, file_nodes in by_file.items():
+        cluster_id = _file_cluster_id(file_path)
+        directory = _get_directory(file_path)
+        node_ids = [n["id"] for n in file_nodes]
 
-    # Step 4: build cluster objects
-    node_cluster_map = {}
-    clusters = []
-
-    for group_key, node_ids in final_groups.items():
-        cluster_id = _make_cluster_id(group_key)
-        label = _make_label(group_key)
-
-        cluster_nodes = [n for n in nodes if n["id"] in node_ids]
-        cat_breakdown = defaultdict(int)
-        for n in cluster_nodes:
+        cat_breakdown: dict[str, int] = defaultdict(int)
+        for n in file_nodes:
             cat_breakdown[n.get("category", "source")] += 1
 
-        # Count internal edges
+        container_groups: dict[str, list[str]] = defaultdict(list)
+        for n in file_nodes:
+            container = _get_container(n) or "_free"
+            container_groups[container].append(n["id"])
+
+        # If the file holds exactly one named container, surface it for
+        # the existing UI (which renders `cluster.container` when set).
+        named = [k for k in container_groups if k != "_free"]
+        single_container = named[0] if len(named) == 1 and not container_groups.get("_free") else None
+
         id_set = set(node_ids)
-        internal_edges = sum(
+        internal = sum(
             1 for e in edges
             if e["source"] in id_set and e["target"] in id_set
         )
 
-        cluster = {
+        file_clusters.append({
             "id": cluster_id,
-            "label": label,
-            "directory": group_key[0] if isinstance(group_key, tuple) else group_key,
-            "container": group_key[1] if isinstance(group_key, tuple) and len(group_key) > 1 else None,
+            "label": _file_label(file_path),
+            "kind": "file",
+            "directory": directory,
+            "file": file_path,
+            "container": single_container,
             "node_ids": sorted(node_ids),
             "node_count": len(node_ids),
-            "internal_edge_count": internal_edges,
+            "internal_edge_count": internal,
             "category_breakdown": dict(cat_breakdown),
-        }
-        clusters.append(cluster)
+            "container_groups": {k: sorted(v) for k, v in container_groups.items()},
+        })
 
         for nid in node_ids:
             node_cluster_map[nid] = cluster_id
 
-    # Step 5: compute inter-cluster edges
+    # ── Group file clusters by directory into the tree ──────────────────
+    by_dir: dict[str, list[dict]] = defaultdict(list)
+    for fc in file_clusters:
+        by_dir[fc["directory"]].append(fc)
+
+    tree: list[dict] = []
+    for directory, files in by_dir.items():
+        files_sorted = sorted(files, key=lambda c: c["label"].lower())
+        node_count = sum(c["node_count"] for c in files_sorted)
+        cat_rollup: dict[str, int] = defaultdict(int)
+        for c in files_sorted:
+            for cat, n in c["category_breakdown"].items():
+                cat_rollup[cat] += n
+
+        tree.append({
+            "id": _dir_cluster_id(directory),
+            "label": _dir_label(directory),
+            "kind": "dir",
+            "directory": directory,
+            "node_count": node_count,
+            "file_count": len(files_sorted),
+            "category_breakdown": dict(cat_rollup),
+            "children": files_sorted,
+        })
+
+    # Biggest dirs first; "_root" pinned to the end.
+    tree.sort(key=lambda d: (d["directory"] == "_root", -d["node_count"]))
+
+    # Flat back-compat list: largest files first.
+    file_clusters.sort(key=lambda c: c["node_count"], reverse=True)
+
     cluster_edges = _compute_cluster_edges(edges, node_cluster_map)
 
-    # Sort clusters by size desc
-    clusters.sort(key=lambda c: c["node_count"], reverse=True)
-
     return {
-        "clusters": clusters,
+        "tree": tree,
+        "clusters": file_clusters,
         "cluster_edges": cluster_edges,
         "node_cluster_map": node_cluster_map,
     }
 
 
-# ─── Step 1: Initial grouping ───────────────────────────────────────────────
+# ─── Path / label helpers ────────────────────────────────────────────────────
 
 def _get_directory(file_path: str) -> str:
-    """Extract the directory portion of a file path."""
     parts = file_path.replace("\\", "/").split("/")
-    if len(parts) > 1:
-        return "/".join(parts[:-1])
-    return "_root"
+    return "/".join(parts[:-1]) if len(parts) > 1 else "_root"
 
 
 def _get_container(node: dict) -> str | None:
-    """Extract the container (class/struct) from qualified_name."""
+    container = node.get("container")
+    if container:
+        return container
     qn = node.get("qualified_name", "")
     if "." in qn:
         return qn.rsplit(".", 1)[0]
-    # Also check 'container' field if present (v3 compiler)
-    return node.get("container")
+    return None
 
 
-def _initial_grouping(nodes: list[dict]) -> dict[tuple, set[str]]:
-    """Group nodes by (directory, container). Free functions get container=None."""
-    groups: dict[tuple, set[str]] = defaultdict(set)
-    for node in nodes:
-        directory = _get_directory(node["file"])
-        container = _get_container(node)
-        key = (directory, container) if container else (directory, None)
-        groups[key].add(node["id"])
-    return dict(groups)
+def _file_label(file_path: str) -> str:
+    parts = file_path.replace("\\", "/").split("/")
+    return parts[-1] or file_path
 
 
-# ─── Step 2: Merge small groups ─────────────────────────────────────────────
-
-def _merge_small_groups(groups: dict[tuple, set[str]]) -> dict[tuple, set[str]]:
-    """
-    Merge groups with < MIN_CLUSTER_SIZE nodes into their directory-level parent.
-    """
-    # Collect which groups are too small
-    dir_buckets: dict[str, set[str]] = defaultdict(set)
-    keep = {}
-
-    for (directory, container), node_ids in groups.items():
-        if len(node_ids) < MIN_CLUSTER_SIZE:
-            dir_buckets[directory].update(node_ids)
-        else:
-            keep[(directory, container)] = node_ids
-
-    # Merge small-group nodes into directory-level clusters
-    for directory, node_ids in dir_buckets.items():
-        parent_key = (directory, None)
-        if parent_key in keep:
-            keep[parent_key].update(node_ids)
-        else:
-            keep[parent_key] = node_ids
-
-    return keep
-
-
-# ─── Step 3: Split oversized groups ─────────────────────────────────────────
-
-def _split_large_groups(groups: dict[tuple, set[str]]) -> dict[tuple, set[str]]:
-    """
-    Split groups with > MAX_CLUSTER_SIZE that have container=None
-    by re-examining qualified_name to find sub-containers.
-    (Groups that already have a specific container are left alone.)
-    """
-    result = {}
-
-    for key, node_ids in groups.items():
-        directory, container = key
-        if len(node_ids) <= MAX_CLUSTER_SIZE or container is not None:
-            result[key] = node_ids
-            continue
-
-        # This is a large mixed-container group — not splittable without node data.
-        # Just keep it as-is (the frontend can still filter by container within a cluster).
-        result[key] = node_ids
-
-    return result
-
-
-# ─── Cluster ID & Label ─────────────────────────────────────────────────────
-
-def _make_cluster_id(group_key: tuple) -> str:
-    """Produce a stable, URL-safe cluster ID."""
-    directory, container = group_key
-    parts = [_slugify(directory)]
-    if container:
-        parts.append(_slugify(container))
-    return "cluster:" + "_".join(parts)
+def _dir_label(directory: str) -> str:
+    if directory == "_root":
+        return "Root"
+    parts = directory.replace("\\", "/").split("/")
+    return parts[-1] or directory
 
 
 def _slugify(text: str) -> str:
-    """Convert a path or name to a URL-safe slug."""
     text = text.replace("/", "_").replace("\\", "_").replace(".", "_")
     text = re.sub(r"[^a-zA-Z0-9_]", "", text)
     text = re.sub(r"_+", "_", text).strip("_").lower()
     return text or "misc"
 
 
-def _make_label(group_key: tuple) -> str:
-    """Human-readable label for a cluster."""
-    directory, container = group_key
-    if container:
-        return container
-
-    # Derive from directory name
-    parts = directory.replace("\\", "/").split("/")
-    # Use the last meaningful segment
-    label = parts[-1] if parts else "Root"
-
-    # Common renames for readability
-    renames = {
-        "Sources": "Core Sources",
-        "Tests": "Tests",
-        "Mocks": "Test Mocks",
-        "Helpers": "Helpers",
-        "Util": "Utilities",
-        "_root": "Root",
-    }
-    return renames.get(label, label)
+def _file_cluster_id(file_path: str) -> str:
+    return f"file:{file_path}"
 
 
-# ─── Inter-cluster edges ────────────────────────────────────────────────────
+def _dir_cluster_id(directory: str) -> str:
+    return f"dir:{directory}"
+
+
+# ─── Inter-cluster edge aggregation ─────────────────────────────────────────
 
 def _compute_cluster_edges(
     edges: list[dict],
     node_cluster_map: dict[str, str],
 ) -> list[dict]:
-    """Aggregate node-level edges into cluster-level edges."""
-    cluster_edge_weights: dict[tuple[str, str], int] = defaultdict(int)
-
+    """Aggregate node-level edges into file-level edges."""
+    weights: dict[tuple[str, str], int] = defaultdict(int)
     for edge in edges:
-        src_cluster = node_cluster_map.get(edge["source"])
-        dst_cluster = node_cluster_map.get(edge["target"])
-
-        if src_cluster and dst_cluster and src_cluster != dst_cluster:
-            key = (src_cluster, dst_cluster)
-            cluster_edge_weights[key] += edge.get("weight", 1)
+        src = node_cluster_map.get(edge["source"])
+        dst = node_cluster_map.get(edge["target"])
+        if src and dst and src != dst:
+            weights[(src, dst)] += edge.get("weight", 1)
 
     return [
-        {"source": src, "target": dst, "weight": w}
-        for (src, dst), w in sorted(cluster_edge_weights.items(), key=lambda x: x[1], reverse=True)
+        {"source": s, "target": t, "weight": w}
+        for (s, t), w in sorted(weights.items(), key=lambda kv: kv[1], reverse=True)
     ]
 
 
-# ─── LLM-assisted labeling (optional enhancement) ───────────────────────────
+# ─── LLM-assisted labeling (file-level) ──────────────────────────────────────
 
 def label_clusters_with_llm(clusters: list[dict], graph: dict) -> list[dict]:
     """
-    Ask the LLM to assign better human-readable labels to clusters
-    based on the function names and file paths they contain.
-
-    This mutates the cluster dicts in-place and returns them.
-    Falls back to heuristic labels if LLM is unavailable.
+    Assign short human-readable labels to file clusters via the LLM.
+    Falls back to heuristic file names if the LLM is unavailable.
+    Mutates `clusters` in place.
     """
     try:
         from llm.cache import cached_complete
     except ImportError:
         return clusters
 
-    SYSTEM = """You are a senior software architect labeling architecture layers.
-Given a list of function names and file paths in a cluster, assign a short
-(2-4 word) label describing the cluster's role.
+    SYSTEM = """You are a senior software architect labeling source files.
+Given a list of function names in a file, assign a short (2-4 word) label
+describing the file's role. Reply with ONLY the label.
 
-Reply with ONLY the label, nothing else. Examples:
+Examples:
 - "State Management"
-- "Observer Middleware"
+- "HTTP Request Router"
 - "Test Helpers"
 - "Side Effect Engine"
 """
 
     for cluster in clusters:
-        # Build a summary of what's in this cluster
-        node_names = []
-        for nid in cluster["node_ids"][:15]:  # cap to avoid huge prompts
-            # Extract qualified_name from node_id: func:<file>:<qname>:<line>
+        node_names: list[str] = []
+        for nid in cluster.get("node_ids", [])[:15]:
             parts = nid.split(":", 3)
             if len(parts) >= 3:
                 node_names.append(parts[2])
@@ -295,12 +266,13 @@ Reply with ONLY the label, nothing else. Examples:
         if not node_names:
             continue
 
-        user_prompt = f"""Cluster directory: {cluster['directory']}
-Container: {cluster.get('container') or 'mixed'}
-Functions ({cluster['node_count']} total, showing first {len(node_names)}):
-{chr(10).join(f'  - {n}' for n in node_names)}
-
-Label this cluster:"""
+        user_prompt = (
+            f"File: {cluster.get('file', cluster.get('directory', ''))}\n"
+            f"Functions ({cluster['node_count']} total, "
+            f"showing first {len(node_names)}):\n"
+            + "\n".join(f"  - {n}" for n in node_names)
+            + "\n\nLabel this file:"
+        )
 
         try:
             resp = cached_complete(
@@ -315,6 +287,6 @@ Label this cluster:"""
             if 1 < len(label) < 60:
                 cluster["ai_label"] = label
         except Exception:
-            pass  # keep heuristic label
+            pass
 
     return clusters

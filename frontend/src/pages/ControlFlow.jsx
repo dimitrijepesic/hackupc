@@ -197,7 +197,7 @@ function ConditionLabel({ from, to, edge }) {
 // --- Main Control Flow page ---
 
 export default function ControlFlow() {
-  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, viewCameras, setViewCamera, viewLayouts } = useGraphStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
   const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab, setProject } = useProjectStore();
   const [searchParams] = useSearchParams();
 
@@ -315,10 +315,15 @@ export default function ControlFlow() {
     return false;
   }, [classFilter]);
 
-  // Visible nodes: hide unused (0-in, 0-out) nodes unless toggled on
+  // Visible nodes: hide unused (0-in, 0-out) nodes unless toggled on, plus
+  // importance-threshold filter from the FilterPanel slider.
   const visibleNodes = useMemo(
-    () => (showUnusedNodes ? nodes : nodes.filter((n) => !isUnusedNode(n))),
-    [nodes, showUnusedNodes],
+    () => {
+      const base = showUnusedNodes ? nodes : nodes.filter((n) => !isUnusedNode(n));
+      if (!importanceThreshold) return base;
+      return base.filter((n) => (n.importance || 0) >= importanceThreshold);
+    },
+    [nodes, showUnusedNodes, importanceThreshold],
   );
   const visibleNodeIds = useMemo(() => new Set(visibleNodes.map((n) => n.id)), [visibleNodes]);
   const visibleEdges = useMemo(
@@ -658,7 +663,7 @@ export default function ControlFlow() {
                           <path
                             className="connection-line"
                             d={computeEdgePath(from, to)}
-                            style={{ strokeWidth: Math.min(4, 1 + ce.weight * 0.5), opacity: 0.5 }}
+                            style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }}
                           />
                           <path
                             className="connection-line"

@@ -108,6 +108,14 @@ function computeArrowHead(target) {
   return `M ${tipX - s} ${target.y - s} L ${tipX} ${target.y} L ${tipX - s} ${target.y + s}`;
 }
 
+// Inline stroke-width override based on edge weight. Returns undefined for
+// weight <= 1 so the default CSS rule applies.
+function edgeWeightStyle(edge) {
+  const w = edge && edge.weight;
+  if (!w || w <= 1) return undefined;
+  return { strokeWidth: Math.min(3.5, 1.2 + Math.log2(w) * 0.7) };
+}
+
 function getEdgeClasses(edge, selectedNodeId) {
   const classes = ['connection-line'];
   const touchesSelected = edge.source === selectedNodeId || edge.target === selectedNodeId;
@@ -142,7 +150,7 @@ function computeSelfLoopArrow(node) {
 // --- Main Call Graph page ---
 
 export default function Workspace() {
-  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, filters, filteredCounts, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, viewCameras, setViewCamera, viewLayouts } = useGraphStore();
+  const { nodes, edges, selectedNodeId, selectedFile, selectNode, selectFile, closeFile, moveNode, addNode, addEdge, autoLayout, loadGraph, enterView, filters, filteredCounts, sourceFiles, loading: graphLoading, error: graphError, graphId, metadata, clusters, clusterEdges, nodeClusterMap, expandedClusters, clusterView, clusterPositions, toggleClusterView, toggleCluster, viewCameras, setViewCamera, viewLayouts, importanceThreshold } = useGraphStore();
   const { project, ui, openNodeEditor, closeNodeEditor, toggleCodePanel, setActiveSideTab, setProject } = useProjectStore();
   const [searchParams] = useSearchParams();
 
@@ -264,10 +272,15 @@ export default function Workspace() {
     return false;
   }, [classFilter]);
 
-  // Visible nodes: hide unused (0-in, 0-out) nodes unless toggled on
+  // Visible nodes: hide unused (0-in, 0-out) nodes unless toggled on, and
+  // hide nodes below the importance threshold (live filter, no re-fetch).
   const visibleNodes = useMemo(
-    () => (showUnusedNodes ? nodes : nodes.filter((n) => !isUnusedNode(n))),
-    [nodes, showUnusedNodes],
+    () => {
+      const base = showUnusedNodes ? nodes : nodes.filter((n) => !isUnusedNode(n));
+      if (!importanceThreshold) return base;
+      return base.filter((n) => (n.importance || 0) >= importanceThreshold);
+    },
+    [nodes, showUnusedNodes, importanceThreshold],
   );
   const visibleNodeIds = useMemo(() => new Set(visibleNodes.map((n) => n.id)), [visibleNodes]);
   const visibleEdges = useMemo(
@@ -610,7 +623,7 @@ export default function Workspace() {
                           <path
                             className="connection-line"
                             d={computeEdgePath(from, to)}
-                            style={{ strokeWidth: Math.min(4, 1 + ce.weight * 0.5), opacity: 0.5 }}
+                            style={{ strokeWidth: Math.min(6, Math.max(1.4, Math.log2(ce.weight + 1) * 1.4)), opacity: 0.65 }}
                           />
                           <path
                             className="connection-line"
@@ -654,10 +667,11 @@ export default function Workspace() {
                       }
                       const from = getHandlePosition(sourceNode, edge.sourceHandle);
                       const to = getHandlePosition(targetNode, edge.targetHandle);
+                      const wStyle = edgeWeightStyle(edge);
                       return (
                         <g key={edge.id}>
-                          <path className={getEdgeClasses(edge, selectedNodeId)} d={computeEdgePath(from, to)} />
-                          <path className={getEdgeClasses(edge, selectedNodeId)} d={computeArrowHead(to)} />
+                          <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeEdgePath(from, to)} />
+                          <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeArrowHead(to)} />
                         </g>
                       );
                     })}
@@ -719,10 +733,11 @@ export default function Workspace() {
                       }
                       const from = getHandlePosition(sourceNode, edge.sourceHandle);
                       const to = getHandlePosition(targetNode, edge.targetHandle);
+                      const wStyle = edgeWeightStyle(edge);
                       return (
                         <g key={edge.id}>
-                          <path className={getEdgeClasses(edge, selectedNodeId)} d={computeEdgePath(from, to)} />
-                          <path className={getEdgeClasses(edge, selectedNodeId)} d={computeArrowHead(to)} />
+                          <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeEdgePath(from, to)} />
+                          <path className={getEdgeClasses(edge, selectedNodeId)} style={wStyle} d={computeArrowHead(to)} />
                         </g>
                       );
                     })}
