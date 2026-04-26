@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Header } from '../components/Layout';
+import { Header, RepoFooter } from '../components/Layout';
 import useGraphStore from '../store/graphStore';
 import useProjectStore from '../store/projectStore';
 import { defaultFileTree, SOURCE_FILES } from '../data/mockData';
@@ -485,6 +485,7 @@ export default function ControlFlow() {
         <SideNav
           activePage="control-flow"
           project={project}
+          graphId={graphId}
           activeTab={ui.activeSideTab}
           onTabChange={(tab) => setActiveSideTab(ui.activeSideTab === tab ? null : tab)}
           nodes={nodes}
@@ -937,6 +938,7 @@ export default function ControlFlow() {
 function SideNav({
   activePage,
   project,
+  graphId,
   activeTab,
   onTabChange,
   nodes,
@@ -1116,20 +1118,11 @@ function SideNav({
           </div>
         </div>
 
-        {/* Bottom — GitHub icon */}
-        <div className="flex flex-col items-center w-full px-0.5 sm:px-1 md:px-2 mt-auto pt-2 md:pt-3 border-t border-gray-200">
-          <a
-            href={project?.repoUrl || '#'}
-            target={project?.repoUrl ? '_blank' : undefined}
-            rel="noreferrer"
-            className="w-7 sm:w-8 md:w-10 h-7 sm:h-8 md:h-10 rounded flex items-center justify-center text-gray-700 hover:text-black hover:bg-gray-100 transition-colors"
-            title={project?.name ? `${project.name} on GitHub` : 'GitHub'}
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" aria-hidden="true">
-              <path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.18 7.69 10.66.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.34-3.79-1.34-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.29-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.16a10.7 10.7 0 0 1 5.65 0c2.15-1.46 3.1-1.16 3.1-1.16.61 1.55.23 2.69.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.34-2.64 5.29-5.15 5.56.4.35.76 1.04.76 2.1v3.11c0 .3.2.65.78.54 4.47-1.49 7.68-5.69 7.68-10.66C23.25 5.48 18.27.5 12 .5Z" />
-            </svg>
-          </a>
-        </div>
+        <RepoFooter
+          project={project}
+          graphId={graphId}
+          onReloaded={() => { if (graphId) useGraphStore.getState().loadGraph(graphId); }}
+        />
       </nav>
 
       {/* Explorer / Functions panel — slides in/out */}
